@@ -154,10 +154,14 @@ app.MapFallbackToFile("index.html");
 
 using (var scope = app.Services.CreateScope())
 {
+    var context = scope.ServiceProvider.GetRequiredService<DataContext>();
+    await context.Database.MigrateAsync();   // tablolar + HasData seed otomatik oluşur
+
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
 
     await SeedDatabase.SeedRolesAndUsers(userManager, roleManager);
 }
+
 
 app.Run();
