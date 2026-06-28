@@ -1,0 +1,64 @@
+.blogs {
+  margin-bottom: 30px;
+}
+
+.blogs .blog-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 30px;
+}
+
+
+@media (max-width: 992px) {
+  .blogs .blog-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+@media (max-width: 768px) {
+  /* Sadece HomePage'deki blog bölümü kaydırmalı olsun */
+  .blogs.blogs-home .blog-list {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+    scrollbar-width: none;
+  }
+
+  .blogs.blogs-home .blog-list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .blogs.blogs-home .blog-list .blog-item {
+    flex: 0 0 70%;
+    scroll-snap-align: start;
+  }
+
+  /* Blog sayfasında (limit yok) grid 2 kolona düşsün */
+  .blogs:not(.blogs-home) .blog-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .blogs .section-title h2 {
+    font-size: 22px;
+  }
+
+  .blogs .section-title p {
+    font-size: 15px;
+  }
+
+  .blogs .section-title {
+    margin-bottom: 20px;
+  }
+}
+
+
+@media (max-width: 576px) {
+  .blogs.blogs-home .blog-list .blog-item {
+    flex: 0 0 80%;
+  }
+}

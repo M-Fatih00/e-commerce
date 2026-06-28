@@ -1,0 +1,23 @@
+.products {
+  margin-bottom: 40px;
+}
+
+.products .product-list {
+  display: flex;
+  gap: 20px;
+}
+
+
+@media (max-width: 768px) {
+  .products .section-title h2 {
+    font-size: 22px;
+  }
+
+  .products .section-title p {
+    font-size: 15px;
+  }
+
+  .products .section-title {
+    margin-bottom: 20px;
+  }
+}

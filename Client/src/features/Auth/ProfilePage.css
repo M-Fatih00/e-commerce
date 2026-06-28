@@ -1,0 +1,288 @@
+.profile-section {
+  padding: 60px 0;
+}
+
+.profile-wrapper {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.profile-title {
+  margin-bottom: 20px;
+  font-weight: 600;
+  text-align: center;
+}
+
+
+.profile-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.profile-name {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.profile-email {
+  margin: 4px 0 16px;
+  color: #999;
+  font-size: 13px;
+}
+
+
+.profile-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.profile-section-header h4 {
+  margin: 0;
+  font-weight: 600;
+}
+
+.profile-form-actions {
+  display: flex;
+  gap: 8px;
+}
+
+
+/* ── Siparişlerim sekmesi (Accordion) ── */
+.profile-orders-loading {
+  display: flex;
+  justify-content: center;
+  padding: 60px 0;
+}
+
+.profile-orders-empty {
+  text-align: center;
+  padding: 40px 0;
+  color: #888;
+}
+
+.profile-order-collapse {
+  background: transparent;
+  border: none;
+}
+
+.profile-order-scroll {
+  max-height: 380px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.profile-order-collapse .ant-collapse-item {
+  border: 1px solid #dee0ea;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.profile-order-collapse .ant-collapse-header {
+  align-items: center !important;
+  background-color: #f9f9f9;
+}
+
+.profile-order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-right: 8px;
+}
+
+.profile-order-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-order-id {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.profile-order-date {
+  font-size: 12px;
+  color: #888;
+}
+
+.profile-order-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+}
+
+.profile-order-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.profile-order-item-name {
+  flex: 1;
+  font-weight: 500;
+}
+
+.profile-order-item-qty {
+  color: #888;
+  margin: 0 12px;
+}
+
+.profile-order-item-price {
+  font-weight: 600;
+}
+
+.profile-order-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 10px;
+  border-top: 1px solid #dee0ea;
+}
+
+.profile-order-total {
+  font-size: 14px;
+}
+
+.profile-order-total strong {
+  font-size: 15px;
+}
+
+
+
+@media (max-width: 768px) {
+  .profile-title {
+    margin: 20px 0;
+
+  }
+  .profile-section {
+    padding: 24px 0;
+  }
+
+
+  .profile-avatar-row {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .profile-name {
+    font-size: 17px;
+  }
+
+  .profile-email {
+    margin: 2px 0 10px;
+  }
+
+
+  .profile-section-header {
+    margin-bottom: 14px;
+  }
+
+  .profile-section-header h4 {
+    font-size: 14px;
+  }
+
+  .profile-form-actions {
+    width: 100%;
+  }
+
+  .profile-form-actions button {
+    flex: 1;
+  }
+
+
+  .profile-order-scroll {
+    max-height: 420px;
+  }
+
+  .profile-order-collapse .ant-collapse-header {
+    padding: 16px 14px !important;
+    align-items: center !important;
+  }
+
+  .profile-order-collapse .ant-collapse-expand-icon {
+    align-self: center !important;
+  }
+
+  .profile-order-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding-right: 0;
+  }
+
+  .profile-order-info {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .profile-order-id {
+    font-size: 14px;
+  }
+
+  .profile-order-date {
+    font-size: 12px;
+  }
+
+  .profile-order-collapse .ant-tag {
+    font-size: 12px;
+    padding: 1px 10px;
+    line-height: 18px;
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .profile-order-items {
+    gap: 6px;
+    padding-bottom: 8px;
+  }
+
+  .profile-order-item {
+    font-size: 11px;
+  }
+
+  .profile-order-item-qty {
+    margin: 0 8px;
+  }
+
+  .profile-order-footer {
+    padding-top: 8px;
+  }
+
+  .profile-order-total {
+    font-size: 12px;
+  }
+
+  .profile-order-total strong {
+    font-size: 13px;
+  }
+}
+
+
+
+@media (max-width: 576px) {
+  .profile-section {
+    padding: 10px 0;
+  }
+
+  .profile-order-scroll {
+    max-height: 400px;
+  }
+
+  .profile-order-collapse .ant-collapse-header {
+    padding: 20px 10px !important;
+  }
+}

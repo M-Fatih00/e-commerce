@@ -1,0 +1,84 @@
+.campaign-single {
+  padding: 140px 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.campaign-single .campaign-wrapper {
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.campaign-single .campaign-wrapper h2 {
+  font-size: 25px;
+}
+
+.campaign-single .campaign-wrapper strong {
+  font-size: 55px;
+  font-weight: 600;
+  margin: 20px 0;
+}
+
+.campaign-single .campaign-wrapper span {
+  display: inline-block;
+  width: 50px;
+  height: 5px;
+  background-color: white;
+}
+
+.campaign-single .campaign-wrapper > a {
+  background-color: #fff;
+  margin-top: 60px;
+}
+
+.campaign-single .campaign-wrapper > a:hover {
+  background-color: #1367ef;
+  border-color: #1367ef;
+  color: #fff;
+}
+
+
+
+/* 📱 Tablet */
+@media (max-width: 992px) {
+  .campaign-single {
+    padding: 100px 20px;
+  }
+
+  .campaign-single .campaign-wrapper h2 {
+    font-size: 24px;
+  }
+
+  .campaign-single .campaign-wrapper strong {
+    font-size: 48px;
+  }
+}
+
+
+/* 📱 Mobile */
+@media (max-width: 576px) {
+  .campaign-single {
+    padding: 50px 15px;
+  }
+
+  .campaign-single .campaign-wrapper h2 {
+    font-size: 20px;
+  }
+
+  .campaign-single .campaign-wrapper strong {
+    font-size: 36px;
+  }
+
+  .campaign-single .campaign-wrapper > a {
+    margin-top: 30px;
+
+  }
+}

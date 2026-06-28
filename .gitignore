@@ -1,0 +1,27 @@
+# Hassas yapılandırma
+**/appsettings.Development.json
+**/appsettings.Production.json
+
+# Veritabanı
+*.db
+*.db-shm
+*.db-wal
+
+# .NET build
+bin/
+obj/
+*.user
+
+# Frontend
+Client/node_modules/
+Client/dist/
+Client/dist-ssr/
+*.local
+
+# Editör / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.sw?

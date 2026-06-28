@@ -1,0 +1,276 @@
+/* 
+  products stillerini merkezi olarak productItem.css içinde yazıyoruz, 
+  burada sadece grid layout boyutlarını yazıyoruz 
+*/
+
+
+.shop-hero {
+  background: #f7f8fa;
+  padding: 24px 0;
+  margin-bottom: 32px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.shop-hero-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 4px;
+  letter-spacing: -0.5px;
+}
+
+.shop-hero-sub {
+  font-size: 13px;
+  color: #999;
+  margin: 0;
+}
+
+
+.shop-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 28px;
+}
+
+.shop-cat-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 100px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shop-cat-btn:hover {
+  border-color: #1a1a2e;
+  color: #1a1a2e;
+}
+
+.shop-cat-btn.active {
+  background: #1a1a2e;
+  border-color: #1a1a2e;
+  color: #fff;
+}
+
+.shop-cat-img {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+
+.shop-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.shop-search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 25%;
+  display: flex;
+  align-items: center;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.shop-search:focus-within {
+  border-color: #1a1a2e;
+}
+
+.shop-search-icon {
+  padding: 0 12px;
+  color: #333;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+.shop-search-input {
+  flex: 1;
+  padding: 10px 0;
+  border: none;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.shop-search-input::placeholder {
+  color: #333;
+  font-weight: 500;
+}
+
+.shop-search-clear {
+  padding: 0 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.shop-sort {
+  padding: 10px 16px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #555;
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.shop-sort:focus {
+  border-color: #1a1a2e;
+}
+
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  margin: 0 auto 60px;
+  max-width: 1100px;
+}
+
+
+.shop-grid .product-item .product-image img {
+  height: 320px;
+  object-fit: contain;
+}
+
+
+.shop-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: #999;
+}
+
+.shop-empty-icon {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 16px;
+}
+
+.shop-empty p {
+  font-size: 16px;
+  margin-bottom: 20px;
+}
+
+.shop-empty-reset {
+  padding: 10px 24px;
+  border: 1.5px solid #1a1a2e;
+  border-radius: 8px;
+  background: transparent;
+  color: #1a1a2e;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.shop-empty-reset:hover {
+  background: #1a1a2e;
+  color: #fff;
+}
+
+
+@media (max-width: 992px) {
+  .shop-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .shop-hero {
+    padding: 10px 0;
+  }
+
+  .shop-categories {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 8px;
+    padding-bottom: 4px;
+  }
+
+  .shop-categories::-webkit-scrollbar {
+    display: none;
+  }
+
+  .shop-cat-btn {
+    flex-shrink: 0;
+    padding: 6px 12px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .shop-cat-img {
+    width: 18px;
+    height: 18px;
+  }
+
+
+  .shop-toolbar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .shop-search {
+    max-width: none;
+    flex: 1;
+  }
+
+  .shop-search-input {
+    padding: 8px 0;
+    font-size: 13px;
+  }
+
+  .shop-search-icon {
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .shop-sort {
+    flex-shrink: 0;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+
+
+  .shop-grid .product-item .product-image img {
+    height: 220px;
+  }
+}
+
+
+@media (max-width: 576px) {
+  /* Grid — 2 kolon */
+  .shop-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+
+  /* Ürün görseli */
+  .shop-grid .product-item .product-image img {
+    height: 180px;
+  }
+}
