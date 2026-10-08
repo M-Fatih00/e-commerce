@@ -20,7 +20,7 @@ public class TokenService
         _config = config;
     }
 
-    public async Task<string> GenerateToken(AppUser user, bool rememberMe)
+    public async Task<string> GenerateToken(AppUser user, DateTime expiresUtc)
     {
         var claims = new List<Claim>
         {
@@ -39,7 +39,7 @@ public class TokenService
         var descriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = rememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddHours(2),
+            Expires = expiresUtc,
             SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature),
             Issuer = _config["Jwt:Issuer"],
             Audience = _config["Jwt:Audience"]

@@ -41,7 +41,8 @@ axios.interceptors.response.use(
         break;
 
       case 403:
-        toast.error("Bu işlem için yetkiniz yok.");
+        if (data?.demo) toast.info(data.message);
+        else toast.error("Bu işlem için yetkiniz yok.");
         break;
 
       case 404:

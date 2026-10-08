@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using API.DTO;
 using API.Entity;
+using API.Filters;
 using API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -13,6 +14,8 @@ namespace API.Controllers;
 [Route("api/[controller]")]
 public class AccountController : ControllerBase
 {
+    private const long AvatarRequestLimit = ImageValidator.MaxSize + 1024 * 1024;
+
     private readonly UserManager<AppUser> _userManager;
     private readonly SignInManager<AppUser> _signInManager;
     private readonly TokenService _tokenService;
@@ -75,13 +78,11 @@ public class AccountController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(new { message = "Kullanıcı adı veya şifre hatalı." });
 
-        var token = await _tokenService.GenerateToken(user, dto.RememberMe);
-
         var expires = dto.RememberMe
             ? DateTime.UtcNow.AddDays(30)
             : DateTime.UtcNow.AddHours(2);
 
-        Response.Cookies.Append("jwt", token, JwtCookieOptions(expires));
+        await IssueAuthCookie(user, expires);
 
         var roles = await _userManager.GetRolesAsync(user);
 
@@ -127,71 +128,114 @@ public class AccountController : ControllerBase
 
     [HttpPut("update")]
     [Authorize]
+    [DemoDisabled]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDTO dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var user = await _userManager.FindByIdAsync(userId!);
         if (user == null) return Unauthorized();
 
-        user.FullName = dto.FullName ?? user.FullName;
-        user.UserName = dto.UserName ?? user.UserName;
-        user.Email = dto.Email ?? user.Email;
+        var fullName = dto.FullName?.Trim();
+        var userName = dto.UserName?.Trim();
+        var email = dto.Email?.Trim();
 
-        var result = await _userManager.UpdateAsync(user);
-        if (!result.Succeeded)
-            return BadRequest(new { message = TranslateErrors(result.Errors) });
+        if (fullName is not null)
+        {
+            if (fullName.Length == 0)
+                return BadRequest(new { message = "Ad soyad boş olamaz." });
+
+            user.FullName = fullName;
+            var updateResult = await _userManager.UpdateAsync(user);
+            if (!updateResult.Succeeded)
+                return BadRequest(new { message = TranslateErrors(updateResult.Errors) });
+        }
+
+        if (userName is not null && userName != user.UserName)
+        {
+            var userNameResult = await _userManager.SetUserNameAsync(user, userName);
+            if (!userNameResult.Succeeded)
+                return BadRequest(new { message = TranslateErrors(userNameResult.Errors) });
+        }
+
+        if (email is not null && !string.Equals(email, user.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var emailResult = await _userManager.SetEmailAsync(user, email);
+            if (!emailResult.Succeeded)
+                return BadRequest(new { message = TranslateErrors(emailResult.Errors) });
+        }
+
+        await IssueAuthCookie(user, CurrentTokenExpiry());
 
         return Ok(new { fullName = user.FullName, userName = user.UserName, email = user.Email });
     }
 
-    private static readonly string[] _allowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-    private const long _maxAvatarSize = 5 * 1024 * 1024;
-
-    private string? ValidateImage(IFormFile file)
-    {
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!_allowedImageExtensions.Contains(ext))
-            return $"Geçersiz dosya türü: {ext}. Sadece resim yükleyebilirsiniz (jpg, png, webp, gif).";
-
-        if (file.Length > _maxAvatarSize)
-            return "Dosya boyutu 5 MB'tan büyük olamaz.";
-
-        if (file.Length == 0)
-            return "Boş dosya yüklenemez.";
-
-        return null;
-    }
-
     [HttpPut("avatar")]
     [Authorize]
+    [DemoDisabled]
+    [RequestSizeLimit(AvatarRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = AvatarRequestLimit)]
     public async Task<IActionResult> UpdateAvatar([FromForm] AvatarDTO dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(new { message = "Dosya seçilmedi." });
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var user = await _userManager.FindByIdAsync(userId!);
         if (user == null) return Unauthorized();
 
-        var imageError = ValidateImage(dto.Avatar);
-        if (imageError != null) return BadRequest(new { message = imageError });
+        var (extension, error) = await ImageValidator.ValidateAsync(dto.Avatar);
+        if (error != null) return BadRequest(new { message = error });
 
-        var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/avatars");
-        if (!Directory.Exists(uploadPath)) Directory.CreateDirectory(uploadPath);
+        var avatarsDir = Path.Combine(_env.WebRootPath, "img", "avatars");
+        Directory.CreateDirectory(avatarsDir);
 
-        if (!string.IsNullOrEmpty(user.Avatar))
+        var fileName = Guid.NewGuid() + extension;
+        var filePath = Path.Combine(avatarsDir, fileName);
+
+        await using (var stream = new FileStream(filePath, FileMode.CreateNew))
+            await dto.Avatar!.CopyToAsync(stream);
+
+        var oldAvatar = user.Avatar;
+        user.Avatar = "avatars/" + fileName;
+
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
         {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", user.Avatar);
-            if (System.IO.File.Exists(oldPath)) System.IO.File.Delete(oldPath);
+            System.IO.File.Delete(filePath);
+            return StatusCode(500, new { message = "Profil fotoğrafı kaydedilemedi." });
         }
 
-        var fileName = Guid.NewGuid() + Path.GetExtension(dto.Avatar.FileName);
-        var filePath = Path.Combine(uploadPath, fileName);
-
-        using var stream = new FileStream(filePath, FileMode.Create);
-        await dto.Avatar.CopyToAsync(stream);
-
-        user.Avatar = "avatars/" + fileName;
-        await _userManager.UpdateAsync(user);
+        DeleteAvatarFile(oldAvatar);
 
         return Ok(new { avatar = user.Avatar });
+    }
+
+    private async Task IssueAuthCookie(AppUser user, DateTime expiresUtc)
+    {
+        var token = await _tokenService.GenerateToken(user, expiresUtc);
+        Response.Cookies.Append("jwt", token, JwtCookieOptions(expiresUtc));
+    }
+
+    private DateTime CurrentTokenExpiry()
+    {
+        var exp = User.FindFirstValue("exp");
+        return long.TryParse(exp, out var seconds)
+            ? DateTimeOffset.FromUnixTimeSeconds(seconds).UtcDateTime
+            : DateTime.UtcNow.AddHours(2);
+    }
+
+    private void DeleteAvatarFile(string? avatar)
+    {
+        if (string.IsNullOrEmpty(avatar)) return;
+
+        var avatarsDir = Path.GetFullPath(Path.Combine(_env.WebRootPath, "img", "avatars"));
+        var path = Path.GetFullPath(Path.Combine(_env.WebRootPath, "img", avatar));
+
+        if (path.StartsWith(avatarsDir + Path.DirectorySeparatorChar) && System.IO.File.Exists(path))
+            System.IO.File.Delete(path);
     }
 
     private CookieOptions JwtCookieOptions(DateTime? expires = null) => new()
