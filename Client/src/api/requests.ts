@@ -132,7 +132,12 @@ const Auth = {
   register: (values: {}) => requests.post("account/register", values),
   logout: () => requests.post("account/logout", {}),
   getUser: () => requests.get("account/getUser"),
-  updateAvatar: (data: FormData) => requests.post("account/avatar", data),
+  updateProfile: (values: {
+    fullName: string;
+    userName: string;
+    email: string;
+  }) => requests.put("account/update", values),
+  updateAvatar: (data: FormData) => requests.put("account/avatar", data),
 };
 
 const Review = {

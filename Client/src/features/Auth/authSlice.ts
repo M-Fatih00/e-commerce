@@ -96,12 +96,10 @@ export const authSlice = createSlice({
         state.user.avatar = action.payload;
       }
     },
-    updateProfile(
-      state,
-      action: { payload: { fullName: string; email: string } },
-    ) {
+    updateProfile(state, action: { payload: { fullName: string; userName: string; email: string } }) {
       if (state.user) {
         state.user.fullName = action.payload.fullName;
+        state.user.userName = action.payload.userName;
         state.user.email = action.payload.email;
       }
     },

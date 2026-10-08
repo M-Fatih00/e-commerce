@@ -1,13 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { Button, Card, Form, Input, message, Upload, Divider, Tabs, Spin, Tag, Collapse } from "antd";
-import { UploadOutlined, EditOutlined, SaveOutlined, CloseOutlined } from "@ant-design/icons";
+import { Alert, Button, Card, Form, Input, message, Upload, Divider, Tabs, Spin, Tag, Collapse } from "antd";
+import type { UploadProps } from "antd";
+import { UploadOutlined, EditOutlined, SaveOutlined, CloseOutlined, LockOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "../../store/store";
-import { updateAvatar, updateProfile } from "../../features/Auth/authSlice";
+import { updateAvatar, updateProfile } from "./authSlice";
 import { getMyOrders } from "../Orders/orderSlice";
 import { IOrder } from "../../model/IOrder";
+import requests from "../../api/requests";
+import DemoLockButton from "../../components/DemoLockButton";
+import { isDemo } from "../../utils/demo";
+import { showFormError } from "../../utils/errors";
 import UserAvatar from "./UserAvatar";
-import axios from "axios";
 import "./ProfilePage.css";
+
+const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
+const AVATAR_ACCEPT = ".jpg,.jpeg,.png,.webp,.gif";
+
+type ProfileForm = {
+  fullName: string;
+  userName: string;
+  email: string;
+};
 
 const statusColor = (durum: string) => {
   switch (durum) {
@@ -27,7 +40,7 @@ const ProfilePage: React.FC = () => {
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [editing, setEditing] = useState(false);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<ProfileForm>();
 
   useEffect(() => {
     if (user) {
@@ -45,43 +58,41 @@ const ProfilePage: React.FC = () => {
 
   if (!user) return null;
 
-  const handleAvatarUpload = async (options: any) => {
-    const { file } = options;
+  const handleAvatarUpload: UploadProps["customRequest"] = async ({ file }) => {
+    if (!(file instanceof File)) return;
+
+    if (file.size > MAX_AVATAR_SIZE) {
+      message.error("Dosya boyutu 5 MB'tan büyük olamaz.");
+      return;
+    }
+
     setAvatarLoading(true);
     try {
       const formData = new FormData();
       formData.append("avatar", file);
-      const { data } = await axios.put("account/avatar", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-        withCredentials: true,
-      });
+      const data = await requests.Auth.updateAvatar(formData);
       dispatch(updateAvatar(data.avatar));
-      message.success("Avatar güncellendi!");
-    } catch (error: any) {
-      const backendMsg = error?.response?.data;
-      message.error(
-        typeof backendMsg === "string"
-          ? backendMsg
-          : backendMsg?.message || "Avatar güncellenirken hata oluştu."
-      );
+      message.success("Profil fotoğrafı güncellendi.");
+    } catch (error) {
+      showFormError(error, "Profil fotoğrafı güncellenemedi.");
     } finally {
       setAvatarLoading(false);
     }
   };
 
-  const handleProfileUpdate = async (values: any) => {
+  const handleProfileUpdate = async (values: ProfileForm) => {
     setProfileLoading(true);
     try {
-      const { data } = await axios.put("account/update", {
-        fullName: values.fullName,
-        userName: values.userName,
-        email: values.email,
+      const data = await requests.Auth.updateProfile({
+        fullName: values.fullName.trim(),
+        userName: values.userName.trim(),
+        email: values.email.trim(),
       });
       dispatch(updateProfile(data));
-      message.success("Profil güncellendi!");
+      message.success("Profil güncellendi.");
       setEditing(false);
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || "Güncelleme başarısız.");
+    } catch (error) {
+      showFormError(error, "Profil güncellenemedi.");
     } finally {
       setProfileLoading(false);
     }
@@ -96,53 +107,81 @@ const ProfilePage: React.FC = () => {
     setEditing(false);
   };
 
-  /* ── Sekme 1: Hesap Bilgileri ── */
+  const avatarLabel = user.avatar ? "Avatarı Değiştir" : "Avatar Yükle";
+
   const accountTab = (
     <Card>
-      {/* Avatar */}
+      {isDemo && (
+        <Alert
+          type="info"
+          showIcon
+          icon={<LockOutlined />}
+          message="Demo sürümünde profil düzenleme ve fotoğraf yükleme kapalı."
+          style={{ marginBottom: 16 }}
+        />
+      )}
+
       <div className="profile-avatar-row">
         <UserAvatar fullName={user.fullName} avatar={user.avatar} size={88} fontSize={32} />
         <div>
           <h3 className="profile-name">{user.fullName}</h3>
           <p className="profile-email">{user.email}</p>
-          <Upload customRequest={handleAvatarUpload} showUploadList={false} accept="image/*">
-            <Button icon={<UploadOutlined />} loading={avatarLoading} size="small">
-              {user.avatar ? "Avatarı Değiştir" : "Avatar Yükle"}
-            </Button>
-          </Upload>
+          {isDemo ? (
+            <DemoLockButton size="small">{avatarLabel}</DemoLockButton>
+          ) : (
+            <Upload customRequest={handleAvatarUpload} showUploadList={false} accept={AVATAR_ACCEPT}>
+              <Button icon={<UploadOutlined />} loading={avatarLoading} size="small">
+                {avatarLabel}
+              </Button>
+            </Upload>
+          )}
         </div>
       </div>
 
       <Divider />
 
-      {/* Hesap Bilgileri */}
       <div className="profile-section-header">
         <h4>Hesap Bilgileri</h4>
         {!editing && (
-          <Button icon={<EditOutlined />} size="small" onClick={() => setEditing(true)}>
+          <DemoLockButton icon={<EditOutlined />} size="small" onClick={() => setEditing(true)}>
             Düzenle
-          </Button>
+          </DemoLockButton>
         )}
       </div>
 
       <Form form={form} layout="vertical" onFinish={handleProfileUpdate}>
-        <Form.Item label="Ad Soyad" name="fullName" rules={editing ? [{ required: true, message: "Ad soyad zorunlu!" }] : []}>
-          <Input disabled={!editing} />
+        <Form.Item
+          label="Ad Soyad"
+          name="fullName"
+          rules={editing ? [
+            { required: true, whitespace: true, message: "Ad soyad zorunludur." },
+            { max: 100, message: "Ad soyad en fazla 100 karakter olabilir." },
+          ] : []}
+        >
+          <Input disabled={!editing} maxLength={100} />
         </Form.Item>
 
-        <Form.Item label="Kullanıcı Adı" name="userName" rules={editing ? [{ required: true, message: "Kullanıcı adı zorunlu!" }] : []}>
-          <Input disabled={!editing} />
+        <Form.Item
+          label="Kullanıcı Adı"
+          name="userName"
+          rules={editing ? [
+            { required: true, whitespace: true, message: "Kullanıcı adı zorunludur." },
+            { min: 3, message: "Kullanıcı adı en az 3 karakter olmalıdır." },
+            { max: 50, message: "Kullanıcı adı en fazla 50 karakter olabilir." },
+          ] : []}
+        >
+          <Input disabled={!editing} maxLength={50} />
         </Form.Item>
 
         <Form.Item
           label="E-posta"
           name="email"
           rules={editing ? [
-            { required: true, message: "E-posta zorunlu!" },
-            { type: "email", message: "Geçerli bir e-posta girin!" },
+            { required: true, whitespace: true, message: "E-posta zorunludur." },
+            { type: "email", message: "Geçerli bir e-posta adresi girin." },
           ] : []}
         >
-          <Input disabled={!editing} />
+          <Input disabled={!editing} maxLength={256} />
         </Form.Item>
 
         {editing && (
@@ -157,7 +196,6 @@ const ProfilePage: React.FC = () => {
     </Card>
   );
 
-  /* ── Sekme 2: Siparişlerim ── */
   const orderItems = orders.map((order: IOrder) => ({
     key: order.id,
     label: (
