@@ -1,5 +1,6 @@
 using API.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace API.Controllers;
 
@@ -15,6 +16,7 @@ public class ContactController : ControllerBase
     }
 
     [HttpPost]
+    [EnableRateLimiting("contact")]
     public async Task<IActionResult> SendMessage([FromBody] ContactDTO dto)
     {
         if (string.IsNullOrEmpty(dto.Name) || string.IsNullOrEmpty(dto.Email) ||

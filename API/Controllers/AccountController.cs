@@ -6,6 +6,7 @@ using API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace API.Controllers;
 
@@ -29,6 +30,7 @@ public class AccountController : ControllerBase
 
 
     [HttpPost("register")]
+    [EnableRateLimiting("register")]
     public async Task<IActionResult> Register(RegisterDTO dto)
     {
         if (!ModelState.IsValid)
@@ -67,6 +69,7 @@ public class AccountController : ControllerBase
 
 
     [HttpPost("login")]
+    [EnableRateLimiting("login")]
     public async Task<IActionResult> Login(LoginDTO dto)
     {
         var user = await _userManager.FindByNameAsync(dto.UserName);

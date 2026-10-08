@@ -9,6 +9,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Stripe;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,6 +105,46 @@ builder.Services.AddCors(options =>
     });
 });
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
+var rateLimitEnabled = builder.Configuration.GetValue("RateLimit:Enabled", true);
+var loginPerMinute = builder.Configuration.GetValue("RateLimit:LoginPerMinute", 10);
+var registerPerHour = builder.Configuration.GetValue("RateLimit:RegisterPerHour", 5);
+var contactPerHour = builder.Configuration.GetValue("RateLimit:ContactPerHour", 3);
+
+RateLimitPartition<string> FixedWindowByIp(HttpContext context, int permitLimit, TimeSpan window)
+{
+    if (!rateLimitEnabled)
+        return RateLimitPartition.GetNoLimiter("disabled");
+
+    var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+    return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+    {
+        PermitLimit = permitLimit,
+        Window = window,
+        QueueLimit = 0
+    });
+}
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, token) =>
+    {
+        await context.HttpContext.Response.WriteAsJsonAsync(
+            new { message = "Çok fazla deneme yaptınız. Lütfen biraz sonra tekrar deneyin." }, token);
+    };
+
+    options.AddPolicy("login", context => FixedWindowByIp(context, loginPerMinute, TimeSpan.FromMinutes(1)));
+    options.AddPolicy("register", context => FixedWindowByIp(context, registerPerHour, TimeSpan.FromHours(1)));
+    options.AddPolicy("contact", context => FixedWindowByIp(context, contactPerHour, TimeSpan.FromHours(1)));
+});
+
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<API.Services.TokenService>();
@@ -115,6 +158,7 @@ builder.Services.AddSwaggerGen(option =>
 
 var app = builder.Build();
 
+app.UseForwardedHeaders();
 app.UseMiddleware<ExceptionHandling>();
 
 app.Use(async (context, next) =>
@@ -137,6 +181,7 @@ if (app.Environment.IsDevelopment())
 app.UseStaticFiles();
 app.UseRouting();
 app.UseCors();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
