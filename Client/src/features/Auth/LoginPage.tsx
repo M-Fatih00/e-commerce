@@ -77,7 +77,7 @@ export default function LoginPage() {
 
     if (loginUser.fulfilled.match(result)) {
       message.success("Giriş başarılı");
-      navigate(result.payload.roles?.includes("Admin") ? "/admin" : "/");
+      navigate("/");
       return;
     }
 

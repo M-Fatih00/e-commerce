@@ -26,6 +26,7 @@ const initialState: AuthState = {
 export const getUser = createAsyncThunk("auth/getUser", async (_, thunkAPI) => {
   try {
     const user = await requests.Auth.getUser();
+    if (!user) return thunkAPI.rejectWithValue(null);
     return user;
   } catch {
     return thunkAPI.rejectWithValue(null);
@@ -44,7 +45,14 @@ export const loginUser = createAsyncThunk<
 >("auth/loginUser", async (data, { rejectWithValue }) => {
   try {
     await requests.Auth.login(data);
-    return await requests.Auth.getUser();
+    const user = await requests.Auth.getUser();
+    if (!user) {
+      return rejectWithValue({
+        status: 0,
+        message: "Giriş yapılamadı. Lütfen tekrar deneyin.",
+      });
+    }
+    return user;
   } catch (error: any) {
     if (Array.isArray(error)) {
       return rejectWithValue({

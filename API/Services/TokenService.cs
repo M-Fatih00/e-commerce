@@ -9,6 +9,8 @@ namespace API.Services;
 
 public class TokenService
 {
+    public const string SecurityStampClaim = "security_stamp";
+
     private readonly UserManager<AppUser> _userManager;
     private readonly IConfiguration _config;
 
@@ -18,45 +20,32 @@ public class TokenService
         _config = config;
     }
 
-
     public async Task<string> GenerateToken(AppUser user, bool rememberMe)
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.Email, user.Email!),
-            new Claim(ClaimTypes.NameIdentifier, user.Id!),
-            new Claim(ClaimTypes.Name, user.UserName!),
+            new(ClaimTypes.Email, user.Email!),
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.UserName!),
+            new(SecurityStampClaim, await _userManager.GetSecurityStampAsync(user))
         };
 
         var roles = await _userManager.GetRolesAsync(user);
-
         foreach (var role in roles)
-        {
             claims.Add(new Claim(ClaimTypes.Role, role));
-        }
 
-        var tokenHandler = new JwtSecurityTokenHandler();
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["AppSettings:Secret"]!));
 
-        var tokenSettings = new SecurityTokenDescriptor
+        var descriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-
-            Expires = rememberMe
-            ? DateTime.UtcNow.AddDays(30)
-            : DateTime.UtcNow.AddHours(2),
-
-            SigningCredentials = new SigningCredentials(
-            key,
-            SecurityAlgorithms.HmacSha256Signature
-        ),
-            Issuer = "fatihcanibek.com",
-            Audience = "firmaAdı"
+            Expires = rememberMe ? DateTime.UtcNow.AddDays(30) : DateTime.UtcNow.AddHours(2),
+            SigningCredentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature),
+            Issuer = _config["Jwt:Issuer"],
+            Audience = _config["Jwt:Audience"]
         };
 
-        var token = tokenHandler.CreateToken(tokenSettings);
-        
-        return tokenHandler.WriteToken(token);
+        var handler = new JwtSecurityTokenHandler();
+        return handler.WriteToken(handler.CreateToken(descriptor));
     }
-
 }

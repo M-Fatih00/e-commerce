@@ -25,6 +25,11 @@ if (string.IsNullOrWhiteSpace(stripeSecretKey))
 
 StripeConfiguration.ApiKey = stripeSecretKey;
 
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
+if (string.IsNullOrWhiteSpace(jwtIssuer) || string.IsNullOrWhiteSpace(jwtAudience))
+    throw new InvalidOperationException("Jwt:Issuer ve Jwt:Audience tanımlı olmalı.");
+
 builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("defaultConnection")));
 
@@ -59,8 +64,10 @@ builder.Services.AddAuthentication(options =>
 {
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
         ValidateLifetime = true,
@@ -82,6 +89,23 @@ builder.Services.AddAuthentication(options =>
 
             context.Token = context.Request.Cookies["jwt"];
             return Task.CompletedTask;
+        },
+        OnTokenValidated = async context =>
+        {
+            var userId = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+            var stamp = context.Principal?.FindFirstValue(API.Services.TokenService.SecurityStampClaim);
+
+            if (userId is null || stamp is null)
+            {
+                context.Fail("Geçersiz oturum.");
+                return;
+            }
+
+            var userManager = context.HttpContext.RequestServices.GetRequiredService<UserManager<AppUser>>();
+            var user = await userManager.FindByIdAsync(userId);
+
+            if (user is null || user.SecurityStamp != stamp)
+                context.Fail("Oturum geçersiz.");
         }
     };
 });

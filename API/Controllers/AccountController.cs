@@ -93,14 +93,17 @@ public class AccountController : ControllerBase
     }
 
     [HttpGet("getUser")]
-    [Authorize]
+    [AllowAnonymous]
     public async Task<IActionResult> GetUser()
     {
+        if (User.Identity?.IsAuthenticated != true)
+            return NoContent();
+
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (userId is null) return Unauthorized();
+        if (userId is null) return NoContent();
 
         var user = await _userManager.FindByIdAsync(userId);
-        if (user == null) return Unauthorized();
+        if (user == null) return NoContent();
 
         var roles = await _userManager.GetRolesAsync(user);
 
