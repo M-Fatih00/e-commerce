@@ -1,5 +1,5 @@
 import { message, Spin } from "antd";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { loginUser } from "./authSlice";
@@ -9,6 +9,27 @@ type LoginForm = {
   password: string;
   rememberMe: boolean;
 };
+
+const RETRY_KEY = "loginRetryAt";
+const WAIT_SECONDS = 60;
+
+function readRetryAt(): number {
+  try {
+    const value = Number(localStorage.getItem(RETRY_KEY));
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function writeRetryAt(value: number | null) {
+  try {
+    if (value === null) localStorage.removeItem(RETRY_KEY);
+    else localStorage.setItem(RETRY_KEY, String(value));
+  } catch {
+    return;
+  }
+}
 
 export default function LoginPage() {
   const dispatch = useAppDispatch();
@@ -22,6 +43,23 @@ export default function LoginPage() {
     rememberMe: false,
   });
 
+  const [retryAt, setRetryAt] = useState<number>(readRetryAt);
+  const [now, setNow] = useState<number>(Date.now());
+  const remaining = Math.max(0, Math.ceil((retryAt - now) / 1000));
+
+  useEffect(() => {
+    if (retryAt <= Date.now()) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [retryAt]);
+
+  useEffect(() => {
+    if (retryAt > 0 && remaining === 0) {
+      writeRetryAt(null);
+      setRetryAt(0);
+    }
+  }, [remaining, retryAt]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -31,26 +69,32 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (remaining > 0) return;
 
-    try {
-      const result = await dispatch(loginUser(formData));
+    const result = await dispatch(
+      loginUser({ ...formData, userName: formData.userName.trim() }),
+    );
 
-      if (loginUser.fulfilled.match(result)) {
-        message.success("Giriş başarılı");
-
-        const user: any = result.payload;
-
-        if (user?.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/");
-        }
-      } else {
-        message.error("Giriş başarısız");
-      }
-    } catch (error) {
-      message.error("Bir hata oluştu");
+    if (loginUser.fulfilled.match(result)) {
+      message.success("Giriş başarılı");
+      navigate(result.payload.roles?.includes("Admin") ? "/admin" : "/");
+      return;
     }
+
+    const error = result.payload;
+
+    if (error?.status === 429) {
+      const until = Date.now() + WAIT_SECONDS * 1000;
+      writeRetryAt(until);
+      setNow(Date.now());
+      setRetryAt(until);
+      message.warning(
+        `Çok fazla deneme yaptınız. Lütfen ${WAIT_SECONDS} saniye bekleyin.`,
+      );
+      return;
+    }
+
+    message.error(error?.message ?? "Giriş yapılamadı. Lütfen tekrar deneyin.");
   };
 
   return (
@@ -68,6 +112,7 @@ export default function LoginPage() {
               name="userName"
               value={formData.userName}
               onChange={handleInputChange}
+              autoComplete="username"
               required
             />
           </label>
@@ -83,6 +128,7 @@ export default function LoginPage() {
               name="password"
               value={formData.password}
               onChange={handleInputChange}
+              autoComplete="current-password"
               required
             />
           </label>
@@ -103,8 +149,18 @@ export default function LoginPage() {
             <span>Remember me</span>
           </label>
 
-          <button className="btn btn-sm" disabled={loading}>
-            {loading ? <Spin size="small" /> : "Login"}
+          <button
+            className="btn btn-sm"
+            disabled={loading || remaining > 0}
+            style={{ minWidth: 160, fontVariantNumeric: "tabular-nums" }}
+          >
+            {loading ? (
+              <Spin size="small" />
+            ) : remaining > 0 ? (
+              `Tekrar dene (${String(remaining).padStart(2, "0")})`
+            ) : (
+              "Login"
+            )}
           </button>
         </p>
 
