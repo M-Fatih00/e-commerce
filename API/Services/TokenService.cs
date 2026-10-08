@@ -36,7 +36,7 @@ public class TokenService
         }
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(_config["AppSettings:Secret"]!));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["AppSettings:Secret"]!));
 
         var tokenSettings = new SecurityTokenDescriptor
         {
@@ -55,7 +55,7 @@ public class TokenService
         };
 
         var token = tokenHandler.CreateToken(tokenSettings);
-        Console.WriteLine(token);
+        
         return tokenHandler.WriteToken(token);
     }
 

@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using System.Linq;
 using API.DTO;
 using API.Entity;
 using API.Services;
@@ -10,24 +9,23 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace API.Controllers;
 
-
 [ApiController]
 [Route("api/[controller]")]
 public class AccountController : ControllerBase
 {
     private readonly UserManager<AppUser> _userManager;
-
+    private readonly SignInManager<AppUser> _signInManager;
     private readonly TokenService _tokenService;
     private readonly IWebHostEnvironment _env;
 
-    public AccountController(UserManager<AppUser> userManager, TokenService tokenService, IWebHostEnvironment env)
+    public AccountController(UserManager<AppUser> userManager, SignInManager<AppUser> signInManager,
+        TokenService tokenService, IWebHostEnvironment env)
     {
         _userManager = userManager;
+        _signInManager = signInManager;
         _tokenService = tokenService;
         _env = env;
     }
-
-
 
     [HttpPost("register")]
     [EnableRateLimiting("register")]
@@ -38,69 +36,61 @@ public class AccountController : ControllerBase
 
         var user = new AppUser
         {
-            FullName = dto.AdSoyad,
-            UserName = dto.UserName,
-            Email = dto.Email,
+            FullName = dto.AdSoyad.Trim(),
+            UserName = dto.UserName.Trim(),
+            Email = dto.Email.Trim(),
             Avatar = null
         };
 
         var result = await _userManager.CreateAsync(user, dto.Password);
+        if (!result.Succeeded)
+            return BadRequest(new { message = TranslateErrors(result.Errors) });
 
-        if (result.Succeeded)
+        var roleResult = await _userManager.AddToRoleAsync(user, "Customer");
+        if (!roleResult.Succeeded)
         {
-            var roleResult = await _userManager.AddToRoleAsync(user, "Customer");
-            if (!roleResult.Succeeded)
-                return BadRequest(new { message = "Kullanıcı oluşturuldu ancak rol atanamadı." });
-
-            return Ok(new UserDTO { Name = user.UserName! });
+            await _userManager.DeleteAsync(user);
+            return StatusCode(500, new { message = "Kayıt tamamlanamadı. Lütfen tekrar deneyin." });
         }
 
-        var errors = result.Errors.Select(e => e.Code switch
-        {
-            "DuplicateUserName" => "Bu kullanıcı adı zaten kullanılıyor.",
-            "DuplicateEmail" => "Bu e-posta adresi zaten kayıtlı.",
-            "PasswordTooShort" => "Şifre en az 6 karakter olmalıdır.",
-            _ => e.Description
-        });
-
-        return BadRequest(new { message = string.Join(" ", errors) });
+        return Ok(new UserDTO { Name = user.UserName! });
     }
-
-
 
     [HttpPost("login")]
     [EnableRateLimiting("login")]
     public async Task<IActionResult> Login(LoginDTO dto)
     {
-        var user = await _userManager.FindByNameAsync(dto.UserName);
-        var result = user != null && await _userManager.CheckPasswordAsync(user, dto.Password);
+        if (!ModelState.IsValid)
+            return BadRequest(new { message = "Kullanıcı adı ve şifre zorunludur." });
 
-        if (!result)
+        var user = await _userManager.FindByNameAsync(dto.UserName.Trim());
+        if (user == null)
             return BadRequest(new { message = "Kullanıcı adı veya şifre hatalı." });
 
-        var token = await _tokenService.GenerateToken(user!, dto.RememberMe);
+        var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, lockoutOnFailure: true);
+
+        if (result.IsLockedOut)
+            return BadRequest(new { message = "Çok fazla hatalı deneme yapıldı. Hesap 5 dakika kilitlendi." });
+
+        if (!result.Succeeded)
+            return BadRequest(new { message = "Kullanıcı adı veya şifre hatalı." });
+
+        var token = await _tokenService.GenerateToken(user, dto.RememberMe);
 
         var expires = dto.RememberMe
             ? DateTime.UtcNow.AddDays(30)
             : DateTime.UtcNow.AddHours(2);
 
-        Response.Cookies.Append("jwt", token, new CookieOptions
-        {
-            HttpOnly = true,
-            Secure = !_env.IsDevelopment(),
-            SameSite = SameSiteMode.Lax,
-            Expires = expires
-        });
+        Response.Cookies.Append("jwt", token, JwtCookieOptions(expires));
 
-        var roles = await _userManager.GetRolesAsync(user!);
+        var roles = await _userManager.GetRolesAsync(user);
 
         return Ok(new UserDTO
         {
-            Name = user!.UserName!,
+            Name = user.UserName!,
             Role = roles.FirstOrDefault()
         });
     }
-
 
     [HttpGet("getUser")]
     [Authorize]
@@ -125,15 +115,12 @@ public class AccountController : ControllerBase
         });
     }
 
-
     [HttpPost("logout")]
     public IActionResult Logout()
     {
-        Response.Cookies.Delete("jwt");
-
+        Response.Cookies.Delete("jwt", JwtCookieOptions());
         return Ok();
     }
-
 
     [HttpPut("update")]
     [Authorize]
@@ -149,23 +136,13 @@ public class AccountController : ControllerBase
 
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
-        {
-            var errors = result.Errors.Select(e => e.Code switch
-            {
-                "DuplicateUserName" => "Bu kullanıcı adı zaten kullanılıyor.",
-                "DuplicateEmail" => "Bu e-posta adresi zaten kayıtlı.",
-                _ => e.Description
-            });
-            return BadRequest(new { message = string.Join(" ", errors) });
-        }
+            return BadRequest(new { message = TranslateErrors(result.Errors) });
 
         return Ok(new { fullName = user.FullName, userName = user.UserName, email = user.Email });
     }
 
-
-
     private static readonly string[] _allowedImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-    private const long _maxAvatarSize = 5 * 1024 * 1024; // 5 MB
+    private const long _maxAvatarSize = 5 * 1024 * 1024;
 
     private string? ValidateImage(IFormFile file)
     {
@@ -214,4 +191,23 @@ public class AccountController : ControllerBase
         return Ok(new { avatar = user.Avatar });
     }
 
+    private CookieOptions JwtCookieOptions(DateTime? expires = null) => new()
+    {
+        HttpOnly = true,
+        Secure = !_env.IsDevelopment(),
+        SameSite = SameSiteMode.Lax,
+        Path = "/",
+        Expires = expires
+    };
+
+    private static string TranslateErrors(IEnumerable<IdentityError> errors) =>
+        string.Join(" ", errors.Select(e => e.Code switch
+        {
+            "DuplicateUserName" => "Bu kullanıcı adı zaten kullanılıyor.",
+            "DuplicateEmail" => "Bu e-posta adresi zaten kayıtlı.",
+            "InvalidUserName" => "Kullanıcı adı sadece İngilizce harf, rakam ve - . _ @ + karakterlerini içerebilir.",
+            "InvalidEmail" => "Geçerli bir e-posta adresi girin.",
+            "PasswordTooShort" => "Şifre en az 6 karakter olmalıdır.",
+            _ => e.Description
+        }));
 }
