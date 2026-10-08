@@ -117,16 +117,17 @@ var loginPerMinute = builder.Configuration.GetValue("RateLimit:LoginPerMinute", 
 var registerPerHour = builder.Configuration.GetValue("RateLimit:RegisterPerHour", 5);
 var contactPerHour = builder.Configuration.GetValue("RateLimit:ContactPerHour", 3);
 
-RateLimitPartition<string> FixedWindowByIp(HttpContext context, int permitLimit, TimeSpan window)
+RateLimitPartition<string> SlidingWindowByIp(HttpContext context, int permitLimit, TimeSpan window)
 {
     if (!rateLimitEnabled)
         return RateLimitPartition.GetNoLimiter("disabled");
 
     var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-    return RateLimitPartition.GetFixedWindowLimiter(ip, _ => new FixedWindowRateLimiterOptions
+    return RateLimitPartition.GetSlidingWindowLimiter(ip, _ => new SlidingWindowRateLimiterOptions
     {
         PermitLimit = permitLimit,
         Window = window,
+        SegmentsPerWindow = 6,
         QueueLimit = 0
     });
 }
@@ -140,9 +141,9 @@ builder.Services.AddRateLimiter(options =>
             new { message = "Çok fazla deneme yaptınız. Lütfen biraz sonra tekrar deneyin." }, token);
     };
 
-    options.AddPolicy("login", context => FixedWindowByIp(context, loginPerMinute, TimeSpan.FromMinutes(1)));
-    options.AddPolicy("register", context => FixedWindowByIp(context, registerPerHour, TimeSpan.FromHours(1)));
-    options.AddPolicy("contact", context => FixedWindowByIp(context, contactPerHour, TimeSpan.FromHours(1)));
+    options.AddPolicy("login", context => SlidingWindowByIp(context, loginPerMinute, TimeSpan.FromMinutes(1)));
+    options.AddPolicy("register", context => SlidingWindowByIp(context, registerPerHour, TimeSpan.FromHours(1)));
+    options.AddPolicy("contact", context => SlidingWindowByIp(context, contactPerHour, TimeSpan.FromHours(1)));
 });
 
 builder.Services.AddControllers();
@@ -195,7 +196,7 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AppUser>>();
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
 
-    await SeedDatabase.SeedRolesAndUsers(userManager, roleManager);
+    await SeedDatabase.SeedRolesAndUsers(userManager, roleManager, app.Configuration);
 }
 
 app.Run();
