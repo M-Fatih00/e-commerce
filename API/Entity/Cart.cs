@@ -7,6 +7,14 @@ public class Cart
 
     public List<CartItem> CartItems { get; set; } = new();
 
+    public static decimal UnitPrice(Product product)
+    {
+        if (product.Discount <= 0) return product.NewPrice;
+
+        var discounted = product.NewPrice - product.NewPrice * product.Discount / 100;
+        return Math.Round(discounted, 2, MidpointRounding.AwayFromZero);
+    }
+
     public void AddItem(Product product, int miktar, string? beden = null, string? renk = null)
     {
         var item = CartItems.FirstOrDefault(i =>
@@ -17,38 +25,25 @@ public class Cart
         else
             item.Miktar += miktar;
     }
+
     public void DeleteItem(int urunId, int miktar, string? beden = null, string? renk = null)
     {
         var item = CartItems.FirstOrDefault(i =>
             i.UrunId == urunId && i.Beden == beden && i.Renk == renk);
-        if (item != null)
-        {
-            item.Miktar -= miktar;
-            if (item.Miktar <= 0) CartItems.Remove(item);
-        }
+
+        if (item == null) return;
+
+        item.Miktar -= miktar;
+        if (item.Miktar <= 0) CartItems.Remove(item);
     }
 
-    public decimal AraToplam()
-    {
-        return CartItems.Sum(i => i.Urun.NewPrice * i.Miktar);
-    }
+    public int QuantityOf(int urunId, string? beden) =>
+        CartItems.Where(i => i.UrunId == urunId && i.Beden == beden).Sum(i => i.Miktar);
 
-    public decimal Toplam()
-    {
-        return CartItems.Sum(i =>
-        {
-            var price = i.Urun.NewPrice;
+    public decimal AraToplam() => CartItems.Sum(i => i.Urun.NewPrice * i.Miktar);
 
-            if (i.Urun.Discount > 0)
-            {
-                price = price - (price * i.Urun.Discount / 100);
-            }
-
-            return price * i.Miktar;
-        });
-    }
+    public decimal Toplam() => CartItems.Sum(i => UnitPrice(i.Urun) * i.Miktar);
 }
-
 
 public class CartItem
 {
