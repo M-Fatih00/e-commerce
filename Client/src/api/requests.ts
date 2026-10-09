@@ -46,7 +46,8 @@ axios.interceptors.response.use(
         break;
 
       case 404:
-        router.navigate("/not-found");
+        if (error.config?.method === "get") router.navigate("/not-found");
+        else toast.error(data?.message ?? "Kayıt bulunamadı.");
         break;
 
       case 429:
@@ -57,8 +58,16 @@ axios.interceptors.response.use(
         );
         break;
 
+      case 413:
+        toast.error("Dosya boyutu çok büyük.");
+        break;
+
       case 500:
-        router.navigate("/server-error", { state: { error: data } });
+        if (error.config?.method === "get") {
+          router.navigate("/server-error", { state: { error: data } });
+        } else {
+          toast.error("Sunucuda bir hata oluştu. Lütfen tekrar deneyin.");
+        }
         break;
 
       default:
@@ -144,8 +153,8 @@ const Review = {
   getByProduct: (productId: number) =>
     requests.get(`ProductReview/${productId}`),
   create: (data: any) => requests.post("ProductReview", data),
-  update: (id: number, data: any) => requests.put(`/ProductReview/${id}`, data),
-  delete: (id: number) => requests.delete(`/ProductReview/${id}`),
+  update: (id: number, data: any) => requests.put(`ProductReview/${id}`, data),
+  delete: (id: number) => requests.delete(`ProductReview/${id}`),
 };
 
 const Cart = {
@@ -190,6 +199,17 @@ const Errors = {
   getValidationError: () => requests.get("error/validation-error"),
 };
 
+const Users = {
+  list: () => requests.get("users"),
+  addRole: (id: string, body: { role: string; password: string }) =>
+    requests.post(`users/${id}/roles`, body),
+  removeRole: (id: string, body: { role: string; password: string }) =>
+    axios
+      .delete(`users/${id}/roles`, { data: body })
+      .then((res: AxiosResponse) => res.data),
+  delete: (id: string) => requests.delete(`users/${id}`),
+};
+
 const Coupon = {
   getAll: () => requests.get("coupon"),
   getById: (id: number) => requests.get(`coupon/${id}`),
@@ -219,4 +239,5 @@ export default {
   Errors,
   Coupon,
   Order,
+  Users,
 };
