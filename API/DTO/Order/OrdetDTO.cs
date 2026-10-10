@@ -3,6 +3,7 @@ namespace API.DTO;
 public class OrderDTO
 {
     public int Id { get; set; }
+    public string OrderNumber { get; set; } = null!;
     public DateTime SiparisTarihi { get; set; }
     public string AdSoyad { get; set; } = null!;
     public string Username { get; set; } = null!;

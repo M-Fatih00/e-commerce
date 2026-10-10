@@ -20,7 +20,10 @@ export const createOrder = createAsyncThunk(
   "order/create",
   async (data: ICreateOrder, thunkAPI) => {
     try {
-      return await requests.Order.create(data);
+      const order = await requests.Order.create(data);
+      if (order?.stripeSessionUrl)
+        window.location.assign(order.stripeSessionUrl);
+      return order;
     } catch (error: any) {
       return thunkAPI.rejectWithValue(error.response?.data);
     }
@@ -58,7 +61,7 @@ export const orderSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // createOrder
+
     builder.addCase(createOrder.pending, (state) => {
       state.loading = true;
       state.error = null;
@@ -66,18 +69,13 @@ export const orderSlice = createSlice({
     builder.addCase(createOrder.fulfilled, (state, action) => {
       state.loading = false;
       state.currentOrder = action.payload;
-
-      // Stripe URL varsa direkt yönlendir
-      if (action.payload.stripeSessionUrl) {
-        window.location.href = action.payload.stripeSessionUrl;
-      }
     });
     builder.addCase(createOrder.rejected, (state, action: any) => {
       state.loading = false;
       state.error = action.payload;
     });
 
-    // getMyOrders
+
     builder.addCase(getMyOrders.pending, (state) => {
       state.loading = true;
     });
@@ -90,7 +88,7 @@ export const orderSlice = createSlice({
       state.error = action.payload;
     });
 
-    // getOrderById
+
     builder.addCase(getOrderById.pending, (state) => {
       state.loading = true;
     });

@@ -3,6 +3,7 @@ namespace API.Entity;
 public class Order
 {
     public int Id { get; set; }
+    public string OrderNumber { get; set; } = null!;
     public DateTime SiparisTarihi { get; set; } = DateTime.Now;
     public string AdSoyad { get; set; } = null!;
     public string Username { get; set; } = null!;

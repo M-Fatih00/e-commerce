@@ -2,6 +2,7 @@ using System.Security.Claims;
 using API.Data;
 using API.DTO;
 using API.Entity;
+using API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +51,20 @@ public class OrderController : ControllerBase
 
     private static long ToMinorUnits(decimal amount) =>
         (long)Math.Round(amount * 100m, MidpointRounding.AwayFromZero);
+
+    private async Task<string> GenerateUniqueOrderNumber()
+    {
+        var prefix = _config["Order:NumberPrefix"] ?? "ES";
+
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            var number = OrderNumberGenerator.Generate(prefix);
+            if (!await _context.Orders.AnyAsync(o => o.OrderNumber == number))
+                return number;
+        }
+
+        throw new InvalidOperationException("Benzersiz sipariş numarası üretilemedi.");
+    }
 
     public static decimal CalculateShipping(decimal total, bool express) =>
         express ? ExpressShipping : total >= FreeShippingThreshold ? 0m : StandardShipping;
@@ -202,8 +217,11 @@ public class OrderController : ControllerBase
         var teslimatUcreti = CalculateShipping(indirimliToplam, dto.HizliKargo);
         var toplam = indirimliToplam - kuponIndirimi + teslimatUcreti;
 
+        var orderNumber = await GenerateUniqueOrderNumber();
+
         var order = new Order
         {
+            OrderNumber = orderNumber,
             CustomerId = userId,
             Username = GetUsername(),
             AdSoyad = dto.AdSoyad.Trim(),
@@ -252,13 +270,13 @@ public class OrderController : ControllerBase
                             UnitAmount = ToMinorUnits(order.Toplam),
                             ProductData = new SessionLineItemPriceDataProductDataOptions
                             {
-                                Name = "Sipariş #" + order.Id
+                                Name = "Sipariş " + order.OrderNumber
                             }
                         }
                     }
                 },
-                SuccessUrl = $"{clientUrl}/order-success?orderId={order.Id}&session_id={{CHECKOUT_SESSION_ID}}",
-                CancelUrl = $"{clientUrl}/order-failed?orderId={order.Id}",
+                SuccessUrl = $"{clientUrl}/order-success?order={order.OrderNumber}&session_id={{CHECKOUT_SESSION_ID}}",
+                CancelUrl = $"{clientUrl}/order-failed?order={order.OrderNumber}",
                 Metadata = new Dictionary<string, string> { { "orderId", order.Id.ToString() } }
             });
         }
@@ -279,11 +297,12 @@ public class OrderController : ControllerBase
         return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, result);
     }
 
-    [HttpPost("{id}/abandon")]
-    public async Task<IActionResult> AbandonOrder(int id)
+    [HttpPost("abandon/{orderNumber}")]
+    public async Task<IActionResult> AbandonOrder(string orderNumber)
     {
         var userId = GetUserId();
-        var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id && o.CustomerId == userId);
+        var order = await _context.Orders
+            .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber && o.CustomerId == userId);
 
         if (order == null || order.Durum != Pending)
             return Ok();
@@ -299,20 +318,20 @@ public class OrderController : ControllerBase
 
     [AllowAnonymous]
     [HttpPost("callback")]
-    public async Task<IActionResult> Callback([FromQuery] int orderId, [FromQuery] string? session_id)
+    public async Task<IActionResult> Callback([FromQuery] string? order, [FromQuery] string? session_id)
     {
-        if (orderId <= 0 || string.IsNullOrWhiteSpace(session_id))
+        if (string.IsNullOrWhiteSpace(order) || string.IsNullOrWhiteSpace(session_id))
             return BadRequest(new { message = "Geçersiz ödeme bilgisi." });
 
-        var order = await _context.Orders
+        var orderEntity = await _context.Orders
             .Include(o => o.OrderItems)
-            .FirstOrDefaultAsync(o => o.Id == orderId);
+            .FirstOrDefaultAsync(o => o.OrderNumber == order);
 
-        if (order == null || order.IyzicoToken != session_id)
+        if (orderEntity == null || orderEntity.IyzicoToken != session_id)
             return BadRequest(new { message = "Geçersiz ödeme bilgisi." });
 
-        if (order.IyzicoPaymentId != null)
-            return order.Durum == Cancelled
+        if (orderEntity.IyzicoPaymentId != null)
+            return orderEntity.Durum == Cancelled
                 ? Conflict(new { message = "Ödemeniz alındı ancak ürün stokta kalmadı. Ödemeniz iade edildi." })
                 : Ok();
 
@@ -323,17 +342,17 @@ public class OrderController : ControllerBase
         }
         catch (StripeException ex)
         {
-            _logger.LogError(ex, "Stripe oturumu alınamadı. Sipariş: {OrderId}", orderId);
+            _logger.LogError(ex, "Stripe oturumu alınamadı. Sipariş: {OrderNumber}", order);
             return StatusCode(502, new { message = "Ödeme doğrulanamadı. Lütfen tekrar deneyin." });
         }
 
-        if (!IsValidPaidSession(order, session))
+        if (!IsValidPaidSession(orderEntity, session))
         {
-            _logger.LogWarning("Ödeme doğrulaması başarısız. Sipariş: {OrderId}, Durum: {Status}", orderId, session.PaymentStatus);
+            _logger.LogWarning("Ödeme doğrulaması başarısız. Sipariş: {OrderNumber}, Durum: {Status}", order, session.PaymentStatus);
             return BadRequest(new { message = "Ödeme doğrulanamadı." });
         }
 
-        if (!await MarkAsPaid(order, session.PaymentIntentId))
+        if (!await MarkAsPaid(orderEntity, session.PaymentIntentId))
             return Conflict(new { message = "Ödemeniz alındı ancak ürün stokta kalmadı. Ödemeniz iade edildi." });
 
         return Ok();
@@ -436,7 +455,7 @@ public class OrderController : ControllerBase
 
         await _context.SaveChangesAsync();
     }
-    
+
     private async Task<string?> ChangeStatus(Order order, string? newStatus)
     {
         if (string.IsNullOrWhiteSpace(newStatus))
@@ -541,6 +560,7 @@ public class OrderController : ControllerBase
     private static OrderDTO MapToDTO(Order order) => new()
     {
         Id = order.Id,
+        OrderNumber = order.OrderNumber,
         SiparisTarihi = order.SiparisTarihi,
         AdSoyad = order.AdSoyad,
         Username = order.Username,

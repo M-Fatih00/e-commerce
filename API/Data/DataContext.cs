@@ -60,6 +60,8 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
 
         modelBuilder.Entity<OrderItem>().Property(o => o.Fiyat).HasConversion<double>();
 
+        modelBuilder.Entity<Order>().HasIndex(o => o.OrderNumber).IsUnique();
+
         // 1. Seed Category
         modelBuilder.Entity<Category>().HasData(
             new Category { Id = 1, Name = "Smartphone", ImageUrl = "categories/categories1.png" },

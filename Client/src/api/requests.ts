@@ -70,8 +70,11 @@ axios.interceptors.response.use(
         }
         break;
 
+      case 409:
+        break;
+
       default:
-        toast.error("Beklenmeyen bir hata oluştu.");
+        toast.error(data?.message ?? "Beklenmeyen bir hata oluştu.");
         break;
     }
 
@@ -225,6 +228,13 @@ const Order = {
   create: (data: any) => requests.post("order/create", data),
   getMyOrders: () => requests.get("order"),
   getById: (id: number) => requests.get(`order/${id}`),
+  confirm: (orderNumber: string, sessionId: string) =>
+    requests.post(
+      `order/callback?order=${encodeURIComponent(orderNumber)}&session_id=${encodeURIComponent(sessionId)}`,
+      {},
+    ),
+  abandon: (orderNumber: string) =>
+    requests.post(`order/abandon/${encodeURIComponent(orderNumber)}`, {}),
 };
 
 export default {

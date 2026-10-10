@@ -5,10 +5,12 @@ export interface IOrderItem {
   urunResmi: string;
   fiyat: number;
   miktar: number;
+  beden?: string | null;
 }
 
 export interface IOrder {
   id: number;
+  orderNumber: string;
   siparisTarihi: string;
   adSoyad: string;
   username: string;
@@ -23,7 +25,6 @@ export interface IOrder {
   kuponKodu: string | null;
   teslimatUcreti: number;
   toplam: number;
-  iyzicoToken: string | null;
   stripeSessionUrl: string | null;
   orderItems: IOrderItem[];
 }

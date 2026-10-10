@@ -377,6 +377,10 @@ namespace API.Migrations
                     b.Property<string>("KuponKodu")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PostaKodu")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -407,6 +411,9 @@ namespace API.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
 
                     b.ToTable("Orders");
                 });

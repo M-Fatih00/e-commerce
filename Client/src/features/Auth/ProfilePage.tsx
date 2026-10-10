@@ -201,7 +201,7 @@ const ProfilePage: React.FC = () => {
     label: (
       <div className="profile-order-header">
         <div className="profile-order-info">
-          <span className="profile-order-id">Sipariş #{order.id}</span>
+          <span className="profile-order-id">Sipariş {order.orderNumber}</span>
           <span className="profile-order-date">
             {new Date(order.siparisTarihi).toLocaleDateString("tr-TR", {
               day: "2-digit",
@@ -218,7 +218,10 @@ const ProfilePage: React.FC = () => {
         <div className="profile-order-items">
           {order.orderItems.map((item) => (
             <div className="profile-order-item" key={item.id}>
-              <span className="profile-order-item-name">{item.urunAdi}</span>
+              <span className="profile-order-item-name">
+                {item.urunAdi}
+                {item.beden ? ` (${item.beden})` : ""}
+              </span>
               <span className="profile-order-item-qty">x{item.miktar}</span>
               <span className="profile-order-item-price">
                 {(item.fiyat * item.miktar).toFixed(2)} ₺
