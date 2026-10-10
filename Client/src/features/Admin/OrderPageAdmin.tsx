@@ -1,37 +1,187 @@
-import React, { useCallback, useEffect, useState, useMemo } from "react";
-import { Table, Tag, Spin, message, Button, Modal, Select, Card, Col, Row, Statistic, Popconfirm } from "antd";
-import { EyeOutlined, StopOutlined } from "@ant-design/icons";
-import axios from "axios";
-import { IOrder, IOrderItem } from "../../model/IOrder";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Input,
+  Modal,
+  Popconfirm,
+  Select,
+  Steps,
+  Table,
+  Tag,
+  Tooltip,
+  message,
+} from "antd";
+import {
+  CarOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
+  EyeOutlined,
+  InboxOutlined,
+  MoreOutlined,
+  ReloadOutlined,
+  RollbackOutlined,
+  StopOutlined,
+  WalletOutlined,
+} from "@ant-design/icons";
+import requests from "../../api/requests";
+import { showFormError } from "../../utils/errors";
+import { IOrder } from "../../model/IOrder";
+import "./OrderPageAdmin.css";
 
-const DURUMLAR = ["Tümü", "Beklemede", "Ödendi", "Kargoya Verildi", "Teslim Edildi", "İptal"];
+const STATUS = {
+  pending: "Beklemede",
+  paid: "Ödendi",
+  shipped: "Kargoda",
+  delivered: "Teslim Edildi",
+  cancelled: "İptal",
+} as const;
 
-const durumRenk = (durum: string) => {
-  switch (durum) {
-    case "Ödendi": return "green";
-    case "Beklemede": return "orange";
-    case "Kargoya Verildi": return "blue";
-    case "Teslim Edildi": return "cyan";
-    case "İptal": return "red";
-    default: return "default";
+type FilterKey =
+  | "all"
+  | "paid"
+  | "shipped"
+  | "delivered"
+  | "refunded"
+  | "pending"
+  | "abandoned";
+
+const FILTERS: { value: FilterKey; label: string }[] = [
+  { value: "all", label: "Tüm siparişler" },
+  { value: "paid", label: "Kargo bekleyen" },
+  { value: "shipped", label: "Kargoda" },
+  { value: "delivered", label: "Teslim edildi" },
+  { value: "refunded", label: "İade edildi" },
+  { value: "pending", label: "Ödeme bekleniyor" },
+  { value: "abandoned", label: "Yarım kalan" },
+];
+
+const matchesFilter = (order: IOrder, filter: FilterKey) => {
+  switch (filter) {
+    case "paid":
+      return order.durum === STATUS.paid;
+    case "shipped":
+      return order.durum === STATUS.shipped;
+    case "delivered":
+      return order.durum === STATUS.delivered;
+    case "refunded":
+      return order.durum === STATUS.cancelled && order.odemeAlindi;
+    case "pending":
+      return order.durum === STATUS.pending;
+    case "abandoned":
+      return order.durum === STATUS.cancelled && !order.odemeAlindi;
+    default:
+      return true;
   }
 };
+
+const statusMeta = (order: IOrder) => {
+  switch (order.durum) {
+    case STATUS.paid:
+      return { label: "Ödendi", color: "green", icon: <CheckCircleOutlined /> };
+    case STATUS.shipped:
+      return { label: "Kargoda", color: "blue", icon: <CarOutlined /> };
+    case STATUS.delivered:
+      return {
+        label: "Teslim Edildi",
+        color: "cyan",
+        icon: <CheckCircleOutlined />,
+      };
+    case STATUS.pending:
+      return {
+        label: "Ödeme Bekleniyor",
+        color: "orange",
+        icon: <ClockCircleOutlined />,
+      };
+    case STATUS.cancelled:
+      return order.odemeAlindi
+        ? { label: "İade Edildi", color: "red", icon: <RollbackOutlined /> }
+        : {
+            label: "Yarım Kaldı",
+            color: "default",
+            icon: <CloseCircleOutlined />,
+          };
+    default:
+      return { label: order.durum, color: "default", icon: null };
+  }
+};
+
+const nextStep = (order: IOrder) => {
+  if (order.durum === STATUS.paid)
+    return {
+      status: STATUS.shipped,
+      label: "Kargoya Ver",
+      icon: <CarOutlined />,
+      question: "Sipariş kargoya verildi olarak işaretlensin mi?",
+    };
+  if (order.durum === STATUS.shipped)
+    return {
+      status: STATUS.delivered,
+      label: "Teslim Edildi",
+      icon: <CheckCircleOutlined />,
+      question: "Sipariş teslim edildi olarak işaretlensin mi?",
+    };
+  return null;
+};
+
+const canCancel = (order: IOrder) =>
+  order.durum === STATUS.paid || order.durum === STATUS.pending;
+
+const money = (value: number) =>
+  value.toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
+
+const formatDate = (value: string) =>
+  new Date(value).toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+const formatDateTime = (value: string) =>
+  new Date(value).toLocaleString("tr-TR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(-10);
+  if (digits.length !== 10) return value;
+  return `0${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8)}`;
+};
+
+const initials = (name: string) =>
+  name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toLocaleUpperCase("tr-TR");
+
+const stepIndex = (durum: string) =>
+  durum === STATUS.delivered ? 2 : durum === STATUS.shipped ? 1 : 0;
 
 const OrderPageAdmin: React.FC = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionId, setActionId] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<IOrder | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [durumFilter, setDurumFilter] = useState("Tümü");
+  const [filter, setFilter] = useState<FilterKey>("all");
+  const [search, setSearch] = useState("");
+  const [modal, contextHolder] = Modal.useModal();
   const baseUrl = import.meta.env.VITE_BASE_URL;
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get<IOrder[]>("order/all");
-      setOrders(data);
-    } catch {
-      message.error("Siparişler getirilemedi.");
+      setOrders(await requests.Order.getAll());
+    } catch (error) {
+      showFormError(error, "Siparişler getirilemedi.");
     } finally {
       setLoading(false);
     }
@@ -41,295 +191,478 @@ const OrderPageAdmin: React.FC = () => {
     fetchOrders();
   }, [fetchOrders]);
 
-  const cancelOrder = async (id: number) => {
+  const changeStatus = async (order: IOrder, durum: string) => {
+    setActionId(order.id);
     try {
-      await axios.delete(`order/${id}`);
-      setOrders((prev) =>
-        prev.map((o) => (o.id === id ? { ...o, durum: "İptal" } : o))
+      const updated: IOrder = await requests.Order.updateStatus(
+        order.id,
+        durum,
       );
-      if (selectedOrder?.id === id) {
-        setSelectedOrder((prev) => prev ? { ...prev, durum: "İptal" } : null);
+      setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
+      setSelectedOrder((prev) => (prev?.id === updated.id ? updated : prev));
+
+      if (durum === STATUS.cancelled) {
+        message.success(
+          order.odemeAlindi
+            ? "Sipariş iptal edildi, ödeme iade edildi."
+            : "Sipariş iptal edildi.",
+        );
+      } else {
+        message.success(`Sipariş "${durum}" olarak işaretlendi.`);
       }
-      message.success("Sipariş iptal edildi.");
-    } catch {
-      message.error("İptal işlemi başarısız.");
+    } catch (error) {
+      showFormError(error, "Durum güncellenemedi.");
+    } finally {
+      setActionId(null);
     }
   };
 
-  // ── İstatistikler ──
-  const istatistikler = useMemo(() => ({
-    toplam: orders.length,
-    beklemede: orders.filter((o) => o.durum === "Beklemede").length,
-    odendi: orders.filter((o) => o.durum === "Ödendi").length,
-    iptal: orders.filter((o) => o.durum === "İptal").length,
-  }), [orders]);
+  const confirmCancel = (order: IOrder) => {
+    const isPaid = order.durum === STATUS.paid;
+    modal.confirm({
+      title: isPaid
+        ? `${order.orderNumber} iptal edilip iade edilsin mi?`
+        : `${order.orderNumber} iptal edilsin mi?`,
+      content: isPaid
+        ? `${money(order.toplam)} müşteriye Stripe üzerinden iade edilir ve stok geri eklenir. Bu işlem geri alınamaz.`
+        : "Müşterinin ödeme sayfası kapatılır.",
+      okText: isPaid ? "İptal et ve iade et" : "İptal et",
+      okButtonProps: { danger: true },
+      cancelText: "Vazgeç",
+      onOk: () => changeStatus(order, STATUS.cancelled),
+    });
+  };
 
-  // ── Filtrelenmiş siparişler ──
+  const stats = useMemo(() => {
+    const active = orders.filter(
+      (o) => o.odemeAlindi && o.durum !== STATUS.cancelled,
+    );
+    return {
+      revenue: active.reduce((sum, o) => sum + o.toplam, 0),
+      paid: orders.filter((o) => o.durum === STATUS.paid).length,
+      shipped: orders.filter((o) => o.durum === STATUS.shipped).length,
+      delivered: orders.filter((o) => o.durum === STATUS.delivered).length,
+      refunded: orders.filter(
+        (o) => o.durum === STATUS.cancelled && o.odemeAlindi,
+      ).length,
+    };
+  }, [orders]);
+
+  const statCards: {
+    key: FilterKey;
+    label: string;
+    value: string | number;
+    icon: React.ReactNode;
+    color: string;
+    bg: string;
+  }[] = [
+    {
+      key: "all",
+      label: "Ciro",
+      value: money(stats.revenue),
+      icon: <WalletOutlined />,
+      color: "#531dab",
+      bg: "#f9f0ff",
+    },
+    {
+      key: "paid",
+      label: "Kargo bekleyen",
+      value: stats.paid,
+      icon: <InboxOutlined />,
+      color: "#389e0d",
+      bg: "#f6ffed",
+    },
+    {
+      key: "shipped",
+      label: "Kargoda",
+      value: stats.shipped,
+      icon: <CarOutlined />,
+      color: "#1677ff",
+      bg: "#e6f4ff",
+    },
+    {
+      key: "delivered",
+      label: "Teslim edildi",
+      value: stats.delivered,
+      icon: <CheckCircleOutlined />,
+      color: "#08979c",
+      bg: "#e6fffb",
+    },
+    {
+      key: "refunded",
+      label: "İade edildi",
+      value: stats.refunded,
+      icon: <RollbackOutlined />,
+      color: "#cf1322",
+      bg: "#fff1f0",
+    },
+  ];
+
   const filteredOrders = useMemo(() => {
-    if (durumFilter === "Tümü") return orders;
-    return orders.filter((o) => o.durum === durumFilter);
-  }, [orders, durumFilter]);
+    const term = search.trim().toLocaleLowerCase("tr-TR");
+    return orders.filter((o) => {
+      if (!matchesFilter(o, filter)) return false;
+      if (!term) return true;
+      return [o.orderNumber, o.adSoyad, o.username].some((value) =>
+        value?.toLocaleLowerCase("tr-TR").includes(term),
+      );
+    });
+  }, [orders, filter, search]);
+
+  const renderNextStep = (order: IOrder, size: "small" | "middle") => {
+    const step = nextStep(order);
+    if (!step) return null;
+
+    return (
+      <Popconfirm
+        title={step.question}
+        okText="Evet"
+        cancelText="Hayır"
+        onConfirm={() => changeStatus(order, step.status)}
+      >
+        <Button
+          size={size}
+          type="primary"
+          ghost
+          icon={step.icon}
+          loading={actionId === order.id}
+        >
+          {step.label}
+        </Button>
+      </Popconfirm>
+    );
+  };
 
   const columns = [
     {
-      title: "Sipariş #",
-      dataIndex: "id",
-      key: "id",
-      render: (id: number) => <b>#{id}</b>,
-    },
-    {
-      title: "Müşteri",
-      dataIndex: "adSoyad",
-      key: "adSoyad",
-    },
-    {
-      title: "Şehir",
-      dataIndex: "sehir",
-      key: "sehir",
-    },
-    {
-      title: "Toplam",
-      dataIndex: "toplam",
-      key: "toplam",
-      render: (toplam: number) => <b>{toplam.toFixed(2)} ₺</b>,
-    },
-    {
-      title: "Durum",
-      dataIndex: "durum",
-      key: "durum",
-      render: (durum: string) => (
-        <Tag color={durumRenk(durum)}>{durum}</Tag>
+      title: "Sipariş",
+      key: "order",
+      width: 150,
+      render: (_: unknown, record: IOrder) => (
+        <div>
+          <div className="op-order-no">{record.orderNumber}</div>
+          <div className="op-muted">{formatDate(record.siparisTarihi)}</div>
+        </div>
       ),
     },
     {
-      title: "Tarih",
-      dataIndex: "siparisTarihi",
-      key: "siparisTarihi",
-      render: (tarih: string) =>
-        new Date(tarih).toLocaleDateString("tr-TR", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-        }),
+      title: "Müşteri",
+      key: "customer",
+      render: (_: unknown, record: IOrder) => (
+        <div className="op-customer">
+          <span className="op-avatar">{initials(record.adSoyad)}</span>
+          <div>
+            <div className="op-customer-name">{record.adSoyad}</div>
+            <div className="op-muted">
+              @{record.username} · {record.sehir}
+            </div>
+          </div>
+        </div>
+      ),
     },
     {
-      title: "İşlemler",
-      key: "actions",
+      title: "Tutar",
+      key: "amount",
+      width: 140,
       render: (_: unknown, record: IOrder) => (
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button
-            icon={<EyeOutlined />}
-            size="small"
-            onClick={() => {
-              setSelectedOrder(record);
-              setModalOpen(true);
-            }}
-          >
-            Detay
-          </Button>
-          <Popconfirm
-            title="Siparişi iptal et"
-            description="Bu siparişi iptal etmek istediğinize emin misiniz?"
-            okText="Evet"
-            cancelText="Hayır"
-            onConfirm={() => cancelOrder(record.id)}
-            disabled={record.durum === "İptal"}
-          >
+        <div>
+          <div className="op-amount">{money(record.toplam)}</div>
+          <div className="op-muted">
+            {record.orderItems.reduce((sum, i) => sum + i.miktar, 0)} ürün
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Durum",
+      key: "status",
+      width: 170,
+      render: (_: unknown, record: IOrder) => {
+        const meta = statusMeta(record);
+        return (
+          <Tag color={meta.color} icon={meta.icon}>
+            {meta.label}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "",
+      key: "actions",
+      width: 200,
+      render: (_: unknown, record: IOrder) => (
+        <div className="op-actions" onClick={(e) => e.stopPropagation()}>
+          {renderNextStep(record, "small")}
+          <Tooltip title="Detay">
             <Button
-              icon={<StopOutlined />}
               size="small"
-              danger
-              disabled={record.durum === "İptal"}
+              icon={<EyeOutlined />}
+              onClick={() => setSelectedOrder(record)}
+            />
+          </Tooltip>
+          {canCancel(record) && (
+            <Dropdown
+              trigger={["click"]}
+              menu={{
+                items: [
+                  {
+                    key: "cancel",
+                    danger: true,
+                    icon: <StopOutlined />,
+                    label:
+                      record.durum === STATUS.paid
+                        ? "İptal et ve iade et"
+                        : "Siparişi iptal et",
+                  },
+                ],
+                onClick: () => confirmCancel(record),
+              }}
             >
-              İptal
-            </Button>
-          </Popconfirm>
+              <Button size="small" icon={<MoreOutlined />} />
+            </Dropdown>
+          )}
         </div>
       ),
     },
   ];
 
-  const itemColumns = [
-    {
-      title: "Görsel",
-      dataIndex: "urunResmi",
-      key: "urunResmi",
-      render: (url: string) => (
-        <img
-          src={`${baseUrl}/img/${url}`}
-          alt=""
-          width={50}
-          style={{ objectFit: "cover", borderRadius: 4 }}
-        />
-      ),
-    },
-    {
-      title: "Ürün",
-      dataIndex: "urunAdi",
-      key: "urunAdi",
-      render: (text: string) => <b>{text}</b>,
-    },
-    {
-      title: "Fiyat",
-      dataIndex: "fiyat",
-      key: "fiyat",
-      render: (fiyat: number) => `${fiyat.toFixed(2)} ₺`,
-    },
-    {
-      title: "Miktar",
-      dataIndex: "miktar",
-      key: "miktar",
-    },
-    {
-      title: "Toplam",
-      key: "toplam",
-      render: (_: unknown, record: IOrderItem) =>
-        `${(record.fiyat * record.miktar).toFixed(2)} ₺`,
-    },
-  ];
+  const selectedMeta = selectedOrder ? statusMeta(selectedOrder) : null;
 
   return (
     <div>
-      <h2 style={{ marginBottom: 16 }}>Siparişler</h2>
+      {contextHolder}
 
-      {/* ── İstatistik Kartları ── */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic title="Toplam Sipariş" value={istatistikler.toplam} suffix="adet" />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Beklemede"
-              value={istatistikler.beklemede}
-              suffix="adet"
-              valueStyle={{ color: "#e67e22" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="Ödendi"
-              value={istatistikler.odendi}
-              suffix="adet"
-              valueStyle={{ color: "#2ecc71" }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card>
-            <Statistic
-              title="İptal"
-              value={istatistikler.iptal}
-              suffix="adet"
-              valueStyle={{ color: "#e74c3c" }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* ── Filtreleme ── */}
-      <div style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 12 }}>
-        <span style={{ color: "#555", fontWeight: 500 }}>Duruma göre filtrele:</span>
-        <Select
-          value={durumFilter}
-          onChange={setDurumFilter}
-          style={{ width: 180 }}
+      <div className="op-header animate-fade-in">
+        <div>
+          <h2>Siparişler</h2>
+          <p className="op-subtitle">
+            Siparişleri takip edin ve durumlarını güncelleyin.
+          </p>
+        </div>
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={fetchOrders}
+          loading={loading}
         >
-          {DURUMLAR.map((d) => (
-            <Select.Option key={d} value={d}>{d}</Select.Option>
-          ))}
-        </Select>
-        <span style={{ color: "#999", fontSize: 13 }}>
-          {filteredOrders.length} sipariş gösteriliyor
-        </span>
+          Yenile
+        </Button>
       </div>
 
-      {/* ── Tablo ── */}
-      <Spin spinning={loading}>
+      <div className="op-stats">
+        {statCards.map((card, index) => (
+          <button
+            key={card.key}
+            type="button"
+            className={`op-stat animate-fade-in-up animate-stagger${filter === card.key ? " active" : ""}`}
+            style={{ "--i": index } as React.CSSProperties}
+            onClick={() => setFilter(card.key)}
+          >
+            <span
+              className="op-stat-icon"
+              style={{ color: card.color, background: card.bg }}
+            >
+              {card.icon}
+            </span>
+            <span>
+              <div className="op-stat-value">{card.value}</div>
+              <div className="op-stat-label">{card.label}</div>
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="op-toolbar">
+        <Select
+          value={filter}
+          onChange={setFilter}
+          options={FILTERS}
+          style={{ width: 190 }}
+        />
+        <Input.Search
+          allowClear
+          placeholder="Sipariş no, müşteri veya kullanıcı adı"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          style={{ width: 320, maxWidth: "100%" }}
+        />
+        <span className="op-count">{filteredOrders.length} sipariş</span>
+      </div>
+
+      <div key={filter} className="animate-fade-in-up">
         <Table
           dataSource={filteredOrders}
           columns={columns}
           rowKey={(record) => record.id}
           loading={loading}
-          pagination={{ pageSize: 10 }}
+          pagination={{ pageSize: 10, hideOnSinglePage: true }}
+          scroll={{ x: 820 }}
+          rowClassName={() => "op-row"}
+          onRow={(record) => ({ onClick: () => setSelectedOrder(record) })}
+          locale={{ emptyText: "Bu filtrede sipariş yok." }}
         />
-      </Spin>
+      </div>
 
-      {/* ── Sipariş Detay Modal ── */}
       <Modal
-        title={`Sipariş #${selectedOrder?.id} Detayı`}
-        open={modalOpen}
-        onCancel={() => setModalOpen(false)}
+        title={selectedOrder ? `Sipariş ${selectedOrder.orderNumber}` : ""}
+        open={selectedOrder !== null}
+        onCancel={() => setSelectedOrder(null)}
+        width={720}
         footer={
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Popconfirm
-              title="Siparişi iptal et"
-              description="Bu siparişi iptal etmek istediğinize emin misiniz?"
-              okText="Evet"
-              cancelText="Hayır"
-              onConfirm={() => selectedOrder && cancelOrder(selectedOrder.id)}
-              disabled={selectedOrder?.durum === "İptal"}
-            >
-              <Button
-                danger
-                disabled={selectedOrder?.durum === "İptal"}
-                icon={<StopOutlined />}
-              >
-                Siparişi İptal Et
-              </Button>
-            </Popconfirm>
-            <Button onClick={() => setModalOpen(false)}>Kapat</Button>
-          </div>
-        }
-        width={700}
-      >
-        {selectedOrder && (
-          <div>
-            <div style={{ marginBottom: 16, padding: 16, background: "#f7f8fa", borderRadius: 8 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <div><span style={{ color: "#999" }}>Ad Soyad:</span> <b>{selectedOrder.adSoyad}</b></div>
-                <div><span style={{ color: "#999" }}>Telefon:</span> <b>{selectedOrder.telefon}</b></div>
-                <div><span style={{ color: "#999" }}>Şehir:</span> <b>{selectedOrder.sehir}</b></div>
-                <div><span style={{ color: "#999" }}>Posta Kodu:</span> <b>{selectedOrder.postaKodu}</b></div>
-                <div style={{ gridColumn: "1 / -1" }}>
-                  <span style={{ color: "#999" }}>Adres:</span> <b>{selectedOrder.adresSatiri}</b>
-                </div>
-                {selectedOrder.siparisNotu && (
-                  <div style={{ gridColumn: "1 / -1" }}>
-                    <span style={{ color: "#999" }}>Not:</span> <b>{selectedOrder.siparisNotu}</b>
-                  </div>
+          selectedOrder && (
+            <div className="op-modal-footer">
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {renderNextStep(selectedOrder, "middle")}
+                {canCancel(selectedOrder) && (
+                  <Button
+                    danger
+                    icon={<StopOutlined />}
+                    onClick={() => confirmCancel(selectedOrder)}
+                  >
+                    {selectedOrder.durum === STATUS.paid
+                      ? "İptal et ve iade et"
+                      : "İptal et"}
+                  </Button>
                 )}
               </div>
+              <Button onClick={() => setSelectedOrder(null)}>Kapat</Button>
+            </div>
+          )
+        }
+      >
+        {selectedOrder && selectedMeta && (
+          <div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 16,
+              }}
+            >
+              <Tag color={selectedMeta.color} icon={selectedMeta.icon}>
+                {selectedMeta.label}
+              </Tag>
+              <span className="op-muted">
+                {formatDateTime(selectedOrder.siparisTarihi)}
+              </span>
             </div>
 
-            <Table
-              dataSource={selectedOrder.orderItems}
-              columns={itemColumns}
-              rowKey="id"
-              pagination={false}
-              size="small"
-            />
+            {selectedOrder.odemeAlindi &&
+              selectedOrder.durum !== STATUS.cancelled && (
+                <Steps
+                  size="small"
+                  current={stepIndex(selectedOrder.durum)}
+                  status={
+                    selectedOrder.durum === STATUS.delivered
+                      ? "finish"
+                      : "process"
+                  }
+                  items={[
+                    { title: "Ödendi" },
+                    { title: "Kargoda" },
+                    { title: "Teslim Edildi" },
+                  ]}
+                />
+              )}
 
-            <div style={{ marginTop: 16, textAlign: "right" }}>
-              <div style={{ color: "#999" }}>Ara Toplam: <b>{selectedOrder.araToplam.toFixed(2)} ₺</b></div>
-              {selectedOrder.kuponIndirimi > 0 && (
-                <div style={{ color: "#e74c3c" }}>
-                  Kupon ({selectedOrder.kuponKodu}): <b>-{selectedOrder.kuponIndirimi.toFixed(2)} ₺</b>
+            {selectedOrder.durum === STATUS.pending && (
+              <Alert
+                type="warning"
+                showIcon
+                message="Müşterinin ödemesi bekleniyor."
+              />
+            )}
+
+            {selectedOrder.durum === STATUS.cancelled && (
+              <Alert
+                type={selectedOrder.odemeAlindi ? "error" : "info"}
+                showIcon
+                message={
+                  selectedOrder.odemeAlindi
+                    ? "Sipariş iptal edildi, ödeme müşteriye iade edildi."
+                    : "Müşteri ödemeyi tamamlamadı."
+                }
+              />
+            )}
+
+            <div className="op-info">
+              <div>
+                <div className="op-info-label">Ad Soyad</div>
+                <div className="op-info-value">{selectedOrder.adSoyad}</div>
+              </div>
+              <div>
+                <div className="op-info-label">Kullanıcı</div>
+                <div className="op-info-value">@{selectedOrder.username}</div>
+              </div>
+              <div>
+                <div className="op-info-label">Telefon</div>
+                <div className="op-info-value">
+                  {formatPhone(selectedOrder.telefon)}
+                </div>
+              </div>
+              <div>
+                <div className="op-info-label">Şehir / Posta Kodu</div>
+                <div className="op-info-value">
+                  {selectedOrder.sehir} / {selectedOrder.postaKodu}
+                </div>
+              </div>
+              <div className="op-info-wide">
+                <div className="op-info-label">Adres</div>
+                <div className="op-info-value">{selectedOrder.adresSatiri}</div>
+              </div>
+              {selectedOrder.siparisNotu && (
+                <div className="op-info-wide">
+                  <div className="op-info-label">Sipariş Notu</div>
+                  <div className="op-info-value">
+                    {selectedOrder.siparisNotu}
+                  </div>
                 </div>
               )}
-              <div style={{ color: "#999" }}>
-                Teslimat: <b>{selectedOrder.teslimatUcreti === 0 ? "Ücretsiz" : `${selectedOrder.teslimatUcreti.toFixed(2)} ₺`}</b>
+            </div>
+
+            <div className="op-items">
+              {selectedOrder.orderItems.map((item) => (
+                <div className="op-item" key={item.id}>
+                  {item.urunResmi ? (
+                    <img src={`${baseUrl}/img/${item.urunResmi}`} alt="" />
+                  ) : null}
+                  <div className="op-item-info">
+                    <div className="op-item-name">{item.urunAdi}</div>
+                    <div className="op-muted">
+                      {item.beden ? `Beden: ${item.beden} · ` : ""}
+                      {item.miktar} × {money(item.fiyat)}
+                    </div>
+                  </div>
+                  <div className="op-item-total">
+                    {money(item.fiyat * item.miktar)}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="op-summary">
+              <div className="op-summary-row">
+                <span>Ara toplam</span>
+                <span>{money(selectedOrder.araToplam)}</span>
               </div>
-              <div style={{ fontSize: 16, fontWeight: 700, marginTop: 8 }}>
-                Toplam: {selectedOrder.toplam.toFixed(2)} ₺
+              {selectedOrder.kuponIndirimi > 0 && (
+                <div className="op-summary-row op-summary-discount">
+                  <span>Kupon ({selectedOrder.kuponKodu})</span>
+                  <span>-{money(selectedOrder.kuponIndirimi)}</span>
+                </div>
+              )}
+              <div className="op-summary-row">
+                <span>Kargo</span>
+                <span>
+                  {selectedOrder.teslimatUcreti === 0
+                    ? "Ücretsiz"
+                    : money(selectedOrder.teslimatUcreti)}
+                </span>
               </div>
-              <Tag color={durumRenk(selectedOrder.durum)} style={{ marginTop: 8 }}>
-                {selectedOrder.durum}
-              </Tag>
+              <div className="op-summary-row op-summary-total">
+                <span>Toplam</span>
+                <span>{money(selectedOrder.toplam)}</span>
+              </div>
             </div>
           </div>
         )}

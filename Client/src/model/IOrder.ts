@@ -20,6 +20,7 @@ export interface IOrder {
   telefon: string;
   siparisNotu: string;
   durum: string;
+  odemeAlindi: boolean;
   araToplam: number;
   kuponIndirimi: number;
   kuponKodu: string | null;

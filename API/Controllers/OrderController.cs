@@ -47,7 +47,7 @@ public class OrderController : ControllerBase
     }
 
     private string GetUserId() => User.FindFirstValue(ClaimTypes.NameIdentifier)!;
-    private string GetUsername() => User.Identity!.Name!;
+    private string GetUsername() => User.FindFirstValue(ClaimTypes.Name)!;
 
     private static long ToMinorUnits(decimal amount) =>
         (long)Math.Round(amount * 100m, MidpointRounding.AwayFromZero);
@@ -570,6 +570,7 @@ public class OrderController : ControllerBase
         Telefon = order.Telefon,
         SiparisNotu = order.SiparisNotu,
         Durum = order.Durum,
+        OdemeAlindi = order.IyzicoPaymentId != null,
         AraToplam = order.AraToplam,
         KuponIndirimi = order.KuponIndirimi,
         KuponKodu = order.KuponKodu,

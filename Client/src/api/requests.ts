@@ -228,6 +228,13 @@ const Order = {
   create: (data: any) => requests.post("order/create", data),
   getMyOrders: () => requests.get("order"),
   getById: (id: number) => requests.get(`order/${id}`),
+  getAll: () => requests.get("order/all"),
+  updateStatus: (id: number, durum: string) =>
+    axios
+      .put(`order/${id}/durum`, JSON.stringify(durum), {
+        headers: { "Content-Type": "application/json" },
+      })
+      .then((res: AxiosResponse) => res.data),
   confirm: (orderNumber: string, sessionId: string) =>
     requests.post(
       `order/callback?order=${encodeURIComponent(orderNumber)}&session_id=${encodeURIComponent(sessionId)}`,
