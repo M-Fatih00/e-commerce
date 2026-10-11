@@ -8,19 +8,14 @@ export interface IProduct {
   averageRating: number;
 }
 
-
 export interface IProductItem {
   id: number;
   name: string;
   oldPrice: number;
   newPrice: number;
   discount: number;
-  mainImage?: string;
-  hoverImage?: string;
+  mainImage: string;
+  hoverImage: string;
+  categoryId: number;
   averageRating: number;
-  images: {
-    id: number;
-    url: string;
-    isMain: boolean;
-  }[];
 }

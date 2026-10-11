@@ -58,21 +58,18 @@ function Tabs({ singleProduct }: TabsProps) {
       </ul>
 
       <div className="tab-panel">
-        {/* DESCRIPTION */}
+
         <div
           className={`tab-panel-descriptions content ${
             activeTab === "desc" ? "active" : ""
           }`}
         >
-          <div
-            className="product-description"
-            dangerouslySetInnerHTML={{
-              __html: singleProduct.description,
-            }}
-          />
+          <div className="..." style={{ whiteSpace: "pre-line" }}>
+            {singleProduct.description || "Bu ürün için açıklama bulunmuyor."}
+          </div>
         </div>
 
-        {/* INFO */}
+
         <div
           className={`tab-panel-information content ${
             activeTab === "info" ? "active" : ""
@@ -131,10 +128,9 @@ function Tabs({ singleProduct }: TabsProps) {
           </table>
         </div>
 
-        {/* REVIEWS */}
+
         <ProductReviewPage
           active={activeTab === "reviews" ? "content active" : "content"}
-          // singleProduct={singleProduct}
           productId={singleProduct?.id}
         />
       </div>
