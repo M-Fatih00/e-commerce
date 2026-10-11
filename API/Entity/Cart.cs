@@ -7,13 +7,10 @@ public class Cart
 
     public List<CartItem> CartItems { get; set; } = new();
 
-    public static decimal UnitPrice(Product product)
-    {
-        if (product.Discount <= 0) return product.NewPrice;
+    public static decimal UnitPrice(Product product) => product.NewPrice;
 
-        var discounted = product.NewPrice - product.NewPrice * product.Discount / 100;
-        return Math.Round(discounted, 2, MidpointRounding.AwayFromZero);
-    }
+    public static decimal ListPrice(Product product) =>
+        product.OldPrice > product.NewPrice ? product.OldPrice : product.NewPrice;
 
     public void AddItem(Product product, int miktar, string? beden = null, string? renk = null)
     {
@@ -40,7 +37,7 @@ public class Cart
     public int QuantityOf(int urunId, string? beden) =>
         CartItems.Where(i => i.UrunId == urunId && i.Beden == beden).Sum(i => i.Miktar);
 
-    public decimal AraToplam() => CartItems.Sum(i => i.Urun.NewPrice * i.Miktar);
+    public decimal AraToplam() => CartItems.Sum(i => ListPrice(i.Urun) * i.Miktar);
 
     public decimal Toplam() => CartItems.Sum(i => UnitPrice(i.Urun) * i.Miktar);
 }

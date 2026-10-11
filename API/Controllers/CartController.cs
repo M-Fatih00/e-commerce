@@ -2,6 +2,7 @@ using System.Security.Claims;
 using API.Data;
 using API.DTO;
 using API.Entity;
+using API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,31 +35,48 @@ public class CartController : ControllerBase
             .FirstOrDefaultAsync(c => c.CustomerId == userId);
     }
 
-    private static CartDTO MapToDTO(Cart cart) => new CartDTO
+    private static CartDTO MapToDTO(Cart cart)
     {
-        CartId = cart.CartId,
-        AraToplam = cart.AraToplam(),
-        Toplam = cart.Toplam(),
-        CartItems = cart.CartItems.Select(i => new CartItemDTO
+        var araToplam = cart.AraToplam();
+        var toplam = cart.Toplam();
+
+        return new CartDTO
         {
-            CartItemId = i.CartItemId,
-            UrunId = i.UrunId,
-            UrunAdi = i.Urun.Name,
-            UrunResim = i.Urun.Images.FirstOrDefault(x => x.IsMain)?.Url ?? "",
-            Fiyat = i.Urun.NewPrice,
-            Indirim = i.Urun.Discount,
-            Miktar = i.Miktar,
-            Beden = i.Beden,
-            Renk = i.Renk
-        }).ToList()
-    };
+            CartId = cart.CartId,
+            AraToplam = araToplam,
+            UrunIndirimi = araToplam - toplam,
+            Toplam = toplam,
+            KargoUcreti = ShippingRules.Calculate(toplam, false),
+            HizliKargoUcreti = ShippingRules.ExpressFee,
+            UcretsizKargoLimiti = ShippingRules.FreeShippingThreshold,
+            CartItems = cart.CartItems.Select(i =>
+            {
+                var price = Cart.UnitPrice(i.Urun);
+                var listPrice = Cart.ListPrice(i.Urun);
+
+                return new CartItemDTO
+                {
+                    CartItemId = i.CartItemId,
+                    UrunId = i.UrunId,
+                    UrunAdi = i.Urun.Name,
+                    UrunResim = i.Urun.Images.FirstOrDefault(x => x.IsMain)?.Url ?? "",
+                    Fiyat = price,
+                    EskiFiyat = listPrice > price ? listPrice : null,
+                    Indirim = Product.CalculateDiscount(i.Urun.OldPrice, i.Urun.NewPrice),
+                    Miktar = i.Miktar,
+                    Beden = i.Beden,
+                    Renk = i.Renk
+                };
+            }).ToList()
+        };
+    }
 
     [HttpGet]
     public async Task<IActionResult> GetCart()
     {
         var cart = await GetUserCart();
         if (cart == null)
-            return Ok(new CartDTO { CartItems = new List<CartItemDTO>() });
+            return Ok(MapToDTO(new Cart()));
 
         return Ok(MapToDTO(cart));
     }

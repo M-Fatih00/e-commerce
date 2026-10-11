@@ -645,6 +645,14 @@ const OrderPageAdmin: React.FC = () => {
                 <span>Ara toplam</span>
                 <span>{money(selectedOrder.araToplam)}</span>
               </div>
+              {selectedOrder.araToplam + selectedOrder.teslimatUcreti - selectedOrder.kuponIndirimi - selectedOrder.toplam > 0.009 && (
+                <div className="op-summary-row op-summary-discount">
+                  <span>Ürün indirimi</span>
+                  <span>
+                    -{money(selectedOrder.araToplam + selectedOrder.teslimatUcreti - selectedOrder.kuponIndirimi - selectedOrder.toplam)}
+                  </span>
+                </div>
+              )}
               {selectedOrder.kuponIndirimi > 0 && (
                 <div className="op-summary-row op-summary-discount">
                   <span>Kupon ({selectedOrder.kuponKodu})</span>

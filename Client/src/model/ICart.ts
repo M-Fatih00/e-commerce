@@ -4,17 +4,20 @@ export interface ICartItem {
   urunAdi: string;
   urunResim: string;
   fiyat: number;
+  eskiFiyat: number | null;
   indirim: number;
   miktar: number;
   beden: string | null;
   renk: string | null;
 }
- 
+
 export interface ICart {
   cartId: number;
-  customerId: string;
   cartItems: ICartItem[];
   araToplam: number;
+  urunIndirimi: number;
   toplam: number;
+  kargoUcreti: number;
+  hizliKargoUcreti: number;
+  ucretsizKargoLimiti: number;
 }
- 

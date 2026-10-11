@@ -8,54 +8,67 @@ import { ICartItem } from "../../model/ICart";
 import requests from "../../api/requests";
 import { RootState } from "../../store/store";
 
-// EntityAdapter — urunId ile normalize yapı
 const cartItemsAdapter = createEntityAdapter<ICartItem, number>({
   selectId: (item) => item.cartItemId,
 });
 
 export interface CartState {
   cartId: number | null;
-  customerId: string | null;
   araToplam: number;
+  urunIndirimi: number;
   toplam: number;
+  kargoUcreti: number;
+  hizliKargoUcreti: number;
+  ucretsizKargoLimiti: number;
   loadingItems: Record<number, boolean>;
   initialLoading: boolean;
   error: string | null;
   cartItems: ReturnType<typeof cartItemsAdapter.getInitialState>;
-
   couponCode: string | null;
   couponDiscount: number;
-  kuponIndirimi: number;
-  yeniToplam: number | null;
   hizliKargo: boolean;
 }
 
 const initialState: CartState = {
   cartId: null,
-  customerId: null,
   araToplam: 0,
+  urunIndirimi: 0,
   toplam: 0,
+  kargoUcreti: 0,
+  hizliKargoUcreti: 0,
+  ucretsizKargoLimiti: 0,
   loadingItems: {},
   initialLoading: false,
   error: null,
   cartItems: cartItemsAdapter.getInitialState(),
   couponCode: null,
   couponDiscount: 0,
-  kuponIndirimi: 0,
-  yeniToplam: null,
   hizliKargo: false,
 };
 
-// Backend'den gelen cart'ı state'e yükle
+const roundMoney = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+
 const loadCartIntoState = (state: CartState, payload: any) => {
-  state.cartId = payload.cartId ?? null;
-  state.customerId = payload.customerId ?? null;
-  state.araToplam = payload.araToplam ?? 0;
-  state.toplam = payload.toplam ?? 0;
-  cartItemsAdapter.setAll(state.cartItems, payload.cartItems ?? []);
+  state.cartId = payload?.cartId ?? null;
+  state.araToplam = payload?.araToplam ?? 0;
+  state.urunIndirimi = payload?.urunIndirimi ?? 0;
+  state.toplam = payload?.toplam ?? 0;
+  state.kargoUcreti = payload?.kargoUcreti ?? 0;
+  state.hizliKargoUcreti = payload?.hizliKargoUcreti ?? 0;
+  state.ucretsizKargoLimiti = payload?.ucretsizKargoLimiti ?? 0;
+  cartItemsAdapter.setAll(state.cartItems, payload?.cartItems ?? []);
 };
 
-// Thunk'lar
+const clearCartState = (state: CartState) => {
+  cartItemsAdapter.removeAll(state.cartItems);
+  state.cartId = null;
+  state.araToplam = 0;
+  state.urunIndirimi = 0;
+  state.toplam = 0;
+  state.hizliKargo = false;
+  state.couponCode = null;
+  state.couponDiscount = 0;
+};
 
 export const getCart = createAsyncThunk("cart/getCart", async (_, thunkAPI) => {
   try {
@@ -68,12 +81,7 @@ export const getCart = createAsyncThunk("cart/getCart", async (_, thunkAPI) => {
 export const addItem = createAsyncThunk(
   "cart/addItem",
   async (
-    {
-      urunId,
-      miktar = 1,
-      beden,
-      renk,
-    }: { urunId: number; miktar?: number; beden?: string; renk?: string },
+    { urunId, miktar = 1, beden, renk }: { urunId: number; miktar?: number; beden?: string; renk?: string },
     thunkAPI,
   ) => {
     try {
@@ -92,12 +100,7 @@ export const removeItem = createAsyncThunk(
       miktar = 1,
       beden,
       renk,
-    }: {
-      urunId: number;
-      miktar?: number;
-      beden?: string | null;
-      renk?: string | null;
-    },
+    }: { urunId: number; miktar?: number; beden?: string | null; renk?: string | null },
     thunkAPI,
   ) => {
     try {
@@ -108,85 +111,42 @@ export const removeItem = createAsyncThunk(
   },
 );
 
-export const clearCart = createAsyncThunk(
-  "cart/clearCart",
-  async (_, thunkAPI) => {
-    try {
-      return await requests.Cart.clear();
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data);
-    }
-  },
-);
+export const clearCart = createAsyncThunk("cart/clearCart", async (_, thunkAPI) => {
+  try {
+    return await requests.Cart.clear();
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(error.response?.data);
+  }
+});
 
-export const applyCoupon = createAsyncThunk(
-  "cart/applyCoupon",
-  async (code: string, thunkAPI) => {
-    try {
-      return await requests.Coupon.apply(code);
-    } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data);
-    }
-  },
-);
-
-// Slice
+export const applyCoupon = createAsyncThunk("cart/applyCoupon", async (code: string, thunkAPI) => {
+  try {
+    return await requests.Coupon.apply(code);
+  } catch (error: any) {
+    return thunkAPI.rejectWithValue(error.response?.data);
+  }
+});
 
 export const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    // Optimistic increment — backend cevabını beklemeden UI'ı güncelle
-    incrementItem(state, action: { payload: { cartItemId: number } }) {
-      const item = state.cartItems.entities[action.payload.cartItemId];
-      if (!item) return;
-      cartItemsAdapter.updateOne(state.cartItems, {
-        id: action.payload.cartItemId,
-        changes: { miktar: item.miktar + 1 },
-      });
-    },
-
-    // Optimistic decrement — 1'de kalırsa azaltma, 0 olursa sil
-    decrementItem(state, action: { payload: { cartItemId: number } }) {
-      const item = state.cartItems.entities[action.payload.cartItemId];
-      if (!item) return;
-      if (item.miktar <= 1) return;
-      cartItemsAdapter.updateOne(state.cartItems, {
-        id: action.payload.cartItemId,
-        changes: { miktar: item.miktar - 1 },
-      });
-    },
-
-    // Optimistic remove all — tüm item'ı sil
     removeItemOptimistic(state, action: { payload: { cartItemId: number } }) {
       cartItemsAdapter.removeOne(state.cartItems, action.payload.cartItemId);
     },
-
-    // Kuponu manuel sıfırla (opsiyonel — sepet güncellenince çağrılabilir)
     resetCoupon(state) {
       state.couponCode = null;
       state.couponDiscount = 0;
-      state.kuponIndirimi = 0;
-      state.yeniToplam = null;
     },
-
-    // Sepeti manuel sıfırla
     resetCartState(state) {
-      cartItemsAdapter.removeAll(state.cartItems);
-      state.araToplam = 0;
-      state.toplam = 0;
-      state.cartId = null;
-      state.hizliKargo = false;
+      clearCartState(state);
     },
-
-    // hızlı kargo toggle
     setHizliKargo(state, action: { payload: boolean }) {
       state.hizliKargo = action.payload;
     },
   },
 
   extraReducers(builder) {
-    // ── getCart ──
     builder.addCase(getCart.pending, (state) => {
       state.initialLoading = true;
     });
@@ -199,56 +159,37 @@ export const cartSlice = createSlice({
       state.error = action.payload;
     });
 
-    // ── addItem ──
     builder.addCase(addItem.pending, (state, action) => {
       state.loadingItems[action.meta.arg.urunId] = true;
     });
     builder.addCase(addItem.fulfilled, (state, action) => {
-      const urunId = action.meta.arg.urunId;
-      delete state.loadingItems[urunId];
-      state.araToplam = action.payload.araToplam;
-      state.toplam = action.payload.toplam;
-      cartItemsAdapter.setAll(state.cartItems, action.payload.cartItems);
+      delete state.loadingItems[action.meta.arg.urunId];
+      loadCartIntoState(state, action.payload);
     });
     builder.addCase(addItem.rejected, (state, action: any) => {
-      const urunId = action.payload?.urunId;
-      if (urunId) delete state.loadingItems[urunId];
+      delete state.loadingItems[action.meta.arg.urunId];
       state.error = action.payload?.error;
     });
 
-    // ── removeItem ──
     builder.addCase(removeItem.pending, (state, action) => {
       state.loadingItems[action.meta.arg.urunId] = true;
     });
     builder.addCase(removeItem.fulfilled, (state, action) => {
-      const urunId = action.meta.arg.urunId;
-      delete state.loadingItems[urunId];
-      state.araToplam = action.payload.araToplam;
-      state.toplam = action.payload.toplam;
-      cartItemsAdapter.setAll(state.cartItems, action.payload.cartItems);
+      delete state.loadingItems[action.meta.arg.urunId];
+      loadCartIntoState(state, action.payload);
     });
     builder.addCase(removeItem.rejected, (state, action: any) => {
-      const urunId = action.payload?.urunId;
-      if (urunId) delete state.loadingItems[urunId];
+      delete state.loadingItems[action.meta.arg.urunId];
       state.error = action.payload?.error;
     });
 
-    // ── clearCart ──
     builder.addCase(clearCart.fulfilled, (state) => {
-      cartItemsAdapter.removeAll(state.cartItems);
-      state.araToplam = 0;
-      state.toplam = 0;
-      state.cartId = null;
-      state.customerId = null;
-      state.hizliKargo = false;
+      clearCartState(state);
     });
 
-    // ── applyCoupon ──
     builder.addCase(applyCoupon.fulfilled, (state, action) => {
       state.couponCode = action.payload.code;
       state.couponDiscount = action.payload.discountPercent;
-      state.kuponIndirimi = action.payload.kuponIndirimi;
-      state.yeniToplam = action.payload.yeniToplam;
     });
     builder.addCase(applyCoupon.rejected, (state, action: any) => {
       state.error = action.payload;
@@ -256,10 +197,7 @@ export const cartSlice = createSlice({
   },
 });
 
-// Selector'lar
-export const cartItemSelectors = cartItemsAdapter.getSelectors(
-  (state: RootState) => state.cart.cartItems,
-);
+export const cartItemSelectors = cartItemsAdapter.getSelectors((state: RootState) => state.cart.cartItems);
 
 export const selectAllCartItems = createSelector(
   (state: RootState) => state.cart.cartItems,
@@ -271,45 +209,33 @@ export const selectCartItemCount = createSelector(selectAllCartItems, (items) =>
 );
 
 export const selectCartTotals = createSelector(
-  (state: RootState) => state.cart.araToplam,
-  (state: RootState) => state.cart.toplam,
-  (state: RootState) => state.cart.kuponIndirimi,
-  (state: RootState) => state.cart.yeniToplam,
-  (state: RootState) => state.cart.couponCode,
-  (state: RootState) => state.cart.couponDiscount,
-  (state: RootState) => state.cart.hizliKargo,
-  (
-    araToplam,
-    toplam,
-    kuponIndirimi,
-    yeniToplam,
-    couponCode,
-    couponDiscount,
-    hizliKargo,
-  ) => ({
-    araToplam,
-    toplam,
-    kuponIndirimi,
-    yeniToplam,
-    couponCode,
-    couponDiscount,
-    hizliKargo,
-  }),
+  (state: RootState) => state.cart,
+  (cart) => {
+    const kuponIndirimi = cart.couponCode ? roundMoney((cart.toplam * cart.couponDiscount) / 100) : 0;
+    const kargo = cart.hizliKargo ? cart.hizliKargoUcreti : cart.kargoUcreti;
+
+    return {
+      araToplam: cart.araToplam,
+      urunIndirimi: cart.urunIndirimi,
+      toplam: cart.toplam,
+      couponCode: cart.couponCode,
+      couponDiscount: cart.couponDiscount,
+      kuponIndirimi,
+      hizliKargo: cart.hizliKargo,
+      kargoUcreti: cart.kargoUcreti,
+      hizliKargoUcreti: cart.hizliKargoUcreti,
+      ucretsizKargoLimiti: cart.ucretsizKargoLimiti,
+      kargo,
+      genelToplam: roundMoney(cart.toplam - kuponIndirimi + kargo),
+    };
+  },
 );
 
-// Item bazlı loading — sadece ilgili item'ın butonu disable olur
 export const selectItemLoading = (urunId: number) =>
   createSelector(
     (state: RootState) => state.cart.loadingItems,
     (loadingItems) => !!loadingItems[urunId],
   );
 
-export const {
-  incrementItem,
-  decrementItem,
-  removeItemOptimistic,
-  resetCoupon,
-  setHizliKargo,
-  resetCartState,
-} = cartSlice.actions;
+export const { removeItemOptimistic, resetCoupon, setHizliKargo, resetCartState } = cartSlice.actions;
 export default cartSlice.reducer;

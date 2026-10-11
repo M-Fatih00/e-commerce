@@ -35,7 +35,7 @@ export interface ICreateOrder {
   telefon: string;
   sehir: string;
   adresSatiri: string;
-  postakodu: string;
+  postaKodu: string;
   siparisNotu?: string;
   hizliKargo: boolean;
   kuponKodu?: string;

@@ -13,6 +13,7 @@ public class OrderDTO
     public string Telefon { get; set; } = null!;
     public string SiparisNotu { get; set; } = "";
     public string Durum { get; set; } = null!;
+    public bool OdemeAlindi { get; set; }
     public decimal AraToplam { get; set; }
     public decimal KuponIndirimi { get; set; }
     public string? KuponKodu { get; set; }

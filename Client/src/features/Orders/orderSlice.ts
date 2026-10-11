@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import requests from "../../api/requests";
 import { ICreateOrder, IOrder } from "../../model/IOrder";
+import { getErrorMessage } from "../../utils/errors";
 
 interface OrderState {
   currentOrder: IOrder | null;
@@ -16,16 +17,23 @@ const initialState: OrderState = {
   error: null,
 };
 
-export const createOrder = createAsyncThunk(
+export type OrderError = {
+  status: number;
+  message: string;
+};
+
+export const createOrder = createAsyncThunk<IOrder, ICreateOrder, { rejectValue: OrderError }>(
   "order/create",
-  async (data: ICreateOrder, thunkAPI) => {
+  async (data, thunkAPI) => {
     try {
-      const order = await requests.Order.create(data);
-      if (order?.stripeSessionUrl)
-        window.location.assign(order.stripeSessionUrl);
+      const order: IOrder = await requests.Order.create(data);
+      if (order?.stripeSessionUrl) window.location.assign(order.stripeSessionUrl);
       return order;
     } catch (error: any) {
-      return thunkAPI.rejectWithValue(error.response?.data);
+      return thunkAPI.rejectWithValue({
+        status: Array.isArray(error) ? 400 : error?.response?.status ?? 0,
+        message: getErrorMessage(error, "Sipariş oluşturulamadı."),
+      });
     }
   },
 );
@@ -70,9 +78,9 @@ export const orderSlice = createSlice({
       state.loading = false;
       state.currentOrder = action.payload;
     });
-    builder.addCase(createOrder.rejected, (state, action: any) => {
+    builder.addCase(createOrder.rejected, (state, action) => {
       state.loading = false;
-      state.error = action.payload;
+      state.error = action.payload?.message ?? null;
     });
 
 

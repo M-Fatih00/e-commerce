@@ -457,3 +457,21 @@
     padding: 2px 8px;
   }
 }
+
+
+.cargo-standard {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.cargo-hint {
+  font-size: 11px;
+  color: #d46b08;
+}
+
+.cargo-muted {
+  color: #bbb;
+  text-decoration: line-through;
+}

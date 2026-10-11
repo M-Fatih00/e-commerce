@@ -24,9 +24,6 @@ public class OrderController : ControllerBase
     private const string Delivered = "Teslim Edildi";
     private const string Cancelled = "İptal";
 
-    private const decimal FreeShippingThreshold = 1000m;
-    private const decimal StandardShipping = 29.99m;
-    private const decimal ExpressShipping = 150m;
 
     private static readonly Dictionary<string, string[]> AllowedTransitions = new()
     {
@@ -66,8 +63,6 @@ public class OrderController : ControllerBase
         throw new InvalidOperationException("Benzersiz sipariş numarası üretilemedi.");
     }
 
-    public static decimal CalculateShipping(decimal total, bool express) =>
-        express ? ExpressShipping : total >= FreeShippingThreshold ? 0m : StandardShipping;
 
     [HttpGet]
     public async Task<ActionResult<List<OrderDTO>>> GetOrders()
@@ -214,7 +209,7 @@ public class OrderController : ControllerBase
         var kuponIndirimi = coupon == null
             ? 0m
             : Math.Round(indirimliToplam * coupon.DiscountPercent / 100, 2, MidpointRounding.AwayFromZero);
-        var teslimatUcreti = CalculateShipping(indirimliToplam, dto.HizliKargo);
+        var teslimatUcreti = ShippingRules.Calculate(indirimliToplam, dto.HizliKargo);
         var toplam = indirimliToplam - kuponIndirimi + teslimatUcreti;
 
         var orderNumber = await GenerateUniqueOrderNumber();

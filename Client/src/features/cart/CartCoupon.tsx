@@ -15,7 +15,6 @@ const CartCoupon: React.FC = () => {
       return;
     }
 
-    // Aynı kupon zaten uygulanmışsa tekrar uygulama
     if (appliedCoupon && appliedCoupon === couponCode.trim().toUpperCase()) {
       message.warning("Bu kupon zaten uygulandı.");
       return;
