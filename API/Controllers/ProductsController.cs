@@ -19,6 +19,7 @@ public class ProductsController : ControllerBase
     private const int MaxColors = 12;
     private const int MaxStock = 100_000;
     private const decimal MaxPrice = 1_000_000m;
+    private const int MaxDiscount = 90;
     private const long UploadRequestLimit = MaxImages * ImageValidator.MaxSize + 1024 * 1024;
 
     private static readonly Regex HexColor = new("^#[0-9A-Fa-f]{6}$", RegexOptions.Compiled);
@@ -104,6 +105,7 @@ public class ProductsController : ControllerBase
             Discount = Product.CalculateDiscount(product.OldPrice, product.NewPrice),
             ReviewCount = reviews.Count,
             AverageRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : 0,
+            CategoryId = product.CategoryId,
             CategoryName = product.Category.Name,
             Images = product.Images.OrderByDescending(x => x.IsMain).ThenBy(x => x.Id).Select(x => x.Url).ToList(),
             Colors = product.Colors.Select(x => x.Color).ToList(),
@@ -125,7 +127,7 @@ public class ProductsController : ControllerBase
 
         var name = dto.Name.Trim();
 
-        var error = await ValidateProduct(name, dto.OldPrice, dto.NewPrice, dto.CategoryId);
+        var error = await ValidateProduct(name, dto.OldPrice, dto.Discount, dto.CategoryId);
         if (error != null) return BadRequest(new { message = error });
 
         if (dto.Images.Count == 0)
@@ -145,8 +147,8 @@ public class ProductsController : ControllerBase
             Name = name,
             Description = dto.Description?.Trim(),
             OldPrice = dto.OldPrice,
-            NewPrice = dto.NewPrice,
-            Discount = Product.CalculateDiscount(dto.OldPrice, dto.NewPrice),
+            NewPrice = Product.CalculateNewPrice(dto.OldPrice, dto.Discount),
+            Discount = dto.Discount,
             CategoryId = dto.CategoryId
         };
 
@@ -187,11 +189,12 @@ public class ProductsController : ControllerBase
             return NotFound(new { message = "Ürün bulunamadı." });
 
         var name = string.IsNullOrWhiteSpace(dto.Name) ? product.Name : dto.Name.Trim();
+        var priceChanged = dto.OldPrice.HasValue || dto.Discount.HasValue;
         var oldPrice = dto.OldPrice ?? product.OldPrice;
-        var newPrice = dto.NewPrice ?? product.NewPrice;
+        var discount = dto.Discount ?? Product.CalculateDiscount(product.OldPrice, product.NewPrice);
         var categoryId = dto.CategoryId ?? product.CategoryId;
 
-        var error = await ValidateProduct(name, oldPrice, newPrice, categoryId);
+        var error = await ValidateProduct(name, oldPrice, discount, categoryId);
         if (error != null) return BadRequest(new { message = error });
 
         var (images, imageError) = await ValidateImages(dto.NewImages, product.Images.Count);
@@ -213,9 +216,12 @@ public class ProductsController : ControllerBase
 
         product.Name = name;
         if (dto.Description != null) product.Description = dto.Description.Trim();
-        product.OldPrice = oldPrice;
-        product.NewPrice = newPrice;
-        product.Discount = Product.CalculateDiscount(oldPrice, newPrice);
+        if (priceChanged)
+        {
+            product.OldPrice = oldPrice;
+            product.Discount = discount;
+            product.NewPrice = Product.CalculateNewPrice(oldPrice, discount);
+        }
         product.CategoryId = categoryId;
 
         foreach (var image in images!)
@@ -268,19 +274,16 @@ public class ProductsController : ControllerBase
         return Ok(new { message = "Ürün silindi." });
     }
 
-    private async Task<string?> ValidateProduct(string name, decimal oldPrice, decimal newPrice, int categoryId)
+    private async Task<string?> ValidateProduct(string name, decimal price, int discount, int categoryId)
     {
         if (string.IsNullOrWhiteSpace(name))
             return "Ürün adı zorunludur.";
 
-        if (newPrice <= 0 || newPrice > MaxPrice)
-            return "Satış fiyatı 0 ile 1.000.000 ₺ arasında olmalıdır.";
+        if (price <= 0 || price > MaxPrice)
+            return "Fiyat 0 ile 1.000.000 ₺ arasında olmalıdır.";
 
-        if (oldPrice > MaxPrice)
-            return "Liste fiyatı en fazla 1.000.000 ₺ olabilir.";
-
-        if (oldPrice < newPrice)
-            return "Liste fiyatı satış fiyatından düşük olamaz.";
+        if (discount < 0 || discount > MaxDiscount)
+            return $"İndirim oranı 0 ile {MaxDiscount} arasında olmalıdır.";
 
         if (!await _context.Categories.AnyAsync(c => c.Id == categoryId))
             return "Kategori bulunamadı.";

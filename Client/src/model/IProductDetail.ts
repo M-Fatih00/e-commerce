@@ -7,6 +7,7 @@ export interface IProductDetail {
   newPrice: number;
   discount: number;
 
+  categoryId: number;
   categoryName: string;
 
   images: string[];

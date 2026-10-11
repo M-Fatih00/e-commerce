@@ -21,6 +21,10 @@ public class Product
         oldPrice > newPrice && oldPrice > 0
             ? (int)Math.Round((oldPrice - newPrice) / oldPrice * 100, MidpointRounding.AwayFromZero)
             : 0;
+    
+
+    public static decimal CalculateNewPrice(decimal price, int discount) =>
+        Math.Round(price * (100 - discount) / 100m, 2, MidpointRounding.AwayFromZero);
 }
 
 public class ProductImage

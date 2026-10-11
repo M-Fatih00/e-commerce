@@ -8,7 +8,7 @@ public class ProductDetailDTO
     public decimal OldPrice { get; set; }
     public decimal NewPrice { get; set; }
     public int Discount { get; set; }
-
+    public int CategoryId { get; set; }
     public string CategoryName { get; set; } = null!;
 
     public List<string> Images { get; set; } = new();
