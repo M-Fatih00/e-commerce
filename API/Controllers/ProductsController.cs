@@ -1,6 +1,9 @@
+using System.Text.RegularExpressions;
 using API.Data;
 using API.DTO;
 using API.Entity;
+using API.Filters;
+using API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -12,298 +15,235 @@ namespace API.Controllers;
 [Route("api/[controller]")]
 public class ProductsController : ControllerBase
 {
-    private readonly DataContext _context;
+    private const int MaxImages = 6;
+    private const int MaxColors = 12;
+    private const int MaxStock = 100_000;
+    private const decimal MaxPrice = 1_000_000m;
+    private const long UploadRequestLimit = MaxImages * ImageValidator.MaxSize + 1024 * 1024;
 
-    public ProductsController(DataContext context)
+    private static readonly Regex HexColor = new("^#[0-9A-Fa-f]{6}$", RegexOptions.Compiled);
+
+    private readonly DataContext _context;
+    private readonly IWebHostEnvironment _env;
+
+    public ProductsController(DataContext context, IWebHostEnvironment env)
     {
         _context = context;
+        _env = env;
     }
-
 
     [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> GetProducts([FromQuery] string? search)
     {
-        var query = _context.Products.Include(p => p.Images).Include(p => p.ProductReviews).AsQueryable();
+        var query = _context.Products.AsNoTracking();
 
-        if (!string.IsNullOrEmpty(search))
-            query = query.Where(p => p.Name.ToLower().Contains(search.ToLower()));
+        var term = search?.Trim();
+        if (!string.IsNullOrEmpty(term))
+        {
+            if (term.Length > 100) term = term[..100];
+            var lowered = term.ToLower();
+            query = query.Where(p => p.Name.ToLower().Contains(lowered));
+        }
 
-        var products = await query.ToListAsync();
+        var products = await query
+            .OrderBy(p => p.Id)
+            .Select(p => new
+            {
+                p.Id,
+                p.Name,
+                p.OldPrice,
+                p.NewPrice,
+                p.CategoryId,
+                MainImage = p.Images.Where(i => i.IsMain).Select(i => i.Url).FirstOrDefault(),
+                HoverImage = p.Images.Where(i => !i.IsMain).Select(i => i.Url).FirstOrDefault(),
+                AverageRating = p.ProductReviews!.Select(r => (double?)r.Rating).Average() ?? 0
+            })
+            .ToListAsync();
 
-        var result = products.Select(p => new ProductListDTO
+        return Ok(products.Select(p => new ProductListDTO
         {
             Id = p.Id,
             Name = p.Name,
+            OldPrice = p.OldPrice,
             NewPrice = p.NewPrice,
-            Discount = p.Discount,
-            MainImage = p.Images.FirstOrDefault(x => x.IsMain)?.Url ?? "",
-            HoverImage = p.Images.FirstOrDefault(x => !x.IsMain)?.Url
-                ?? p.Images.FirstOrDefault(x => x.IsMain)?.Url
-                ?? "",
+            Discount = Product.CalculateDiscount(p.OldPrice, p.NewPrice),
+            MainImage = p.MainImage ?? "",
+            HoverImage = p.HoverImage ?? p.MainImage ?? "",
             CategoryId = p.CategoryId,
-            AverageRating = p.ProductReviews != null && p.ProductReviews.Any()
-                ? p.ProductReviews.Average(r => r.Rating)
-                : 0
-        }).ToList();
-
-        return Ok(result);
+            AverageRating = p.AverageRating
+        }));
     }
-
 
     [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetProduct(int id)
     {
         var product = await _context.Products
+            .AsNoTracking()
             .Include(p => p.Category)
             .Include(p => p.Images)
             .Include(p => p.Colors)
             .Include(p => p.Sizes)
             .Include(p => p.ProductReviews)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (product == null)
-            return NotFound();
+            return NotFound(new { message = "Ürün bulunamadı." });
 
-        var result = new ProductDetailDTO
+        var reviews = product.ProductReviews ?? new List<ProductReview>();
+
+        return Ok(new ProductDetailDTO
         {
             Id = product.Id,
             Name = product.Name,
             Description = product.Description,
             OldPrice = product.OldPrice,
             NewPrice = product.NewPrice,
-            Discount = product.Discount,
-
-            ReviewCount = product.ProductReviews?.Count ?? 0,
-            AverageRating = product.ProductReviews != null && product.ProductReviews.Any()
-            ? product.ProductReviews.Average(r => r.Rating)
-            : 0,
-
+            Discount = Product.CalculateDiscount(product.OldPrice, product.NewPrice),
+            ReviewCount = reviews.Count,
+            AverageRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : 0,
             CategoryName = product.Category.Name,
-
-            // ALL IMAGES
-            Images = product.Images
-                .Select(x => x.Url)
-                .ToList(),
-
-            // COLORS
-            Colors = product.Colors?
-                .Select(x => x.Color)
-                .ToList(),
-
-            // SIZES
-            Sizes = product.Sizes?
-                .Select(x => new ProductSizeDTO
-                {
-                    Size = x.Size.ToString(),
-                    Stock = x.Stock
-                }).ToList()
-        };
-
-        return Ok(result);
+            Images = product.Images.OrderByDescending(x => x.IsMain).ThenBy(x => x.Id).Select(x => x.Url).ToList(),
+            Colors = product.Colors.Select(x => x.Color).ToList(),
+            Sizes = product.Sizes
+                .OrderBy(x => x.Size)
+                .Select(x => new ProductSizeDTO { Size = x.Size.ToString(), Stock = x.Stock })
+                .ToList()
+        });
     }
 
-
     [HttpPost]
+    [DemoDisabled]
+    [RequestSizeLimit(UploadRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = UploadRequestLimit)]
     public async Task<IActionResult> CreateProduct([FromForm] CreateProductDTO dto)
     {
-        if (dto.Images == null || dto.Images.Count == 0)
-            return BadRequest("En az 1 resim zorunludur.");
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var name = dto.Name.Trim();
+
+        var error = await ValidateProduct(name, dto.OldPrice, dto.NewPrice, dto.CategoryId);
+        if (error != null) return BadRequest(new { message = error });
+
+        if (dto.Images.Count == 0)
+            return BadRequest(new { message = "En az 1 görsel zorunludur." });
+
+        var (images, imageError) = await ValidateImages(dto.Images, 0);
+        if (imageError != null) return BadRequest(new { message = imageError });
+
+        var (colors, colorError) = ParseColors(dto.Colors);
+        if (colorError != null) return BadRequest(new { message = colorError });
+
+        var (sizes, sizeError) = ParseSizes(dto.Sizes, dto.Stocks);
+        if (sizeError != null) return BadRequest(new { message = sizeError });
 
         var product = new Product
         {
-            Name = dto.Name,
-            Description = dto.Description,
+            Name = name,
+            Description = dto.Description?.Trim(),
             OldPrice = dto.OldPrice,
             NewPrice = dto.NewPrice,
-            Discount = dto.Discount,
+            Discount = Product.CalculateDiscount(dto.OldPrice, dto.NewPrice),
             CategoryId = dto.CategoryId
         };
 
-        var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/products");
-
-        if (!Directory.Exists(uploadPath))
-            Directory.CreateDirectory(uploadPath);
-
-        for (int i = 0; i < dto.Images.Count; i++)
+        for (var i = 0; i < images!.Count; i++)
         {
-            var file = dto.Images[i];
-
-            var imageError = ValidateImage(file);
-            if (imageError != null) return BadRequest(imageError);
-
-            var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
-            var filePath = Path.Combine(uploadPath, fileName);
-
-            using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
-
-            product.Images.Add(new ProductImage
-            {
-                Url = $"products/{fileName}",
-                IsMain = i == 0
-            });
+            var url = await SaveImage(images[i].File, images[i].Extension);
+            product.Images.Add(new ProductImage { Url = url, IsMain = i == 0 });
         }
 
-        // colors
-        if (dto.Colors != null && dto.Colors.Count > 0)
-        {
-            foreach (var color in dto.Colors)
-            {
-                if (!IsValidHex(color))
-                    return BadRequest($"Geçersiz renk: {color}");
+        foreach (var color in colors!)
+            product.Colors.Add(new ProductColor { Color = color });
 
-                product.Colors.Add(new ProductColor { Color = color });
-            }
-        }
-
-        // sizes
-        if (dto.Sizes != null && dto.Sizes.Count > 0)
-        {
-            foreach (var size in dto.Sizes)
-            {
-                if (!Enum.TryParse<ProductSizeType>(size, true, out var parsed))
-                    return BadRequest($"Geçersiz beden: {size}");
-
-                product.Sizes.Add(new ProductSize { Size = parsed });
-            }
-        }
+        product.Sizes.AddRange(sizes!);
 
         _context.Products.Add(product);
         await _context.SaveChangesAsync();
 
-        return Ok(new
-        {
-            message = "Ürün oluşturuldu",
-            productId = product.Id
-        });
+        return Ok(new { message = "Ürün oluşturuldu.", productId = product.Id });
     }
 
-
     [HttpPut("{id}")]
+    [DemoDisabled]
+    [RequestSizeLimit(UploadRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = UploadRequestLimit)]
     public async Task<IActionResult> UpdateProduct(int id, [FromForm] UpdateProductDTO dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
         var product = await _context.Products
             .Include(p => p.Images)
             .Include(p => p.Colors)
             .Include(p => p.Sizes)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (product == null)
-            return NotFound();
+            return NotFound(new { message = "Ürün bulunamadı." });
 
-        if (!string.IsNullOrEmpty(dto.Name))
-            product.Name = dto.Name;
+        var name = string.IsNullOrWhiteSpace(dto.Name) ? product.Name : dto.Name.Trim();
+        var oldPrice = dto.OldPrice ?? product.OldPrice;
+        var newPrice = dto.NewPrice ?? product.NewPrice;
+        var categoryId = dto.CategoryId ?? product.CategoryId;
 
-        if (dto.OldPrice.HasValue)
-            product.OldPrice = dto.OldPrice.Value;
+        var error = await ValidateProduct(name, oldPrice, newPrice, categoryId);
+        if (error != null) return BadRequest(new { message = error });
 
-        if (dto.NewPrice.HasValue)
-            product.NewPrice = dto.NewPrice.Value;
+        var (images, imageError) = await ValidateImages(dto.NewImages, product.Images.Count);
+        if (imageError != null) return BadRequest(new { message = imageError });
 
-        if (dto.Discount.HasValue)
-            product.Discount = dto.Discount.Value;
-
-        if (dto.CategoryId.HasValue)
-            product.CategoryId = dto.CategoryId.Value;
-
-        if (!string.IsNullOrEmpty(dto.Description))
-            product.Description = dto.Description;
-
-        // image
-
-        if (dto.NewImages != null && dto.NewImages.Count > 0)
+        List<string>? colors = null;
+        if (dto.Colors is { Count: > 0 })
         {
-            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/products");
-
-            if (!Directory.Exists(uploadPath))
-                Directory.CreateDirectory(uploadPath);
-
-            foreach (var file in dto.NewImages)
-            {
-                var imageError = ValidateImage(file);
-                if (imageError != null) return BadRequest(imageError);
-
-                var fileName = Guid.NewGuid() + Path.GetExtension(file.FileName);
-                var filePath = Path.Combine(uploadPath, fileName);
-
-                using var stream = new FileStream(filePath, FileMode.Create);
-                await file.CopyToAsync(stream);
-
-                product.Images.Add(new ProductImage
-                {
-                    Url = $"products/{fileName}",
-                    IsMain = false
-                });
-            }
+            (colors, var colorError) = ParseColors(dto.Colors);
+            if (colorError != null) return BadRequest(new { message = colorError });
         }
 
+        List<ProductSize>? sizes = null;
+        if (dto.Sizes is { Count: > 0 })
+        {
+            (sizes, var sizeError) = ParseSizes(dto.Sizes, dto.Stocks);
+            if (sizeError != null) return BadRequest(new { message = sizeError });
+        }
 
-        // colors
+        product.Name = name;
+        if (dto.Description != null) product.Description = dto.Description.Trim();
+        product.OldPrice = oldPrice;
+        product.NewPrice = newPrice;
+        product.Discount = Product.CalculateDiscount(oldPrice, newPrice);
+        product.CategoryId = categoryId;
 
-        if (dto.Colors != null && dto.Colors.Count > 0)
+        foreach (var image in images!)
+        {
+            var url = await SaveImage(image.File, image.Extension);
+            product.Images.Add(new ProductImage { Url = url, IsMain = product.Images.Count == 0 });
+        }
+
+        if (colors != null)
         {
             product.Colors.Clear();
-            foreach (var color in dto.Colors)
-            {
-                if (!IsValidHex(color))
-                    return BadRequest($"Geçersiz renk: {color}");
+            foreach (var color in colors)
                 product.Colors.Add(new ProductColor { Color = color });
-            }
         }
 
-
-        // sizes
-        if (dto.Sizes != null && dto.Sizes.Count > 0)
+        if (sizes != null)
         {
             product.Sizes.Clear();
-            for (int i = 0; i < dto.Sizes.Count; i++)
-            {
-                if (!Enum.TryParse<ProductSizeType>(dto.Sizes[i], true, out var parsed))
-                    return BadRequest($"Geçersiz beden: {dto.Sizes[i]}");
-
-                product.Sizes.Add(new ProductSize
-                {
-                    Size = parsed,
-                    Stock = dto.Stocks != null && i < dto.Stocks.Count ? dto.Stocks[i] : 0
-                });
-            }
+            product.Sizes.AddRange(sizes);
         }
 
         await _context.SaveChangesAsync();
 
-        return Ok("Ürün güncellendi");
+        return Ok(new { message = "Ürün güncellendi." });
     }
-
-
-    private static readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
-    private const long _maxFileSize = 5 * 1024 * 1024; // 5 MB
-
-    private string? ValidateImage(IFormFile file)
-    {
-        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
-        if (!_allowedExtensions.Contains(ext))
-            return $"Geçersiz dosya türü: {ext}. Sadece resim yükleyebilirsiniz (jpg, png, webp, gif).";
-
-        if (file.Length > _maxFileSize)
-            return "Dosya boyutu 5 MB'tan büyük olamaz.";
-
-        if (file.Length == 0)
-            return "Boş dosya yüklenemez.";
-
-        return null; // sorun yok
-    }
-
-    private bool IsValidHex(string color)
-    {
-        return System.Text.RegularExpressions.Regex
-            .IsMatch(color, "^#([0-9A-Fa-f]{6})$");
-    }
-
-
 
     [HttpDelete("{id}")]
+    [DemoDisabled]
     public async Task<IActionResult> DeleteProduct(int id)
     {
         var product = await _context.Products
@@ -311,14 +251,124 @@ public class ProductsController : ControllerBase
             .FirstOrDefaultAsync(x => x.Id == id);
 
         if (product == null)
-            return NotFound();
+            return NotFound(new { message = "Ürün bulunamadı." });
 
-        // ilişkili veriler cascade ise otomatik silinir
+        if (await _context.OrderItems.AnyAsync(i => i.UrunId == id))
+            return BadRequest(new { message = "Bu ürün geçmiş siparişlerde yer aldığı için silinemez." });
+
+        var imageUrls = product.Images.Select(i => i.Url).ToList();
+
+        var cartItems = await _context.CartItems.Where(c => c.UrunId == id).ToListAsync();
+        _context.CartItems.RemoveRange(cartItems);
         _context.Products.Remove(product);
-
         await _context.SaveChangesAsync();
 
-        return Ok("Product deleted permanently");
+        await DeleteUnusedUploads(imageUrls);
+
+        return Ok(new { message = "Ürün silindi." });
     }
 
+    private async Task<string?> ValidateProduct(string name, decimal oldPrice, decimal newPrice, int categoryId)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return "Ürün adı zorunludur.";
+
+        if (newPrice <= 0 || newPrice > MaxPrice)
+            return "Satış fiyatı 0 ile 1.000.000 ₺ arasında olmalıdır.";
+
+        if (oldPrice > MaxPrice)
+            return "Liste fiyatı en fazla 1.000.000 ₺ olabilir.";
+
+        if (oldPrice < newPrice)
+            return "Liste fiyatı satış fiyatından düşük olamaz.";
+
+        if (!await _context.Categories.AnyAsync(c => c.Id == categoryId))
+            return "Kategori bulunamadı.";
+
+        return null;
+    }
+
+    private static async Task<(List<(IFormFile File, string Extension)>? Images, string? Error)> ValidateImages(
+        List<IFormFile>? files, int existingCount)
+    {
+        var list = files ?? new List<IFormFile>();
+
+        if (existingCount + list.Count > MaxImages)
+            return (null, $"Bir ürüne en fazla {MaxImages} görsel eklenebilir.");
+
+        var result = new List<(IFormFile, string)>();
+        foreach (var file in list)
+        {
+            var (extension, error) = await ImageValidator.ValidateAsync(file);
+            if (error != null) return (null, error);
+            result.Add((file, extension!));
+        }
+
+        return (result, null);
+    }
+
+    private static (List<string>? Colors, string? Error) ParseColors(List<string>? colors)
+    {
+        var result = (colors ?? new List<string>())
+            .Select(c => c.Trim().ToUpperInvariant())
+            .Distinct()
+            .ToList();
+
+        if (result.Count > MaxColors)
+            return (null, $"En fazla {MaxColors} renk eklenebilir.");
+
+        var invalid = result.FirstOrDefault(c => !HexColor.IsMatch(c));
+        return invalid != null ? (null, $"Geçersiz renk: {invalid}") : (result, null);
+    }
+
+    private static (List<ProductSize>? Sizes, string? Error) ParseSizes(List<string>? sizes, List<int>? stocks)
+    {
+        var list = sizes ?? new List<string>();
+        var result = new List<ProductSize>();
+
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (!Enum.TryParse<ProductSizeType>(list[i], true, out var parsed) || !Enum.IsDefined(parsed))
+                return (null, $"Geçersiz beden: {list[i]}");
+
+            if (result.Any(s => s.Size == parsed))
+                return (null, $"Beden tekrar ediyor: {parsed}");
+
+            var stock = stocks != null && i < stocks.Count ? stocks[i] : 0;
+            if (stock < 0 || stock > MaxStock)
+                return (null, $"Stok 0 ile {MaxStock} arasında olmalıdır.");
+
+            result.Add(new ProductSize { Size = parsed, Stock = stock });
+        }
+
+        return (result, null);
+    }
+
+    private async Task<string> SaveImage(IFormFile file, string extension)
+    {
+        var directory = Path.Combine(_env.WebRootPath, "img", "products");
+        Directory.CreateDirectory(directory);
+
+        var fileName = Guid.NewGuid() + extension;
+        await using var stream = new FileStream(Path.Combine(directory, fileName), FileMode.CreateNew);
+        await file.CopyToAsync(stream);
+
+        return $"products/{fileName}";
+    }
+
+    private async Task DeleteUnusedUploads(IEnumerable<string> urls)
+    {
+        var productsDir = Path.GetFullPath(Path.Combine(_env.WebRootPath, "img", "products"));
+
+        foreach (var url in urls)
+        {
+            if (await _context.ProductImages.AnyAsync(i => i.Url == url)) continue;
+
+            var path = Path.GetFullPath(Path.Combine(_env.WebRootPath, "img", url));
+            var isUpload = Guid.TryParse(Path.GetFileNameWithoutExtension(path), out _);
+
+            if (isUpload && path.StartsWith(productsDir + Path.DirectorySeparatorChar) && System.IO.File.Exists(path))
+                System.IO.File.Delete(path);
+        }
+    }
 }

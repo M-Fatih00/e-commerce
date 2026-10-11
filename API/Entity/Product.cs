@@ -9,7 +9,6 @@ public class Product
     public decimal NewPrice { get; set; }
     public int Discount { get; set; }
 
-    // İlişkiler
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
     
@@ -17,6 +16,11 @@ public class Product
     public List<ProductColor> Colors { get; set; } = new();
     public List<ProductSize> Sizes { get; set; } = new();
     public List<ProductReview>? ProductReviews { get; set; }
+
+    public static int CalculateDiscount(decimal oldPrice, decimal newPrice) =>
+        oldPrice > newPrice && oldPrice > 0
+            ? (int)Math.Round((oldPrice - newPrice) / oldPrice * 100, MidpointRounding.AwayFromZero)
+            : 0;
 }
 
 public class ProductImage
