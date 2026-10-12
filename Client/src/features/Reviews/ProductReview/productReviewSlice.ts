@@ -1,144 +1,108 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import requests from "../../../api/requests";
 import { IProductReview } from "../../../model/IProductReview";
+import { getErrorMessage } from "../../../utils/errors";
+
+export type ReviewError = {
+  status: number;
+  message: string;
+};
+
+const toReviewError = (error: any, fallback: string): ReviewError => ({
+  status: Array.isArray(error) ? 400 : error?.response?.status ?? 0,
+  message: getErrorMessage(error, fallback),
+});
 
 interface ReviewState {
-    reviews: IProductReview[];
-    loading: boolean;
-    error: string | null;
+  reviews: IProductReview[];
+  loading: boolean;
+  error: string | null;
 }
 
 const initialState: ReviewState = {
-    reviews: [],
-    loading: false,
-    error: null
+  reviews: [],
+  loading: false,
+  error: null,
 };
 
-
-// GET REVIEWS
-export const getReviewsByProduct = createAsyncThunk(
-    "review/getReviewsByProduct",
-    async (productId: number, thunkAPI) => {
-        try {
-            return await requests.Review.getByProduct(productId);
-        } catch (error: any) {
-            return thunkAPI.rejectWithValue(error.response?.data);
-        }
+export const getReviewsByProduct = createAsyncThunk<IProductReview[], number, { rejectValue: ReviewError }>(
+  "review/getReviewsByProduct",
+  async (productId, thunkAPI) => {
+    try {
+      return await requests.Review.getByProduct(productId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(toReviewError(error, "Yorumlar getirilemedi."));
     }
+  },
 );
 
+export const createReview = createAsyncThunk<
+  IProductReview,
+  { productId: number; text: string; rating: number },
+  { rejectValue: ReviewError }
+>("review/createReview", async (data, thunkAPI) => {
+  try {
+    return await requests.Review.create(data);
+  } catch (error) {
+    return thunkAPI.rejectWithValue(toReviewError(error, "Yorum eklenemedi."));
+  }
+});
 
-// CREATE REVIEW
-export const createReview = createAsyncThunk(
-    "review/createReview",
-    async (
-        data: {
-            productId: number;
-            text: string;
-            rating: number;
-        },
-        thunkAPI
-    ) => {
-        try {
-            return await requests.Review.create(data);
-        } catch (error: any) {
-            return thunkAPI.rejectWithValue(error.response?.data);
-        }
+export const updateReview = createAsyncThunk<
+  IProductReview,
+  { id: number; data: { text: string; rating: number } },
+  { rejectValue: ReviewError }
+>("review/updateReview", async ({ id, data }, thunkAPI) => {
+  try {
+    return await requests.Review.update(id, data);
+  } catch (error) {
+    return thunkAPI.rejectWithValue(toReviewError(error, "Yorum güncellenemedi."));
+  }
+});
+
+export const deleteReview = createAsyncThunk<number, number, { rejectValue: ReviewError }>(
+  "review/deleteReview",
+  async (id, thunkAPI) => {
+    try {
+      await requests.Review.delete(id);
+      return id;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(toReviewError(error, "Yorum silinemedi."));
     }
+  },
 );
-
-
-// UPDATE REVIEW
-export const updateReview = createAsyncThunk(
-    "review/updateReview",
-    async (
-        {
-            id,
-            data
-        }: {
-            id: number;
-            data: {
-                text: string;
-                rating: number;
-            };
-        },
-        thunkAPI
-    ) => {
-        try {
-            return await requests.Review.update(id, data);
-        } catch (error: any) {
-            return thunkAPI.rejectWithValue(error.response?.data);
-        }
-    }
-);
-
-
-// DELETE REVIEW
-export const deleteReview = createAsyncThunk(
-    "review/deleteReview",
-    async (id: number, thunkAPI) => {
-        try {
-            await requests.Review.delete(id);
-
-            return id;
-        } catch (error: any) {
-            return thunkAPI.rejectWithValue(error.response?.data);
-        }
-    }
-);
-
 
 const productReviewSlice = createSlice({
-    name: "review",
-    initialState,
-    reducers: {},
+  name: "review",
+  initialState,
+  reducers: {},
+  extraReducers: (builder) => {
+    builder.addCase(getReviewsByProduct.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    });
+    builder.addCase(getReviewsByProduct.fulfilled, (state, action) => {
+      state.loading = false;
+      state.reviews = action.payload;
+    });
+    builder.addCase(getReviewsByProduct.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload?.message ?? null;
+    });
 
-    extraReducers: (builder) => {
+    builder.addCase(createReview.fulfilled, (state, action) => {
+      state.reviews.unshift(action.payload);
+    });
 
-        // GET
-        builder.addCase(getReviewsByProduct.pending, (state) => {
-            state.loading = true;
-            state.error = null;
-        });
+    builder.addCase(updateReview.fulfilled, (state, action) => {
+      const index = state.reviews.findIndex((x) => x.id === action.payload.id);
+      if (index !== -1) state.reviews[index] = action.payload;
+    });
 
-        builder.addCase(getReviewsByProduct.fulfilled, (state, action) => {
-            state.loading = false;
-            state.reviews = action.payload;
-        });
-
-        builder.addCase(getReviewsByProduct.rejected, (state, action: any) => {
-            state.loading = false;
-            state.error = action.payload;
-        });
-
-
-        // CREATE
-        builder.addCase(createReview.fulfilled, (state, action) => {
-            state.reviews.unshift(action.payload);
-        });
-
-
-        // UPDATE
-        builder.addCase(updateReview.fulfilled, (state, action) => {
-
-            const index = state.reviews.findIndex(
-                x => x.id === action.payload.id
-            );
-
-            if (index !== -1) {
-                state.reviews[index] = action.payload;
-            }
-        });
-
-
-        // DELETE
-        builder.addCase(deleteReview.fulfilled, (state, action) => {
-
-            state.reviews = state.reviews.filter(
-                x => x.id !== action.payload
-            );
-        });
-    }
+    builder.addCase(deleteReview.fulfilled, (state, action) => {
+      state.reviews = state.reviews.filter((x) => x.id !== action.payload);
+    });
+  },
 });
 
 export default productReviewSlice.reducer;

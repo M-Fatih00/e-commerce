@@ -141,6 +141,7 @@ var loginPerMinute = builder.Configuration.GetValue("RateLimit:LoginPerMinute", 
 var registerPerHour = builder.Configuration.GetValue("RateLimit:RegisterPerHour", 5);
 var contactPerHour = builder.Configuration.GetValue("RateLimit:ContactPerHour", 3);
 var couponPerMinute = builder.Configuration.GetValue("RateLimit:CouponPerMinute", 10);
+var reviewPerHour = builder.Configuration.GetValue("RateLimit:ReviewPerHour", 10);
 
 RateLimitPartition<string> SlidingWindowByIp(HttpContext context, int permitLimit, TimeSpan window)
 {
@@ -170,6 +171,7 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("register", context => SlidingWindowByIp(context, registerPerHour, TimeSpan.FromHours(1)));
     options.AddPolicy("contact", context => SlidingWindowByIp(context, contactPerHour, TimeSpan.FromHours(1)));
     options.AddPolicy("coupon", context => SlidingWindowByIp(context, couponPerMinute, TimeSpan.FromMinutes(1)));
+    options.AddPolicy("review", context => SlidingWindowByIp(context, reviewPerHour, TimeSpan.FromHours(1)));
 });
 
 builder.Services.AddControllers();

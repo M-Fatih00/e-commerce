@@ -65,3 +65,8 @@
   white-space: pre-line;
   line-height: 1.6;
 }
+
+
+.single-tabs .tab-list .tab-button:focus:not(:focus-visible) {
+  outline: none;
+}

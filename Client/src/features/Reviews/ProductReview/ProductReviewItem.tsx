@@ -1,154 +1,167 @@
 import React, { useState } from "react";
-import { message, Modal, Input, Rate } from "antd";
-import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch, RootState } from "../../../store/store";
-import { deleteReview, updateReview } from "./productReviewSlice";
+import { Button, Input, Modal, Rate, Tooltip, message } from "antd";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { useAppDispatch, useAppSelector } from "../../../store/store";
+import { deleteReview, updateReview, ReviewError } from "./productReviewSlice";
+import { IProductReview } from "../../../model/IProductReview";
+import UserAvatar from "../../Auth/UserAvatar";
+
+const MAX_LENGTH = 1000;
+
+const showError = (error: unknown) => {
+  const e = error as ReviewError;
+  if (e?.status === 400) message.error(e.message);
+};
 
 interface ReviewItemProps {
-  reviewItem: {
-    id: number;
-    text: string;
-    rating: number;
-    createdDate?: string;
-    userName: string;
-    userId: string;
-  };
+  reviewItem: IProductReview;
 }
 
 const ReviewItem: React.FC<ReviewItemProps> = ({ reviewItem }) => {
-  const { id, text, createdDate, rating, userName, userId } = reviewItem;
-  const dispatch = useDispatch<AppDispatch>();
-  const { user } = useSelector((state: RootState) => state.auth);
+  const { id, text, rating, createdDate, authorName, authorAvatar, isMine } =
+    reviewItem;
+  const dispatch = useAppDispatch();
+  const isAdmin =
+    useAppSelector((state) => state.auth.user?.roles?.includes("Admin")) ??
+    false;
+  const [modal, contextHolder] = Modal.useModal();
 
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState(text);
   const [editRating, setEditRating] = useState(rating);
+  const [saving, setSaving] = useState(false);
 
-  // Kendi yorumu mu, yoksa admin mi?
-  const isAdmin = user?.roles?.includes("Admin");
-  const isOwner = user?.id === userId;
-  const canModify = isOwner || isAdmin;
-
-  const options: Intl.DateTimeFormatOptions = {
+  const canDelete = isMine || isAdmin;
+  const formattedDate = new Date(createdDate).toLocaleDateString("tr-TR", {
     year: "numeric",
     month: "long",
     day: "numeric",
-  };
-  const formattedDate = createdDate
-    ? new Date(createdDate).toLocaleDateString("tr-TR", options)
-    : "";
+  });
 
   const handleDelete = () => {
-    Modal.confirm({
+    modal.confirm({
       title: "Yorumu sil",
-      content: "Bu yorumu silmek istediğinize emin misiniz?",
+      content: isMine
+        ? "Yorumunuz kalıcı olarak silinecek."
+        : "Bu kullanıcının yorumu kalıcı olarak silinecek.",
       okText: "Sil",
-      okType: "danger",
+      okButtonProps: { danger: true },
       cancelText: "Vazgeç",
       onOk: async () => {
         try {
           await dispatch(deleteReview(id)).unwrap();
           message.success("Yorum silindi.");
-        } catch (error: any) {
-          message.error(
-            typeof error === "string" ? error : error?.message || "Silme başarısız."
-          );
+        } catch (error) {
+          showError(error);
         }
       },
     });
   };
 
   const handleUpdate = async () => {
-    if (editRating === 0) {
-      message.warning("Lütfen bir puan seçiniz.");
+    if (!editRating) {
+      message.warning("Lütfen bir puan seçin.");
       return;
     }
+    if (editText.trim().length < 3) {
+      message.warning("Yorum en az 3 karakter olmalıdır.");
+      return;
+    }
+
+    setSaving(true);
     try {
-      await dispatch(updateReview({ id, data: { text: editText, rating: editRating } })).unwrap();
+      await dispatch(
+        updateReview({
+          id,
+          data: { text: editText.trim(), rating: editRating },
+        }),
+      ).unwrap();
       message.success("Yorum güncellendi.");
       setEditing(false);
-    } catch (error: any) {
-      message.error(
-        typeof error === "string" ? error : error?.message || "Güncelleme başarısız."
-      );
+    } catch (error) {
+      showError(error);
+    } finally {
+      setSaving(false);
     }
   };
 
-  return (
-    <li className="comment-item">
-      <div className="comment-avatar">
-        <img
-          src="https://cdn-icons-png.flaticon.com/512/149/149071.png"
-          alt={userName}
-          width={60}
-        />
-      </div>
+  const cancelEdit = () => {
+    setEditing(false);
+    setEditText(text);
+    setEditRating(rating);
+  };
 
-      <div className="comment-text">
+  return (
+    <li className="rv-card animate-fade-in">
+      {contextHolder}
+
+      <UserAvatar
+        fullName={authorName}
+        avatar={authorAvatar}
+        size={36}
+        fontSize={13}
+      />
+
+      <div className="rv-body">
+        <div className="rv-meta">
+          <strong>{authorName}</strong>
+          {isMine && <span className="rv-badge">Siz</span>}
+          {!editing && <Rate disabled value={rating} className="rv-stars" />}
+          <span className="rv-dot">·</span>
+          <time className="rv-muted" dateTime={createdDate}>
+            {formattedDate}
+          </time>
+        </div>
+
         {editing ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <div className="rv-edit">
             <Rate value={editRating} onChange={setEditRating} />
             <Input.TextArea
-              rows={3}
+              rows={4}
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
+              maxLength={MAX_LENGTH}
+              showCount
             />
-            <div style={{ display: "flex", gap: 8 }}>
-              <button className="btn" type="button" onClick={handleUpdate}>Kaydet</button>
-              <button
-                className="btn"
-                type="button"
-                onClick={() => {
-                  setEditing(false);
-                  setEditText(text);
-                  setEditRating(rating);
-                }}
-              >
+            <div className="rv-edit-actions">
+              <Button onClick={cancelEdit} disabled={saving}>
                 İptal
-              </button>
+              </Button>
+              <Button type="primary" onClick={handleUpdate} loading={saving}>
+                Kaydet
+              </Button>
             </div>
           </div>
         ) : (
-          <>
-            <ul className="comment-star">
-              {Array.from({ length: rating }).map((_, index) => (
-                <li key={index}>
-                  <i className="bi bi-star-fill"></i>
-                </li>
-              ))}
-            </ul>
-
-            <div className="comment-meta">
-              <strong>{userName}</strong>
-              <span> - </span>
-              <time>{formattedDate}</time>
-            </div>
-
-            <div className="comment-description">
-              <p>{text}</p>
-            </div>
-
-            {canModify && (
-              <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  style={{ background: "none", border: "none", color: "#1677ff", cursor: "pointer", padding: 0, fontSize: 13 }}
-                >
-                  Düzenle
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDelete}
-                  style={{ background: "none", border: "none", color: "#ff4d4f", cursor: "pointer", padding: 0, fontSize: 13 }}
-                >
-                  Sil
-                </button>
-              </div>
-            )}
-          </>
+          <p className="rv-text">{text}</p>
         )}
       </div>
+
+      {canDelete && !editing && (
+        <div className="rv-actions">
+          {isMine && (
+            <Tooltip title="Düzenle">
+              <Button
+                type="text"
+                className="rv-action-btn"
+                icon={<EditOutlined />}
+                onClick={() => setEditing(true)}
+                aria-label="Yorumu düzenle"
+              />
+            </Tooltip>
+          )}
+          <Tooltip title="Sil">
+            <Button
+              type="text"
+              danger
+              className="rv-action-btn"
+              icon={<DeleteOutlined />}
+              onClick={handleDelete}
+              aria-label="Yorumu sil"
+            />
+          </Tooltip>
+        </div>
+      )}
     </li>
   );
 };
