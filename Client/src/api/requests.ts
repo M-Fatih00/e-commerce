@@ -125,6 +125,7 @@ const Sliders = {
 
 const Campaigns = {
   list: () => requests.get("campaign"),
+  getById: (id: number) => requests.get(`campaign/${id}`),
   create: (data: FormData) => requests.post("campaign", data),
   update: (id: number, data: FormData) => requests.put(`campaign/${id}`, data),
   delete: (id: number) => requests.delete(`campaign/${id}`),

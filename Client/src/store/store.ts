@@ -7,7 +7,7 @@ import { authSlice } from '../features/Auth/authSlice'
 import productDetailsSlice from '../features/catalog/ProductDetails/productDetailsSlice'
 import productReviewSlice from '../features/Reviews/ProductReview/productReviewSlice'
 import { cartSlice } from '../features/cart/cartSlice'
-import { couponSlice } from '../features/Coupon/couponSlice'
+import { couponSlice } from '../features/Admin/coupons/couponSlice'
 import { orderSlice } from '../features/Orders/orderSlice'
 
 

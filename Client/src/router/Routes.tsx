@@ -35,13 +35,13 @@ const BlogPageAdmin = lazy(() => import("../features/Admin/blogs/BlogPageAdmin")
 const CreateBlog = lazy(() => import("../features/Admin/blogs/CreateBlog"));
 const UpdateBlog = lazy(() => import("../features/Admin/blogs/UpdateBlog"));
 
-const CouponPage = lazy(() => import("../features/Coupon/CouponPage"));
-const CreateCoupon = lazy(() => import("../features/Coupon/CreateCoupon"));
-const UpdateCoupon = lazy(() => import("../features/Coupon/UpdateCoupon"));
+const CouponPage = lazy(() => import("../features/Admin/coupons/CouponPage"));
+const CreateCoupon = lazy(() => import("../features/Admin/coupons/CreateCoupon"));
+const UpdateCoupon = lazy(() => import("../features/Admin/coupons/UpdateCoupon"));
 
-const CampaignPageAdmin = lazy(() => import("../features/Admin/Campaigns/CampaignPageAdmin"));
-const CreateCampaign = lazy(() => import("../features/Admin/Campaigns/CreateCampaign"));
-const UpdateCampaign = lazy(() => import("../features/Admin/Campaigns/UpdateCampaign"));
+const CampaignPageAdmin = lazy(() => import("../features/Admin/campaigns/CampaignPageAdmin"));
+const CreateCampaign = lazy(() => import("../features/Admin/campaigns/CreateCampaign"));
+const UpdateCampaign = lazy(() => import("../features/Admin/campaigns/UpdateCampaign"));
 
 const UserPage = lazy(() => import("../features/Admin/UserPage"));
 const OrderPageAdmin = lazy(() => import("../features/Admin/OrderPageAdmin"));
