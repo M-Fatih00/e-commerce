@@ -4,9 +4,11 @@ namespace API.DTO;
 
 public class CreateSliderDTO
 {
+    [Range(0, 99, ErrorMessage = "Sıra 0 ile 99 arasında olmalıdır.")]
     public int Index { get; set; }
 
-    [Required]
-    public IFormFile Resim { get; set; } = null!;
+    [Required(ErrorMessage = "Görsel zorunludur.")]
+    public IFormFile? Resim { get; set; }
+
     public bool Aktif { get; set; }
 }

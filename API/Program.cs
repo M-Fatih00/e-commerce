@@ -178,6 +178,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<API.Services.TokenService>();
 builder.Services.AddScoped<API.Services.SmtpEmailService>();
+builder.Services.AddSingleton<API.Services.UploadStorage>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(option =>

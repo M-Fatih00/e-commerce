@@ -119,8 +119,7 @@ const Sliders = {
   listAdmin: () => requests.get("sliders/all-sliders"),
   details: (id: number) => requests.get(`sliders/${id}`),
   create: (data: FormData) => requests.post("sliders", data),
-  update: (id: number, data: FormData) =>
-    requests.put(`sliders?id=${id}`, data),
+  update: (id: number, data: FormData) => requests.put(`sliders/${id}`, data),
   delete: (id: number) => requests.delete(`sliders/${id}`),
 };
 
