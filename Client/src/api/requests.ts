@@ -194,12 +194,8 @@ const Cart = {
   clear: () => requests.delete("cart/clear"),
 };
 
-const Errors = {
-  get400Error: () => requests.get("error/bad-request"),
-  get401Error: () => requests.get("error/unauthorized"),
-  get404Error: () => requests.get("error/not-found"),
-  get500Error: () => requests.get("error/server-error"),
-  getValidationError: () => requests.get("error/validation-error"),
+const Dashboard = {
+  get: () => requests.get("dashboard"),
 };
 
 const Users = {
@@ -253,7 +249,7 @@ export default {
   Auth,
   Review,
   Cart,
-  Errors,
+  Dashboard,
   Coupon,
   Order,
   Users,

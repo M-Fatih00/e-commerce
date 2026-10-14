@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Button, Card, Form, Input, message, Upload, Divider, Tabs, Spin, Tag, Collapse } from "antd";
+import { Alert, Button, Card, Form, Input, message, Upload, Divider, Tabs, Spin, Collapse } from "antd";
 import type { UploadProps } from "antd";
 import { UploadOutlined, EditOutlined, SaveOutlined, CloseOutlined, LockOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "../../store/store";
@@ -12,6 +12,7 @@ import { isDemo } from "../../utils/demo";
 import { showFormError } from "../../utils/errors";
 import UserAvatar from "./UserAvatar";
 import "./ProfilePage.css";
+import { OrderStatusTag } from "../../utils/orderStatus";
 
 const MAX_AVATAR_SIZE = 5 * 1024 * 1024;
 const AVATAR_ACCEPT = ".jpg,.jpeg,.png,.webp,.gif";
@@ -22,15 +23,7 @@ type ProfileForm = {
   email: string;
 };
 
-const statusColor = (durum: string) => {
-  switch (durum) {
-    case "Ödendi": return "green";
-    case "Kargoda": return "blue";
-    case "Teslim Edildi": return "cyan";
-    case "Ödeme Başarısız": return "red";
-    default: return "orange";
-  }
-};
+
 
 const ProfilePage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
@@ -210,7 +203,7 @@ const ProfilePage: React.FC = () => {
             })}
           </span>
         </div>
-        <Tag color={statusColor(order.durum)}>{order.durum}</Tag>
+        <OrderStatusTag durum={order.durum} odemeAlindi={order.odemeAlindi} />
       </div>
     ),
     children: (

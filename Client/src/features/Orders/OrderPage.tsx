@@ -3,18 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { getMyOrders } from "./orderSlice";
 import { IOrder } from "../../model/IOrder";
-import { Spin, Tag } from "antd";
+import { Spin } from "antd";
 import "./Order.css";
+import { OrderStatusTag } from "../../utils/orderStatus";
 
-const statusColor = (durum: string) => {
-  switch (durum) {
-    case "Ödendi": return "green";
-    case "Kargoda": return "blue";
-    case "Teslim Edildi": return "cyan";
-    case "İptal": return "red";
-    default: return "orange";
-  }
-};
 
 const OrderPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -64,7 +56,7 @@ const OrderPage: React.FC = () => {
                       })}
                     </span>
                   </div>
-                  <Tag color={statusColor(order.durum)}>{order.durum}</Tag>
+                  <OrderStatusTag durum={order.durum} odemeAlindi={order.odemeAlindi} />
                 </div>
 
 
