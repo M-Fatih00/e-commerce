@@ -135,7 +135,7 @@ const Blogs = {
   getAll: () => requests.get("blogs"),
   getById: (id: number) => requests.get(`blogs/${id}`),
   create: (data: FormData) => requests.post("blogs", data),
-  update: (data: FormData) => requests.put("blogs", data),
+  update: (id: number, data: FormData) => requests.put(`blogs/${id}`, data),
   delete: (id: number) => requests.delete(`blogs/${id}`),
 };
 
