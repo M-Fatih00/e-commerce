@@ -198,6 +198,11 @@ const Dashboard = {
   get: () => requests.get("dashboard"),
 };
 
+const Contact = {
+  send: (data: { name: string; email: string; subject: string; message: string }) =>
+    requests.post("contact", data),
+};
+
 const Users = {
   list: () => requests.get("users"),
   addRole: (id: string, body: { role: string; password: string }) =>
@@ -253,4 +258,5 @@ export default {
   Coupon,
   Order,
   Users,
+  Contact,
 };
