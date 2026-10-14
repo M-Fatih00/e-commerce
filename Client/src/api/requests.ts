@@ -201,6 +201,9 @@ const Dashboard = {
 const Contact = {
   send: (data: { name: string; email: string; subject: string; message: string }) =>
     requests.post("contact", data),
+  getInfo: () => requests.get("contact-info"),
+  updateInfo: (data: { email: string; address: string; workingHours: string }) =>
+    requests.put("contact-info", data),
 };
 
 const Users = {

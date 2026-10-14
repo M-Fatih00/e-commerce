@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Alert, message } from "antd";
+import { useEffect, useState } from "react";
+import { Alert, Skeleton, message } from "antd";
+import { IContactInfo } from "../../model/IContactInfo";
 import { LockOutlined } from "@ant-design/icons";
 import requests from "../../api/requests";
 import { DEMO_MESSAGE, isDemo } from "../../utils/demo";
@@ -13,13 +14,29 @@ type ContactForm = {
   message: string;
 };
 
-const EMPTY_FORM: ContactForm = { name: "", email: "", subject: "", message: "" };
+const EMPTY_FORM: ContactForm = {
+  name: "",
+  email: "",
+  subject: "",
+  message: "",
+};
 
 function Contact() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState<ContactForm>(EMPTY_FORM);
+  const [info, setInfo] = useState<IContactInfo | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  useEffect(() => {
+    requests.Contact.getInfo()
+      .then(setInfo)
+      .catch(() => setInfo({ email: "", address: "", workingHours: "" }));
+  }, []);
+
+  const lines = (value?: string) => (value ?? "").split("\n").filter(Boolean);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
@@ -72,13 +89,16 @@ function Contact() {
           <h4>İletişim</h4>
           <h2>Bize Ulaşın</h2>
           <p>
-            Sipariş, iade ya da ürünlerle ilgili sorularınız için formu doldurun; en kısa sürede size dönüş
-            yapalım.
+            Sipariş, iade ya da ürünlerle ilgili sorularınız için formu
+            doldurun; en kısa sürede size dönüş yapalım.
           </p>
         </div>
 
         <div className="contact-elements">
-          <form className="contact-form animate-fade-in-up" onSubmit={handleSubmit}>
+          <form
+            className="contact-form animate-fade-in-up"
+            onSubmit={handleSubmit}
+          >
             {isDemo && (
               <Alert
                 className="contact-demo"
@@ -151,7 +171,11 @@ function Contact() {
               />
             </div>
 
-            <button className="btn btn-sm form-button" type="submit" disabled={loading || isDemo}>
+            <button
+              className="btn btn-sm form-button"
+              type="submit"
+              disabled={loading || isDemo}
+            >
               {isDemo ? (
                 <>
                   <LockOutlined /> Demo sürümünde kapalı
@@ -168,30 +192,49 @@ function Contact() {
             className="contact-info animate-fade-in-up animate-stagger"
             style={{ "--i": 1 } as React.CSSProperties}
           >
-            <div className="contact-info-item">
-              <i className="bi bi-envelope" aria-hidden="true" />
-              <div>
-                <strong>E-posta</strong>
-                <a href="mailto:destek@example.com">destek@example.com</a>
-              </div>
-            </div>
+            {!info ? (
+              [0, 1, 2].map((i) => (
+                <div className="contact-info-item" key={i}>
+                  <Skeleton active title={false} paragraph={{ rows: 2 }} />
+                </div>
+              ))
+            ) : (
+              <>
+                {info.email && (
+                  <div className="contact-info-item">
+                    <i className="bi bi-envelope" aria-hidden="true" />
+                    <div>
+                      <strong>E-posta</strong>
+                      <a href={`mailto:${info.email}`}>{info.email}</a>
+                    </div>
+                  </div>
+                )}
 
-            <div className="contact-info-item">
-              <i className="bi bi-clock" aria-hidden="true" />
-              <div>
-                <strong>Çalışma Saatleri</strong>
-                <p>Hafta içi 09:00 – 18:00</p>
-                <p>Hafta sonu kapalı</p>
-              </div>
-            </div>
+                {info.workingHours && (
+                  <div className="contact-info-item">
+                    <i className="bi bi-clock" aria-hidden="true" />
+                    <div>
+                      <strong>Çalışma Saatleri</strong>
+                      {lines(info.workingHours).map((line, index) => (
+                        <p key={index}>{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-            <div className="contact-info-item">
-              <i className="bi bi-geo-alt" aria-hidden="true" />
-              <div>
-                <strong>Adres</strong>
-                <p>İstanbul, Türkiye</p>
-              </div>
-            </div>
+                {info.address && (
+                  <div className="contact-info-item">
+                    <i className="bi bi-geo-alt" aria-hidden="true" />
+                    <div>
+                      <strong>Adres</strong>
+                      {lines(info.address).map((line, index) => (
+                        <p key={index}>{line}</p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </aside>
         </div>
       </div>

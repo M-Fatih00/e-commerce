@@ -4,7 +4,6 @@ import App from "../layouts/App";
 import MainLayout from "../layouts/MainLayout/MainLayout";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
 
-// Public Pages
 import HomePage from "../features/HomePage";
 import Contact from "../features/Contact/Contact";
 import BlogPage from "../features/Blogs/BlogPage";
@@ -21,8 +20,8 @@ import OrderFailed from "../features/Orders/OrderFailed";
 import ServerError from "../features/Errors/ServerError";
 import NotFound from "../features/Errors/NotFound";
 
-// Lazy Admin Pages
 const Dashboard = lazy(() => import("../features/Admin/Dashboard"));
+
 const ProductPageAdmin = lazy(() => import("../features/Admin/products/ProductPageAdmin"));
 const CreateProduct = lazy(() => import("../features/Admin/products/CreateProduct"));
 const UpdateProduct = lazy(() => import("../features/Admin/products/UpdateProduct"));
@@ -45,6 +44,7 @@ const UpdateCampaign = lazy(() => import("../features/Admin/campaigns/UpdateCamp
 
 const UserPage = lazy(() => import("../features/Admin/UserPage"));
 const OrderPageAdmin = lazy(() => import("../features/Admin/OrderPageAdmin"));
+const ContactInfoPage = lazy(() => import("../features/Admin/settings/ContactInfoPage"));
 
 export const router = createBrowserRouter([
   {
@@ -101,6 +101,7 @@ export const router = createBrowserRouter([
 
           { path: "users", element: <UserPage /> },
           { path: "orders", element: <OrderPageAdmin /> },
+          { path: "settings/contact", element: <ContactInfoPage /> },
 
           { path: "*", element: <Navigate to="/admin" replace /> },
         ],

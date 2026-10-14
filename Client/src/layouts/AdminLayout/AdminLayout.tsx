@@ -13,6 +13,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PictureOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet, Navigate } from "react-router-dom";
 import { ReactNode, Suspense, useEffect, useState } from "react";
@@ -76,6 +77,7 @@ const NAV: NavItem[] = [
   },
   { key: "users", label: "Kullanıcılar", icon: <UserOutlined />, path: "/admin/users" },
   { key: "orders", label: "Siparişler", icon: <ShoppingCartOutlined />, path: "/admin/orders" },
+  { key: "settings-contact", label: "İletişim Bilgileri", icon: <SettingOutlined />, path: "/admin/settings/contact" },
 ];
 
 const FLAT_LINKS: FlatLink[] = NAV.flatMap((item) =>
