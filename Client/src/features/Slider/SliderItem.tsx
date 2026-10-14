@@ -1,29 +1,25 @@
+import { Link } from "react-router-dom";
 import { getImageUrl } from "../../utils/image";
-
 
 interface SliderProps {
   imageSrc: string;
 }
 
-function SliderItem({imageSrc}: SliderProps) {
-
-
+function SliderItem({ imageSrc }: SliderProps) {
   return (
     <div className="slider-item fade">
       <div className="slider-image">
         <img src={getImageUrl(imageSrc)} className="img-fluid" alt="" />
       </div>
       <div className="container">
-        <p className="slider-title">SUMMER 2022</p>
-        <h2 className="slider-heading">Save up to 70%</h2>
-        <a href="#" className="btn btn-lg btn-primary">
-          Explore Now
-        </a>
+        <p className="slider-title">YENİ SEZON</p>
+        <h2 className="slider-heading">Yeni sezon ürünlerini keşfedin</h2>
+        <Link to="/shop" className="btn btn-lg btn-primary">
+          Alışverişe Başla
+        </Link>
       </div>
     </div>
   );
 }
 
 export default SliderItem;
-
- 
