@@ -127,7 +127,7 @@ const AdminLayout = () => {
 
   if (status !== "ready") return null;
   if (!user) return <Navigate to="/auth" replace />;
-  if (!roles.includes("Admin")) return <Navigate to="/not-found" replace />;
+  if (!roles?.includes("Admin")) return <Navigate to="/not-found" replace />;
 
   const siderWidth = collapsed ? 80 : 220;
   const breadcrumb = getBreadcrumb(location.pathname, activeLink);
