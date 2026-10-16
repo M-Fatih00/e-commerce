@@ -1,14 +1,13 @@
-import { useEffect, useState, useMemo } from "react";
+import { CSSProperties, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { fetchProducts, selectAllProducts } from "./catalog/catalogSlice";
-import {
-  fetchCategories,
-  selectAllCategories,
-} from "./Categories/categorySlice";
+import { fetchCategories, selectAllCategories } from "./Categories/categorySlice";
 import ProductItem from "./catalog/ProductItem";
 import { getImageUrl } from "../utils/image";
 import "./ShopPage.css";
-import { useSearchParams } from "react-router-dom";
+
+const MAX_STAGGER = 11;
 
 export default function ShopPage() {
   const dispatch = useAppDispatch();
@@ -19,20 +18,13 @@ export default function ShopPage() {
 
   const [searchParams] = useSearchParams();
 
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(
-    () => {
-      const cat = searchParams.get("category");
-      return cat ? parseInt(cat) : null;
-    },
-  );
+  const [selectedCategory, setSelectedCategory] = useState<number | null>(() => {
+    const category = searchParams.get("category");
+    return category ? parseInt(category) : null;
+  });
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("default");
-
-  // sayfa en başa otomatik gelmesi için useEffect
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
 
   useEffect(() => {
     if (!isProductsLoaded) dispatch(fetchProducts());
@@ -46,10 +38,9 @@ export default function ShopPage() {
       result = result.filter((p) => p.categoryId === selectedCategory);
     }
 
-    if (search.trim()) {
-      result = result.filter((p) =>
-        p.name.toLowerCase().includes(search.toLowerCase()),
-      );
+    const term = search.trim().toLocaleLowerCase("tr-TR");
+    if (term) {
+      result = result.filter((p) => p.name.toLocaleLowerCase("tr-TR").includes(term));
     }
 
     switch (sortBy) {
@@ -67,20 +58,18 @@ export default function ShopPage() {
     return result;
   }, [products, selectedCategory, search, sortBy]);
 
+  const gridKey = `${selectedCategory ?? "all"}-${sortBy}`;
+
   return (
     <div className="shop-page">
-      {/* ── Hero ── */}
       <div className="shop-hero">
         <div className="container">
-          <h1 className="shop-hero-title">Shop</h1>
-          <p className="shop-hero-sub">
-            {filteredProducts.length} ürün listeleniyor
-          </p>
+          <h1 className="shop-hero-title">Mağaza</h1>
+          <p className="shop-hero-sub">{filteredProducts.length} ürün listeleniyor</p>
         </div>
       </div>
 
       <div className="container">
-        {/* ── Kategoriler ── */}
         <div className="shop-categories">
           <button
             className={`shop-cat-btn ${selectedCategory === null ? "active" : ""}`}
@@ -92,38 +81,27 @@ export default function ShopPage() {
             <button
               key={cat.id}
               className={`shop-cat-btn ${selectedCategory === cat.id ? "active" : ""}`}
-              onClick={() =>
-                setSelectedCategory(selectedCategory === cat.id ? null : cat.id)
-              }
+              onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
             >
-              {cat.imageUrl && (
-                <img
-                  src={getImageUrl(cat.imageUrl)}
-                  alt={cat.name}
-                  className="shop-cat-img"
-                />
-              )}
+              {cat.imageUrl && <img src={getImageUrl(cat.imageUrl)} alt="" className="shop-cat-img" />}
               {cat.name}
             </button>
           ))}
         </div>
 
-        {/* ── Arama + Sıralama ── */}
         <div className="shop-toolbar">
           <div className="shop-search">
-            <i className="bi bi-search shop-search-icon" />
+            <i className="bi bi-search shop-search-icon" aria-hidden="true" />
             <input
               type="text"
               placeholder="Ürün ara..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="shop-search-input"
+              aria-label="Ürün ara"
             />
             {search && (
-              <button
-                className="shop-search-clear"
-                onClick={() => setSearch("")}
-              >
+              <button className="shop-search-clear" onClick={() => setSearch("")} aria-label="Aramayı temizle">
                 <i className="bi bi-x" />
               </button>
             )}
@@ -133,6 +111,7 @@ export default function ShopPage() {
             className="shop-sort"
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
+            aria-label="Sıralama"
           >
             <option value="default">Varsayılan Sıralama</option>
             <option value="price-asc">Fiyat: Düşükten Yükseğe</option>
@@ -141,10 +120,9 @@ export default function ShopPage() {
           </select>
         </div>
 
-        {/* ── Ürün Grid ── */}
         {filteredProducts.length === 0 ? (
-          <div className="shop-empty">
-            <i className="bi bi-bag-x shop-empty-icon" />
+          <div className="shop-empty animate-fade-in">
+            <i className="bi bi-bag-x shop-empty-icon" aria-hidden="true" />
             <p>Ürün bulunamadı.</p>
             <button
               className="shop-empty-reset"
@@ -157,9 +135,15 @@ export default function ShopPage() {
             </button>
           </div>
         ) : (
-          <div className="shop-grid">
-            {filteredProducts.map((product) => (
-              <ProductItem key={product.id} productItem={product as any} />
+          <div className="shop-grid" key={gridKey}>
+            {filteredProducts.map((product, index) => (
+              <div
+                key={product.id}
+                className="animate-fade-in-up animate-stagger"
+                style={{ "--i": Math.min(index, MAX_STAGGER) } as CSSProperties}
+              >
+                <ProductItem productItem={product as any} />
+              </div>
             ))}
           </div>
         )}
