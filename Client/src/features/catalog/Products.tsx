@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import ProductItem from "./ProductItem";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { fetchProducts, selectAllProducts } from "./catalogSlice";
+import Reveal from "../../components/Reveal";
 import "./Products.css";
 
 type ArrowProps = {
@@ -62,10 +63,10 @@ function Products() {
 
   return (
     <section className="products">
-      <div className="container">
+      <Reveal className="container">
         <div className="section-title">
-          <h2>Featured Products</h2>
-          <p>Summer Collection New Morden Design</p>
+          <h2>Öne Çıkan Ürünler</h2>
+          <p>Sezonun en çok tercih edilen parçaları</p>
         </div>
         <div className="product-wrapper product-carousel">
           <Slider {...sliderSettings}>
@@ -74,7 +75,7 @@ function Products() {
             ))}
           </Slider>
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }
