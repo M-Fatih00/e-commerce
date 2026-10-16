@@ -28,3 +28,10 @@ Client/dist-ssr/
 
 API/wwwroot/img/avatars/
 API/wwwroot/img/**/*-*-*-*-*.*
+
+
+API/wwwroot/assets/
+API/wwwroot/index.html
+API/wwwroot/uploads/
+API/wwwroot/vite.svg
+API/wwwroot/robots.txt
