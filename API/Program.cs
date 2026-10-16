@@ -208,14 +208,20 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseStaticFiles();
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx => ApplyCacheHeaders(ctx.Context)
+});
 app.UseRouting();
 app.UseCors();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-app.MapFallbackToFile("index.html");
+app.MapFallbackToFile("index.html", new StaticFileOptions
+{
+    OnPrepareResponse = ctx => ApplyCacheHeaders(ctx.Context)
+});
 
 using (var scope = app.Services.CreateScope())
 {
@@ -229,3 +235,12 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.Run();
+
+static void ApplyCacheHeaders(HttpContext context)
+{
+    var path = context.Request.Path.Value ?? string.Empty;
+
+    context.Response.Headers.CacheControl = path.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase)
+        ? "public, max-age=31536000, immutable"
+        : "no-cache";
+}
