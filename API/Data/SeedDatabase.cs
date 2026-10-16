@@ -37,7 +37,8 @@ public static class SeedDatabase
 
             var createResult = await userManager.CreateAsync(user, password);
             if (!createResult.Succeeded)
-                throw new InvalidOperationException($"{userName} oluşturulamadı: {string.Join(" ", createResult.Errors.Select(e => e.Description))}");
+                throw new InvalidOperationException(
+                    $"{userName} oluşturulamadı: {string.Join(" ", createResult.Errors.Select(e => e.Description))}");
 
             var roleResult = await userManager.AddToRoleAsync(user, role);
             if (!roleResult.Succeeded)
@@ -46,14 +47,6 @@ public static class SeedDatabase
 
         if (user.LockoutEnabled == demoEnabled)
             await userManager.SetLockoutEnabledAsync(user, !demoEnabled);
-
-        if (demoEnabled && !string.IsNullOrWhiteSpace(password) && !await userManager.CheckPasswordAsync(user, password))
-        {
-            var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
-            var resetResult = await userManager.ResetPasswordAsync(user, resetToken, password);
-            if (!resetResult.Succeeded)
-                throw new InvalidOperationException($"{userName} şifresi güncellenemedi.");
-        }
 
         if (demoEnabled && !string.IsNullOrWhiteSpace(password) && !await userManager.CheckPasswordAsync(user, password))
         {

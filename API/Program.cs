@@ -247,6 +247,8 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
 
     await SeedDatabase.SeedRolesAndUsers(userManager, roleManager, app.Configuration);
+    
+    await DemoDataSeeder.SeedAsync(context, userManager, app.Configuration);
 }
 
 app.Run();
