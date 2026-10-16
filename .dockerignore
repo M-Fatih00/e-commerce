@@ -1,0 +1,10 @@
+.git
+**/node_modules
+Client/dist
+API/bin
+API/obj
+API/ecommerce.db*
+API/appsettings.Development.json
+API/wwwroot/assets
+API/wwwroot/index.html
+API/wwwroot/uploads
