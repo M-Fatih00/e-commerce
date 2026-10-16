@@ -112,7 +112,7 @@ export const authSlice = createSlice({
     builder.addCase(loginUser.fulfilled, (state, action) => {
       state.loginLoading = false;
       state.user = action.payload;
-      state.roles = action.payload.roles;
+      state.roles = action.payload?.roles ?? [];
       state.isAuthenticated = true;
       state.status = "ready";
     });
@@ -142,7 +142,7 @@ export const authSlice = createSlice({
     });
     builder.addCase(getUser.fulfilled, (state, action) => {
       state.user = action.payload;
-      state.roles = action.payload.roles;
+      state.roles = action.payload?.roles ?? [];
       state.isAuthenticated = true;
       state.status = "ready";
     });

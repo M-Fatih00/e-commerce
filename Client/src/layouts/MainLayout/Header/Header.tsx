@@ -261,10 +261,9 @@ function Header({ setIsSearchShow }: HeaderProps) {
               ></i>
             </div>
 
-            {/* HEADER RIGHT */}
+
             <div className="header-right">
               <div className="header-right-links">
-                {/* Giriş yapılmamışsa */}
                 {!user && (
                   <Link
                     to={"/auth"}
@@ -283,8 +282,8 @@ function Header({ setIsSearchShow }: HeaderProps) {
                   </Link>
                 )}
 
-                {/* Admin Paneli */}
-                {roles.includes("Admin") && (
+
+                {roles?.includes("Admin") && (
                   <button
                     className="header-admin-btn"
                     onClick={() => navigate("/admin")}
@@ -304,7 +303,6 @@ function Header({ setIsSearchShow }: HeaderProps) {
                   </button>
                 )}
 
-                {/* Avatar + isim → profil */}
                 {user && (
                   <Link
                     to="/profile"
@@ -352,7 +350,7 @@ function Header({ setIsSearchShow }: HeaderProps) {
                   </Link>
                 )}
 
-                {/* Çıkış */}
+
                 {user && (
                   <button
                     className="search-button"
@@ -367,10 +365,10 @@ function Header({ setIsSearchShow }: HeaderProps) {
                   </button>
                 )}
 
-                {/* Ayraç */}
+
                 <div style={{ width: 1, height: 20, background: "#dee0ea" }} />
 
-                {/* Arama */}
+
                 <button
                   className="search-button"
                   onClick={() => setIsSearchShow(true)}
@@ -379,7 +377,7 @@ function Header({ setIsSearchShow }: HeaderProps) {
                   <i className="bi bi-search" />
                 </button>
 
-                {/* Sepet */}
+
                 <div className="header-cart">
                   <Link to={"/cart"} className="header-cart-link">
                     <i className="bi bi-bag" />
