@@ -266,36 +266,84 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
 
 
         modelBuilder.Entity<Blog>().HasData(
-            new Blog
-            {
-                Id = 1,
-                Title = "The Best Products That Shape Fashion",
-                Description = "Fashion dünyasında öne çıkan ürünleri keşfedin.",
-                Img = "blogs/blog1.jpg",
-                CreatedDate = new DateTime(2026, 05, 07),
-                UpdatedDate = new DateTime(2026, 05, 07)
-            },
-            new Blog
-            {
-                Id = 2,
-                Title = "Modern Street Style Trends",
-                Description = "Sokak modasında yeni trendler ve kombin önerileri.",
-                Img = "blogs/blog2.jpg",
-                CreatedDate = new DateTime(2026, 05, 07),
-                UpdatedDate = new DateTime(2026, 05, 07)
-            },
-            new Blog
-            {
-                Id = 3,
-                Title = "Luxury Brands That Define Elegance",
-                Description = "Lüks markaların stil dünyasına etkisi.",
-                Img = "blogs/blog3.jpg",
-                CreatedDate = new DateTime(2026, 05, 07),
-                UpdatedDate = new DateTime(2026, 05, 07)
-            }
-        );
-
-
+    new Blog
+    {
+        Id = 1,
+        Title = "Modayı Şekillendiren Parçalar",
+        Img = "blogs/blog1.jpg",
+        CreatedDate = new DateTime(2026, 5, 7),
+        UpdatedDate = new DateTime(2026, 5, 7),
+        Description = """
+                    <p>Her sezon onlarca yeni trend gelip geçiyor, ama bazı parçalar dolabımızda yıllarca kalıyor. Bu parçaları özel kılan şey moda olmaları değil; doğru kesim, iyi kumaş ve her kombine uyum sağlayabilmeleri. Bu yazıda, gardırobunuzun temelini oluşturacak parçaları ve onları nasıl seçeceğinizi anlatıyoruz.</p>
+                    <h2>1. İyi kesimli bir ceket</h2>
+                    <p>Omuz çizgisi tam oturan bir ceket, en sade kombini bile toparlar. Satın alırken önce omuzlara bakın: dikiş, omuz kemiğinizin bittiği noktada olmalı. Kol boyu bileği hafifçe geçmeli, gömlek manşeti 1-2 cm görünebilmeli.</p>
+                    <h2>2. Yüksek bel pantolon</h2>
+                    <p>Yüksek bel kesim bacakları daha uzun gösterir ve hem tişörtle hem de gömlekle rahatça kombinlenir. <strong>Pamuk ağırlıklı, az miktarda elastan içeren</strong> kumaşlar gün boyu formunu korur ve hareket rahatlığı sağlar.</p>
+                    <h2>3. Sade, kaliteli bir tişört</h2>
+                    <p>Beyaz, siyah ya da gri bir tişört; ceketin altında, pantolonla ya da etekle aynı başarıyı gösterir. Kumaşın kalınlığına dikkat edin: biraz daha kalın gramajlı tişörtler yıkamadan sonra şeklini daha uzun korur.</p>
+                    <h2>4. Kombini tamamlayan aksesuarlar</h2>
+                    <p>Bir saat, ince bir kemer ya da sezona uygun bir bere; aynı kıyafeti bambaşka bir havaya sokabilir. Aksesuarda kural basit: kombinde tek bir dikkat çekici parça yeterli.</p>
+                    <blockquote>Stil, ne kadar çok parçanız olduğuyla değil, elinizdeki parçaları ne kadar iyi kullandığınızla ilgilidir.</blockquote>
+                    <h3>Alışverişten önce kısa bir kontrol listesi</h3>
+                    <ul>
+                        <li>Bu parçayla dolabımdaki en az üç ürünü kombinleyebilir miyim?</li>
+                        <li>Kumaş içeriği ve bakım talimatları bana uygun mu?</li>
+                        <li>Kesim vücuduma oturuyor mu, yoksa terziye mi ihtiyaç var?</li>
+                    </ul>
+                    <p>Az ama doğru seçilmiş parçalarla kurulan bir gardırop, hem zamandan hem bütçeden tasarruf ettirir. Yeni sezon ürünlerimize göz atarken bu listeyi aklınızda tutmanızı öneririz.</p>
+                    """
+    },
+    new Blog
+    {
+        Id = 2,
+        Title = "Modern Sokak Stili Trendleri",
+        Img = "blogs/blog2.jpg",
+        CreatedDate = new DateTime(2026, 6, 18),
+        UpdatedDate = new DateTime(2026, 6, 18),
+        Description = """
+                    <p>Sokak stili artık podyumlardan ilham almıyor; tam tersine, podyumlar sokaktan ilham alıyor. Rahatlık ve kişisel ifade bu akımın merkezinde. Bu sezon öne çıkan sokak stili trendlerini ve onları günlük hayata nasıl taşıyabileceğinizi derledik.</p>
+                    <h2>Bol kesimler geri döndü</h2>
+                    <p>Geniş paça pantolonlar, omuzdan düşük tişörtler ve oversize ceketler sezonun en çok tercih edilen parçaları arasında. Bol bir parçayı dengelemenin en kolay yolu, kombinin geri kalanını daha oturan seçmek: <em>oversize bir ceketin altına düz bir pantolon</em> gibi.</p>
+                    <h2>Katmanlı giyim</h2>
+                    <p>İnce bir tişört, üzerine açık gömlek, en üstte hafif bir ceket… Katmanlı giyim hem mevsim geçişlerinde pratik hem de kombine derinlik katıyor. Katmanlarda renkleri aynı ton ailesinden seçmek, görünümün dağınık durmasını engeller.</p>
+                    <h2>Nötr renkler, tek bir vurgu</h2>
+                    <p>Sezonun renk paletine bej, haki, gri ve siyah hâkim. Bu sakin tabanın üzerine tek bir canlı renk, örneğin kırmızı bir bere ya da çanta, eklemek kombini bir anda öne çıkarıyor.</p>
+                    <blockquote>Sokak stilinin tek kuralı var: kendiniz gibi hissetmek.</blockquote>
+                    <h3>Bu sezon denemeniz gereken üç kombin</h3>
+                    <ul>
+                        <li><strong>Günlük:</strong> beyaz tişört, yüksek bel kot, spor ayakkabı ve ince bir zincir kolye</li>
+                        <li><strong>Hafta sonu:</strong> oversize sweatshirt, kargo pantolon ve renkli bir bere</li>
+                        <li><strong>Akşam:</strong> siyah boğazlı kazak, düz kesim pantolon ve deri ceket</li>
+                    </ul>
+                    <p>Trendleri birebir kopyalamak yerine, size en çok uyan bir-iki fikri seçip kendi tarzınıza eklemeyi deneyin. Sokak stili zaten tam olarak bu: kişisel yorum.</p>
+                    """
+    },
+    new Blog
+    {
+        Id = 3,
+        Title = "Zarafetin Tanımı: Lüks Markalar",
+        Img = "blogs/blog3.jpg",
+        CreatedDate = new DateTime(2026, 8, 3),
+        UpdatedDate = new DateTime(2026, 8, 3),
+        Description = """
+                    <p>Lüks denildiğinde akla ilk gelen yüksek fiyatlar olsa da, köklü moda evlerini gerçekten ayıran şey fiyat değil; işçilik, malzeme ve zamansız tasarım anlayışı. Peki bu anlayışı kendi gardırobumuza nasıl taşıyabiliriz?</p>
+                    <h2>İşçilik ayrıntıda gizlidir</h2>
+                    <p>Düzgün ve sık dikişler, birbirine denk gelen desenler, sağlam düğmeler ve temiz iç astarlar… İyi bir ürünü tanımak için etiketine değil, iç tarafına bakın. Ayrıntılara gösterilen özen, ürünün yıllarca kullanılıp kullanılamayacağını belirler.</p>
+                    <h2>Malzeme kaliteyi taşır</h2>
+                    <p>Yün, ipek, keten ve kaliteli pamuk gibi doğal lifler hem daha iyi nefes alır hem de zamanla daha güzel yaşlanır. Etikette <strong>kumaş içeriğini</strong> okumak, kaliteli bir alışverişin ilk adımıdır.</p>
+                    <h2>Zamansız tasarım</h2>
+                    <p>Lüks markaların en bilinen parçaları genellikle en sade olanlarıdır: iyi kesimli bir trençkot, klasik bir saat, yalın bir çanta. Bu parçalar bir sezonun trendine değil, yılların birikimine dayanır.</p>
+                    <blockquote>Gerçek zarafet dikkat çekmeye çalışmaz; fark edilir.</blockquote>
+                    <h3>Lüks hissini bütçeyi zorlamadan yakalamak</h3>
+                    <ul>
+                        <li>Çok sayıda trend parça yerine, az sayıda kaliteli temel parçaya yatırım yapın.</li>
+                        <li>Renk paletinizi sınırlı tutun; birbirine uyan parçalar daha şık görünür.</li>
+                        <li>Kıyafetlerinizin bakımını ihmal etmeyin: doğru yıkama ve ütü, bir parçanın ömrünü ikiye katlar.</li>
+                    </ul>
+                    <p>Zarafet bir marka adı değil, bir tercih biçimidir. Aldığınız her parçanın uzun süre sizinle kalacağını düşünerek seçim yaptığınızda, gardırobunuz da zamanla bu anlayışı yansıtacaktır.</p>
+                    """
+    }
+);
         modelBuilder.Entity<Coupon>().HasData(
             new Coupon { Id = 1, Code = "HOSGELDIN10", DiscountPercent = 10, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new Coupon { Id = 2, Code = "YAZA20", DiscountPercent = 20, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
