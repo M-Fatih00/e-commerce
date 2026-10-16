@@ -208,6 +208,21 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/assets"))
+    {
+        context.Response.OnStarting(() =>
+        {
+            if (context.Response.StatusCode == StatusCodes.Status404NotFound)
+                context.Response.Headers["Clear-Site-Data"] = "\"cache\"";
+            return Task.CompletedTask;
+        });
+    }
+
+    await next();
+});
+
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx => ApplyCacheHeaders(ctx.Context)

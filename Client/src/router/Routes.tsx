@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import { lazy } from "react";
+import { lazyPage } from "../utils/lazyPage";
 import App from "../layouts/App";
 import MainLayout from "../layouts/MainLayout/MainLayout";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
@@ -20,31 +20,31 @@ import OrderFailed from "../features/Orders/OrderFailed";
 import ServerError from "../features/Errors/ServerError";
 import NotFound from "../features/Errors/NotFound";
 
-const Dashboard = lazy(() => import("../features/Admin/Dashboard"));
+const Dashboard = lazyPage(() => import("../features/Admin/Dashboard"));
 
-const ProductPageAdmin = lazy(() => import("../features/Admin/products/ProductPageAdmin"));
-const CreateProduct = lazy(() => import("../features/Admin/products/CreateProduct"));
-const UpdateProduct = lazy(() => import("../features/Admin/products/UpdateProduct"));
+const ProductPageAdmin = lazyPage(() => import("../features/Admin/products/ProductPageAdmin"));
+const CreateProduct = lazyPage(() => import("../features/Admin/products/CreateProduct"));
+const UpdateProduct = lazyPage(() => import("../features/Admin/products/UpdateProduct"));
 
-const CategoryPageAdmin = lazy(() => import("../features/Admin/categories/CategoryPageAdmin"));
-const CreateCategory = lazy(() => import("../features/Admin/categories/CreateCategory"));
-const UpdateCategory = lazy(() => import("../features/Admin/categories/UpdateCategory"));
+const CategoryPageAdmin = lazyPage(() => import("../features/Admin/categories/CategoryPageAdmin"));
+const CreateCategory = lazyPage(() => import("../features/Admin/categories/CreateCategory"));
+const UpdateCategory = lazyPage(() => import("../features/Admin/categories/UpdateCategory"));
 
-const BlogPageAdmin = lazy(() => import("../features/Admin/blogs/BlogPageAdmin"));
-const CreateBlog = lazy(() => import("../features/Admin/blogs/CreateBlog"));
-const UpdateBlog = lazy(() => import("../features/Admin/blogs/UpdateBlog"));
+const BlogPageAdmin = lazyPage(() => import("../features/Admin/blogs/BlogPageAdmin"));
+const CreateBlog = lazyPage(() => import("../features/Admin/blogs/CreateBlog"));
+const UpdateBlog = lazyPage(() => import("../features/Admin/blogs/UpdateBlog"));
 
-const CouponPage = lazy(() => import("../features/Admin/coupons/CouponPage"));
-const CreateCoupon = lazy(() => import("../features/Admin/coupons/CreateCoupon"));
-const UpdateCoupon = lazy(() => import("../features/Admin/coupons/UpdateCoupon"));
+const CouponPage = lazyPage(() => import("../features/Admin/coupons/CouponPage"));
+const CreateCoupon = lazyPage(() => import("../features/Admin/coupons/CreateCoupon"));
+const UpdateCoupon = lazyPage(() => import("../features/Admin/coupons/UpdateCoupon"));
 
-const CampaignPageAdmin = lazy(() => import("../features/Admin/campaigns/CampaignPageAdmin"));
-const CreateCampaign = lazy(() => import("../features/Admin/campaigns/CreateCampaign"));
-const UpdateCampaign = lazy(() => import("../features/Admin/campaigns/UpdateCampaign"));
+const CampaignPageAdmin = lazyPage(() => import("../features/Admin/campaigns/CampaignPageAdmin"));
+const CreateCampaign = lazyPage(() => import("../features/Admin/campaigns/CreateCampaign"));
+const UpdateCampaign = lazyPage(() => import("../features/Admin/campaigns/UpdateCampaign"));
 
-const UserPage = lazy(() => import("../features/Admin/UserPage"));
-const OrderPageAdmin = lazy(() => import("../features/Admin/OrderPageAdmin"));
-const ContactInfoPage = lazy(() => import("../features/Admin/settings/ContactInfoPage"));
+const UserPage = lazyPage(() => import("../features/Admin/UserPage"));
+const OrderPageAdmin = lazyPage(() => import("../features/Admin/OrderPageAdmin"));
+const ContactInfoPage = lazyPage(() => import("../features/Admin/settings/ContactInfoPage"));
 
 export const router = createBrowserRouter([
   {
