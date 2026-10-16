@@ -464,7 +464,7 @@ public class OrderController : ControllerBase
         if (newStatus == Cancelled && order.Durum == Pending && !await TryCloseCheckoutSession(order))
             return "Bu siparişin ödemesi tamamlanmış görünüyor. Sayfayı yenileyip tekrar deneyin.";
 
-        if (newStatus == Cancelled && order.Durum == Paid)
+        if (newStatus == Cancelled && order.Durum == Paid && !DemoDataSeeder.IsDemoPayment(order.IyzicoPaymentId))
         {
             try
             {
@@ -505,7 +505,7 @@ public class OrderController : ControllerBase
 
     private async Task<bool> TryCloseCheckoutSession(Order order)
     {
-        if (string.IsNullOrEmpty(order.IyzicoToken)) return true;
+        if (string.IsNullOrEmpty(order.IyzicoToken) || DemoDataSeeder.IsDemoPayment(order.IyzicoToken)) return true;
 
         var service = new SessionService();
         try
