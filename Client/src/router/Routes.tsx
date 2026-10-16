@@ -4,7 +4,6 @@ import App from "../layouts/App";
 import MainLayout from "../layouts/MainLayout/MainLayout";
 import AdminLayout from "../layouts/AdminLayout/AdminLayout";
 
-// Public Pages
 import HomePage from "../features/HomePage";
 import Contact from "../features/Contact/Contact";
 import BlogPage from "../features/Blogs/BlogPage";
@@ -21,8 +20,8 @@ import OrderFailed from "../features/Orders/OrderFailed";
 import ServerError from "../features/Errors/ServerError";
 import NotFound from "../features/Errors/NotFound";
 
-// Lazy Admin Pages
 const Dashboard = lazy(() => import("../features/Admin/Dashboard"));
+
 const ProductPageAdmin = lazy(() => import("../features/Admin/products/ProductPageAdmin"));
 const CreateProduct = lazy(() => import("../features/Admin/products/CreateProduct"));
 const UpdateProduct = lazy(() => import("../features/Admin/products/UpdateProduct"));
@@ -35,16 +34,17 @@ const BlogPageAdmin = lazy(() => import("../features/Admin/blogs/BlogPageAdmin")
 const CreateBlog = lazy(() => import("../features/Admin/blogs/CreateBlog"));
 const UpdateBlog = lazy(() => import("../features/Admin/blogs/UpdateBlog"));
 
-const CouponPage = lazy(() => import("../features/Coupon/CouponPage"));
-const CreateCoupon = lazy(() => import("../features/Coupon/CreateCoupon"));
-const UpdateCoupon = lazy(() => import("../features/Coupon/UpdateCoupon"));
+const CouponPage = lazy(() => import("../features/Admin/coupons/CouponPage"));
+const CreateCoupon = lazy(() => import("../features/Admin/coupons/CreateCoupon"));
+const UpdateCoupon = lazy(() => import("../features/Admin/coupons/UpdateCoupon"));
 
-const CampaignPageAdmin = lazy(() => import("../features/Admin/Campaigns/CampaignPageAdmin"));
-const CreateCampaign = lazy(() => import("../features/Admin/Campaigns/CreateCampaign"));
-const UpdateCampaign = lazy(() => import("../features/Admin/Campaigns/UpdateCampaign"));
+const CampaignPageAdmin = lazy(() => import("../features/Admin/campaigns/CampaignPageAdmin"));
+const CreateCampaign = lazy(() => import("../features/Admin/campaigns/CreateCampaign"));
+const UpdateCampaign = lazy(() => import("../features/Admin/campaigns/UpdateCampaign"));
 
 const UserPage = lazy(() => import("../features/Admin/UserPage"));
 const OrderPageAdmin = lazy(() => import("../features/Admin/OrderPageAdmin"));
+const ContactInfoPage = lazy(() => import("../features/Admin/settings/ContactInfoPage"));
 
 export const router = createBrowserRouter([
   {
@@ -101,6 +101,7 @@ export const router = createBrowserRouter([
 
           { path: "users", element: <UserPage /> },
           { path: "orders", element: <OrderPageAdmin /> },
+          { path: "settings/contact", element: <ContactInfoPage /> },
 
           { path: "*", element: <Navigate to="/admin" replace /> },
         ],

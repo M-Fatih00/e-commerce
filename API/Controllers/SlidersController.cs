@@ -1,167 +1,150 @@
 using API.Data;
 using API.DTO;
 using API.Entity;
+using API.Filters;
+using API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/[controller]")]
 public class SlidersController : ControllerBase
 {
+    private const int MaxSliders = 10;
+    private const string Folder = "slider";
+    private const long UploadRequestLimit = ImageValidator.MaxSize + 1024 * 1024;
+
     private readonly DataContext _context;
-    public SlidersController(DataContext context)
+    private readonly UploadStorage _storage;
+
+    public SlidersController(DataContext context, UploadStorage storage)
     {
         _context = context;
+        _storage = storage;
     }
 
+    [AllowAnonymous]
+    [HttpGet]
+    public async Task<IActionResult> GetSlidersToUI()
+    {
+        var sliders = await _context.Sliders
+            .AsNoTracking()
+            .Where(s => s.Aktif)
+            .OrderBy(s => s.Index)
+            .Select(s => new ListSliderDTO { Id = s.Id, Index = s.Index, Resim = s.Resim, Aktif = s.Aktif })
+            .ToListAsync();
+
+        return Ok(sliders);
+    }
 
     [HttpGet("all-sliders")]
     public async Task<IActionResult> GetSlidersAdmin()
     {
         var sliders = await _context.Sliders
-        .OrderBy(i => i.Index)
-        .Select(s => SliderToDTO(s)).ToListAsync();
+            .AsNoTracking()
+            .OrderBy(s => s.Index)
+            .Select(s => new ListSliderDTO { Id = s.Id, Index = s.Index, Resim = s.Resim, Aktif = s.Aktif })
+            .ToListAsync();
 
         return Ok(sliders);
     }
-
-    [HttpGet]
-    public async Task<IActionResult> GetSlidersToUI()
-    {
-        var sliders = await _context.Sliders
-        .Where(i => i.Aktif)
-        .OrderBy(i => i.Index)
-        .Select(s => SliderToDTO(s)).ToListAsync();
-
-        return Ok(sliders);
-    }
-
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> GetSlider(int? id)
+    public async Task<IActionResult> GetSlider(int id)
     {
-        if (id == null)
-            return NotFound();
-
         var slider = await _context.Sliders
-                .Where(s => s.Id == id)
-                .Select(s => SliderToDTO(s))
-                .FirstOrDefaultAsync();
+            .AsNoTracking()
+            .Where(s => s.Id == id)
+            .Select(s => new ListSliderDTO { Id = s.Id, Index = s.Index, Resim = s.Resim, Aktif = s.Aktif })
+            .FirstOrDefaultAsync();
 
         if (slider == null)
-            return NotFound();
+            return NotFound(new { message = "Slider bulunamadı." });
 
         return Ok(slider);
     }
 
-
     [HttpPost]
-    public async Task<IActionResult> CeateSlider([FromForm] CreateSliderDTO dto)
+    [DemoDisabled]
+    [RequestSizeLimit(UploadRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = UploadRequestLimit)]
+    public async Task<IActionResult> CreateSlider([FromForm] CreateSliderDTO dto)
     {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Resim.FileName);
+        if (await _context.Sliders.CountAsync() >= MaxSliders)
+            return BadRequest(new { message = $"En fazla {MaxSliders} slider eklenebilir." });
 
-        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/", fileName);
-
-        using (var stream = new FileStream(path, FileMode.Create))
-        {
-            await dto.Resim.CopyToAsync(stream);
-        }
+        var (extension, imageError) = await ImageValidator.ValidateAsync(dto.Resim);
+        if (imageError != null)
+            return BadRequest(new { message = imageError });
 
         var slider = new Slider
         {
             Index = dto.Index,
             Aktif = dto.Aktif,
-            Resim = fileName
+            Resim = await _storage.SaveAsync(dto.Resim!, extension!, Folder)
         };
 
         _context.Sliders.Add(slider);
         await _context.SaveChangesAsync();
 
-        return Ok(slider);
+        return Ok(new ListSliderDTO { Id = slider.Id, Index = slider.Index, Resim = slider.Resim, Aktif = slider.Aktif });
     }
 
-
-    [HttpPut]
+    [HttpPut("{id}")]
+    [DemoDisabled]
+    [RequestSizeLimit(UploadRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = UploadRequestLimit)]
     public async Task<IActionResult> UpdateSlider(int id, [FromForm] UpdateSliderDTO dto)
     {
-        if (id != dto.Id) return NotFound("ID Eşleşmmiyor");
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
         var slider = await _context.Sliders.FindAsync(id);
-        if (slider == null) return NotFound();
+        if (slider == null)
+            return NotFound(new { message = "Slider bulunamadı." });
+
+        string? oldImage = null;
+        if (dto.Resim != null)
+        {
+            var (extension, imageError) = await ImageValidator.ValidateAsync(dto.Resim);
+            if (imageError != null)
+                return BadRequest(new { message = imageError });
+
+            oldImage = slider.Resim;
+            slider.Resim = await _storage.SaveAsync(dto.Resim, extension!, Folder);
+        }
 
         slider.Index = dto.Index;
         slider.Aktif = dto.Aktif;
 
-        if (dto.Resim != null && dto.Resim.Length > 0)
-        {
-            var oldPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/", slider.Resim);
-            if (System.IO.File.Exists(oldPath))
-            {
-                System.IO.File.Delete(oldPath);
-            }
-
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Resim.FileName);
-            var newPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/", fileName);
-
-            using (var stream = new FileStream(newPath, FileMode.Create))
-            {
-                await dto.Resim.CopyToAsync(stream);
-            }
-
-            slider.Resim = fileName;
-        }
-
-        _context.Sliders.Update(slider);
         await _context.SaveChangesAsync();
+        _storage.DeleteIfUpload(oldImage);
 
-        return Ok(slider);
+        return Ok(new ListSliderDTO { Id = slider.Id, Index = slider.Index, Resim = slider.Resim, Aktif = slider.Aktif });
     }
 
-
     [HttpDelete("{id}")]
+    [DemoDisabled]
     public async Task<IActionResult> DeleteSlider(int id)
     {
         var slider = await _context.Sliders.FindAsync(id);
-
         if (slider == null)
-        {
-            return NotFound(new { Message = "Silinmek istenen slider bulunamadı." });
-        }
+            return NotFound(new { message = "Slider bulunamadı." });
 
-        if (!string.IsNullOrEmpty(slider.Resim))
-        {
-            var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/", slider.Resim);
-
-            if (System.IO.File.Exists(filePath))
-            {
-                System.IO.File.Delete(filePath);
-            }
-        }
+        var image = slider.Resim;
 
         _context.Sliders.Remove(slider);
         await _context.SaveChangesAsync();
 
-        return Ok(new { Message = "Slider başarıyla silindi." });
+        _storage.DeleteIfUpload(image);
+
+        return Ok(new { message = "Slider silindi." });
     }
-
-
-
-    private static ListSliderDTO SliderToDTO(Slider s)
-    {
-        var dto = new ListSliderDTO();
-
-        if (s != null)
-        {
-            dto.Id = s.Id;
-            dto.Resim = s.Resim;
-            dto.Index = s.Index;
-            dto.Aktif = s.Aktif;
-        }
-
-        return dto;
-    }
-
 }

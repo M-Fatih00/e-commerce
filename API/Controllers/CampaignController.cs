@@ -1,45 +1,39 @@
 using API.Data;
 using API.DTO;
 using API.Entity;
+using API.Filters;
+using API.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/[controller]")]
 public class CampaignController : ControllerBase
 {
+    private const int MaxCampaigns = 4;
+    private const string Folder = "campaigns";
+    private const long UploadRequestLimit = ImageValidator.MaxSize + 1024 * 1024;
+
     private readonly DataContext _context;
-    public CampaignController(DataContext context)
+    private readonly UploadStorage _storage;
+
+    public CampaignController(DataContext context, UploadStorage storage)
     {
         _context = context;
+        _storage = storage;
     }
 
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> GetCampaigns()
     {
         var campaigns = await _context.Campaigns
-                    .OrderBy(c => c.Index)
-                    .Select(c => new ListCampaignDTO
-                    {
-                        Id = c.Id,
-                        ImageUrl = c.ImageUrl,
-                        Index = c.Index,
-                        CategoryId = c.CategoryId,
-                        Title = c.Title,
-                        Description = c.Description
-                    })
-                    .ToListAsync();
-
-        return Ok(campaigns);
-    }
-
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetCampaign(int id)
-    {
-        var campaign = await _context.Campaigns
-            .Where(c => c.Id == id)
+            .AsNoTracking()
+            .OrderBy(c => c.Index)
             .Select(c => new ListCampaignDTO
             {
                 Id = c.Id,
@@ -49,126 +43,119 @@ public class CampaignController : ControllerBase
                 Title = c.Title,
                 Description = c.Description
             })
-            .FirstOrDefaultAsync(x => x.Id == id);
+            .ToListAsync();
 
+        return Ok(campaigns);
+    }
+
+    [AllowAnonymous]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetCampaign(int id)
+    {
+        var campaign = await _context.Campaigns.AsNoTracking().FirstOrDefaultAsync(c => c.Id == id);
         if (campaign == null)
-            return NotFound(new { Message = "Kampanya bulunamadı." });
+            return NotFound(new { message = "Kampanya bulunamadı." });
 
-        return Ok(campaign);
+        return Ok(ToDTO(campaign));
     }
 
     [HttpPost]
+    [DemoDisabled]
+    [RequestSizeLimit(UploadRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = UploadRequestLimit)]
     public async Task<IActionResult> CreateCampaign([FromForm] CreateCampaignDTO dto)
     {
-        var count = await _context.Campaigns.CountAsync();
-        if (count >= 4)
-            return BadRequest(new { message = "Maksimum 4 kampanya ekleyebilirsiniz." });
-            
-        if (dto.Resim == null || dto.Resim.Length == 0)
-            return BadRequest("Resim seçilmedi");
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        var fileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Resim.FileName);
-        var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/campaigns", fileName);
+        if (await _context.Campaigns.CountAsync() >= MaxCampaigns)
+            return BadRequest(new { message = $"En fazla {MaxCampaigns} kampanya eklenebilir." });
 
-        using (var stream = new FileStream(path, FileMode.Create))
-        {
-            await dto.Resim.CopyToAsync(stream);
-        }
+        if (!await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId))
+            return BadRequest(new { message = "Kategori bulunamadı." });
+
+        var (extension, imageError) = await ImageValidator.ValidateAsync(dto.Resim);
+        if (imageError != null)
+            return BadRequest(new { message = imageError });
 
         var campaign = new Campaign
         {
-            Title = dto.Title,
-            Description = dto.Description,
+            Title = dto.Title.Trim(),
+            Description = dto.Description?.Trim(),
             CategoryId = dto.CategoryId,
             Index = dto.Index,
-            ImageUrl = "campaigns/" + fileName
+            ImageUrl = await _storage.SaveAsync(dto.Resim!, extension!, Folder)
         };
 
         _context.Campaigns.Add(campaign);
         await _context.SaveChangesAsync();
 
-        return Ok(CampaignToDTO(campaign));
+        return Ok(ToDTO(campaign));
     }
 
     [HttpPut("{id}")]
+    [DemoDisabled]
+    [RequestSizeLimit(UploadRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = UploadRequestLimit)]
     public async Task<IActionResult> UpdateCampaign(int id, [FromForm] UpdateCampaignDTO dto)
     {
-        if (id != dto.Id) return BadRequest("ID eşleşmiyor.");
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
         var campaign = await _context.Campaigns.FindAsync(id);
-        if (campaign == null) return NotFound("Güncellenmek istenen kampanya bulunamadı.");
+        if (campaign == null)
+            return NotFound(new { message = "Kampanya bulunamadı." });
 
-        campaign.Title = dto.Title;
-        campaign.Description = dto.Description;
+        if (!await _context.Categories.AnyAsync(c => c.Id == dto.CategoryId))
+            return BadRequest(new { message = "Kategori bulunamadı." });
+
+        string? oldImage = null;
+        if (dto.Resim != null)
+        {
+            var (extension, imageError) = await ImageValidator.ValidateAsync(dto.Resim);
+            if (imageError != null)
+                return BadRequest(new { message = imageError });
+
+            oldImage = campaign.ImageUrl;
+            campaign.ImageUrl = await _storage.SaveAsync(dto.Resim, extension!, Folder);
+        }
+
+        campaign.Title = dto.Title.Trim();
+        campaign.Description = dto.Description?.Trim();
         campaign.CategoryId = dto.CategoryId;
         campaign.Index = dto.Index;
 
-        if (dto.Resim != null && dto.Resim.Length > 0)
-        {
-            // Eski resmi sil
-            var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", campaign.ImageUrl);
-            if (System.IO.File.Exists(oldFilePath))
-                System.IO.File.Delete(oldFilePath);
+        await _context.SaveChangesAsync();
+        _storage.DeleteIfUpload(oldImage);
 
-            var fileName = Guid.NewGuid().ToString() + Path.GetExtension(dto.Resim.FileName);
-            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img/campaigns");
-
-            if (!Directory.Exists(folderPath)) Directory.CreateDirectory(folderPath);
-
-            var newPath = Path.Combine(folderPath, fileName);
-            using (var stream = new FileStream(newPath, FileMode.Create))
-            {
-                await dto.Resim.CopyToAsync(stream);
-            }
-
-            campaign.ImageUrl = "campaigns/" + fileName;
-        }
-
-        try
-        {
-            _context.Campaigns.Update(campaign);
-            await _context.SaveChangesAsync();
-        }
-        catch (Exception ex)
-        {
-            return BadRequest("Güncelleme sırasında bir hata oluştu: " + ex.Message);
-        }
-
-        return Ok(CampaignToDTO(campaign));
+        return Ok(ToDTO(campaign));
     }
 
     [HttpDelete("{id}")]
+    [DemoDisabled]
     public async Task<IActionResult> DeleteCampaign(int id)
     {
         var campaign = await _context.Campaigns.FindAsync(id);
         if (campaign == null)
-            return NotFound(new { Message = "Silinmek istenen kampanya bulunamadı." });
+            return NotFound(new { message = "Kampanya bulunamadı." });
 
-        var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/img", campaign.ImageUrl);
-        if (System.IO.File.Exists(filePath))
-        {
-            try { System.IO.File.Delete(filePath); }
-            catch (Exception ex) { Console.WriteLine("Dosya silinemedi: " + ex.Message); }
-        }
+        var image = campaign.ImageUrl;
 
         _context.Campaigns.Remove(campaign);
         await _context.SaveChangesAsync();
 
-        return Ok(new { Message = "Kampanya ve bağlı görsel başarıyla silindi." });
+        _storage.DeleteIfUpload(image);
+
+        return Ok(new { message = "Kampanya silindi." });
     }
 
-    private static ListCampaignDTO CampaignToDTO(Campaign c)
+    private static ListCampaignDTO ToDTO(Campaign c) => new()
     {
-        var dto = new ListCampaignDTO();
-        if (c != null)
-        {
-            dto.Id = c.Id;
-            dto.ImageUrl = c.ImageUrl;
-            dto.Index = c.Index;
-            dto.CategoryId = c.CategoryId;
-            dto.Title = c.Title;
-            dto.Description = c.Description;
-        }
-        return dto;
-    }
+        Id = c.Id,
+        ImageUrl = c.ImageUrl,
+        Index = c.Index,
+        CategoryId = c.CategoryId,
+        Title = c.Title,
+        Description = c.Description
+    };
 }

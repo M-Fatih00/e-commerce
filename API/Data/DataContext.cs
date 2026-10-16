@@ -21,6 +21,8 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
     public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<ProductColor> ProductColors => Set<ProductColor>();
     public DbSet<ProductSize> ProductSizes => Set<ProductSize>();
+    public DbSet<StoreContactInfo> ContactInfo => Set<StoreContactInfo>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -59,6 +61,8 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
         modelBuilder.Entity<Order>().Property(o => o.Toplam).HasConversion<double>();
 
         modelBuilder.Entity<OrderItem>().Property(o => o.Fiyat).HasConversion<double>();
+
+        modelBuilder.Entity<Order>().HasIndex(o => o.OrderNumber).IsUnique();
 
         // 1. Seed Category
         modelBuilder.Entity<Category>().HasData(
@@ -296,5 +300,14 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
             new Coupon { Id = 1, Code = "HOSGELDIN10", DiscountPercent = 10, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
             new Coupon { Id = 2, Code = "YAZA20", DiscountPercent = 20, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
         );
+
+        modelBuilder.Entity<StoreContactInfo>().HasData(new StoreContactInfo
+        {
+            Id = 1,
+            Email = "destek@example.com",
+            Address = "İstanbul, Türkiye",
+            WorkingHours = "Hafta içi 09:00 – 18:00\nHafta sonu kapalı",
+            UpdatedAt = new DateTime(2026, 1, 1)
+        });
     }
 }

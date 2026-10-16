@@ -1,12 +1,13 @@
 export interface IProductDetail {
   id: number;
   name: string;
-  description: string;
+  description: string | null;
 
   oldPrice: number;
   newPrice: number;
   discount: number;
 
+  categoryId: number;
   categoryName: string;
 
   images: string[];

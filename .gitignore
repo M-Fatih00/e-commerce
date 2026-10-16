@@ -25,3 +25,6 @@ Client/dist-ssr/
 .DS_Store
 *.suo
 *.sw?
+
+API/wwwroot/img/avatars/
+API/wwwroot/img/**/*-*-*-*-*.*

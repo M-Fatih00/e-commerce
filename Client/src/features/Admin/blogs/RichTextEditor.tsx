@@ -87,7 +87,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         overflow: "hidden",
       }}
     >
-      {/* Toolbar */}
+
       <div
         style={{
           display: "flex",
@@ -98,7 +98,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
           borderBottom: "1px solid #d9d9d9",
         }}
       >
-        {/* Kalınlık */}
+
         <ToolbarButton
           title="Kalın"
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -107,7 +107,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
           <b>B</b>
         </ToolbarButton>
 
-        {/* İtalik */}
+
         <ToolbarButton
           title="İtalik"
           onClick={() => editor.chain().focus().toggleItalic().run()}
@@ -116,7 +116,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
           <i>I</i>
         </ToolbarButton>
 
-        {/* Altı çizili */}
+
         <ToolbarButton
           title="Altı Çizili"
           onClick={() => editor.chain().focus().toggleUnderline().run()}
@@ -125,7 +125,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
           <u>U</u>
         </ToolbarButton>
 
-        {/* Üstü çizili */}
+
         <ToolbarButton
           title="Üstü Çizili"
           onClick={() => editor.chain().focus().toggleStrike().run()}
@@ -136,7 +136,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
 
         <div style={{ width: 1, background: "#d9d9d9", margin: "0 4px" }} />
 
-        {/* Başlıklar */}
+
         <ToolbarButton
           title="Başlık 1"
           onClick={() =>
@@ -167,7 +167,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
 
         <div style={{ width: 1, background: "#d9d9d9", margin: "0 4px" }} />
 
-        {/* Liste */}
+
         <ToolbarButton
           title="Madde İşaretli Liste"
           onClick={() => editor.chain().focus().toggleBulletList().run()}
@@ -185,7 +185,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
 
         <div style={{ width: 1, background: "#d9d9d9", margin: "0 4px" }} />
 
-        {/* Hizalama */}
+
         <ToolbarButton
           title="Sola Hizala"
           onClick={() => editor.chain().focus().setTextAlign("left").run()}
@@ -210,7 +210,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
 
         <div style={{ width: 1, background: "#d9d9d9", margin: "0 4px" }} />
 
-        {/* Renk seçici */}
+
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           <span style={{ fontSize: 12, color: "#666" }}>Renk:</span>
           <div style={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
@@ -238,7 +238,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
 
         <div style={{ width: 1, background: "#d9d9d9", margin: "0 4px" }} />
 
-        {/* Temizle */}
+
         <ToolbarButton
           title="Formatı Temizle"
           onClick={() => editor.chain().focus().unsetAllMarks().run()}
@@ -247,7 +247,7 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
         </ToolbarButton>
       </div>
 
-      {/* Editör alanı */}
+
       <EditorContent
         editor={editor}
         style={{

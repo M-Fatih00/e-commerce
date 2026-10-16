@@ -5,9 +5,12 @@ namespace API.Middlewares;
 
 public class ExceptionHandling
 {
+    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+
     private readonly RequestDelegate _next;
     private readonly ILogger<ExceptionHandling> _logger;
     private readonly IHostEnvironment _env;
+
     public ExceptionHandling(RequestDelegate next, ILogger<ExceptionHandling> logger, IHostEnvironment env)
     {
         _next = next;
@@ -23,20 +26,25 @@ public class ExceptionHandling
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, ex.Message);
-            context.Response.ContentType = "application/json";
-            context.Response.StatusCode = 500;
+            _logger.LogError(ex, "İşlenmeyen hata. {Method} {Path} TraceId: {TraceId}",
+                context.Request.Method, context.Request.Path, context.TraceIdentifier);
 
-            var response = new ProblemDetails
+            if (context.Response.HasStarted)
+                throw;
+
+            context.Response.Clear();
+            context.Response.ContentType = "application/problem+json";
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+
+            var problem = new ProblemDetails
             {
-                Status = 500,
-                Detail = _env.IsDevelopment() ? ex.StackTrace?.ToString() : null,
-                Title = _env.IsDevelopment() ? ex.Message : "Internal Server Error"
+                Status = StatusCodes.Status500InternalServerError,
+                Title = _env.IsDevelopment() ? ex.Message : "Sunucuda beklenmeyen bir hata oluştu.",
+                Detail = _env.IsDevelopment() ? ex.StackTrace : null
             };
+            problem.Extensions["traceId"] = context.TraceIdentifier;
 
-            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-            var json = JsonSerializer.Serialize(response, options);
-            await context.Response.WriteAsync(json);
+            await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
         }
     }
 }

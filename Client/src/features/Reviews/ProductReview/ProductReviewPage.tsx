@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { Rate, Spin } from "antd";
 import "./ProductReviews.css";
-import { AppDispatch, RootState } from "../../../store/store";
+import { useAppDispatch, useAppSelector } from "../../../store/store";
 import { getReviewsByProduct } from "./productReviewSlice";
 import ReviewItem from "./ProductReviewItem";
 import ReviewForm from "./ProductReviewForm";
@@ -11,46 +11,54 @@ interface ReviewPageProps {
   productId: number;
 }
 
-const ProductReviewPage: React.FC<ReviewPageProps> = ({
-  active,
-  productId,
-}) => {
-  const dispatch = useDispatch<AppDispatch>();
-
-  const { reviews, loading } = useSelector(
-    (state: RootState) => state.productReview
-  );
+const ProductReviewPage: React.FC<ReviewPageProps> = ({ active, productId }) => {
+  const dispatch = useAppDispatch();
+  const { reviews, loading } = useAppSelector((state) => state.productReview);
 
   useEffect(() => {
-    if (productId) {
-      dispatch(getReviewsByProduct(productId));
-    }
+    if (productId) dispatch(getReviewsByProduct(productId));
   }, [dispatch, productId]);
 
-  if (loading) return <p>Yükleniyor...</p>;
+  const average = reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
 
   return (
     <div className={`tab-panel-reviews ${active}`}>
-      {reviews.length > 0 ? (
-        <>
-          <h3>{reviews.length} reviews for this product</h3>
+      <div className="rv-wrapper">
+        <section>
+          {loading ? (
+            <div className="rv-loading">
+              <Spin />
+            </div>
+          ) : reviews.length > 0 ? (
+            <>
+              <div className="rv-summary">
+                <div className="rv-summary-score">
+                  {average.toLocaleString("tr-TR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                </div>
+                <div>
+                  <Rate disabled allowHalf value={Math.round(average * 2) / 2} style={{ fontSize: 14 }} />
+                  <div className="rv-muted">{reviews.length} değerlendirme</div>
+                </div>
+              </div>
 
-          <div className="comments" style={{ maxHeight: "500px", overflowY: "auto", paddingRight: "8px" }}>
-            <ol className="comment-list">
-              {reviews.map((review) => (
-                <ReviewItem key={review.id} reviewItem={review} />
-              ))}
-            </ol>
-          </div>
-        </>
-      ) : (
-        <h3>Hiç yorum yok...</h3>
-      )}
+              <ol className="rv-list">
+                {reviews.map((review) => (
+                  <ReviewItem key={review.id} reviewItem={review} />
+                ))}
+              </ol>
+            </>
+          ) : (
+            <div className="rv-empty">
+              <i className="bi bi-chat-square-text" />
+              Bu ürün için henüz yorum yok. İlk yorumu siz yazın.
+            </div>
+          )}
+        </section>
 
-      <div className="review-form-wrapper">
-        <h2>Add a review</h2>
-
-        <ReviewForm productId={productId} />
+        <aside className="rv-form-section">
+          <h3>Yorum Yaz</h3>
+          <ReviewForm productId={productId} />
+        </aside>
       </div>
     </div>
   );

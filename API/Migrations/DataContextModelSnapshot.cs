@@ -114,6 +114,64 @@ namespace API.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("API.Entity.Blog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Img")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedDate")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Blogs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            CreatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Fashion dünyasında öne çıkan ürünleri keşfedin.",
+                            Img = "blogs/blog1.jpg",
+                            Title = "The Best Products That Shape Fashion",
+                            UpdatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = 2,
+                            CreatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Sokak modasında yeni trendler ve kombin önerileri.",
+                            Img = "blogs/blog2.jpg",
+                            Title = "Modern Street Style Trends",
+                            UpdatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        },
+                        new
+                        {
+                            Id = 3,
+                            CreatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Description = "Lüks markaların stil dünyasına etkisi.",
+                            Img = "blogs/blog3.jpg",
+                            Title = "Luxury Brands That Define Elegance",
+                            UpdatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                        });
+                });
+
             modelBuilder.Entity("API.Entity.Campaign", b =>
                 {
                     b.Property<int>("Id")
@@ -377,6 +435,10 @@ namespace API.Migrations
                     b.Property<string>("KuponKodu")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("PostaKodu")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -407,6 +469,9 @@ namespace API.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique();
 
                     b.ToTable("Orders");
                 });
@@ -1118,61 +1183,39 @@ namespace API.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Blog", b =>
+            modelBuilder.Entity("API.Entity.StoreContactInfo", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
+                    b.Property<string>("Address")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Img")
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Title")
-                        .IsRequired()
+                    b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTime>("UpdatedDate")
+                    b.Property<string>("WorkingHours")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Blogs");
+                    b.ToTable("ContactInfo");
 
                     b.HasData(
                         new
                         {
                             Id = 1,
-                            CreatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Fashion dünyasında öne çıkan ürünleri keşfedin.",
-                            Img = "blogs/blog1.jpg",
-                            Title = "The Best Products That Shape Fashion",
-                            UpdatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Sokak modasında yeni trendler ve kombin önerileri.",
-                            Img = "blogs/blog2.jpg",
-                            Title = "Modern Street Style Trends",
-                            UpdatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Description = "Lüks markaların stil dünyasına etkisi.",
-                            Img = "blogs/blog3.jpg",
-                            Title = "Luxury Brands That Define Elegance",
-                            UpdatedDate = new DateTime(2026, 5, 7, 0, 0, 0, 0, DateTimeKind.Unspecified)
+                            Address = "İstanbul, Türkiye",
+                            Email = "destek@example.com",
+                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            WorkingHours = "Hafta içi 09:00 – 18:00\nHafta sonu kapalı"
                         });
                 });
 

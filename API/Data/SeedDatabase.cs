@@ -5,44 +5,62 @@ namespace API.Data;
 
 public static class SeedDatabase
 {
-    public static async Task SeedRolesAndUsers(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager)
+    public static async Task SeedRolesAndUsers(UserManager<AppUser> userManager, RoleManager<AppRole> roleManager, IConfiguration config)
     {
-        // Roller
         string[] roles = { "Admin", "Customer" };
         foreach (var roleName in roles)
         {
             if (!await roleManager.RoleExistsAsync(roleName))
-            {
                 await roleManager.CreateAsync(new AppRole { Name = roleName });
-            }
         }
 
-        // Admin kullanıcısı
-        if (await userManager.FindByEmailAsync("admin@gmail.com") == null)
-        {
-            var adminUser = new AppUser
-            {
-                FullName = "Admin User",
-                UserName = "admin",
-                Email = "admin@gmail.com",
-            };
+        var demoEnabled = config.GetValue("Demo:Enabled", false);
 
-            await userManager.CreateAsync(adminUser, "123456");
-            await userManager.AddToRoleAsync(adminUser, "Admin");
+        await EnsureUser(userManager, "admin", "admin@example.com", "Admin User", "Admin",
+            config["Seed:AdminPassword"], "Seed:AdminPassword", demoEnabled);
+
+        await EnsureUser(userManager, "customer", "customer@example.com", "Customer User", "Customer",
+            config["Seed:CustomerPassword"], "Seed:CustomerPassword", demoEnabled);
+    }
+
+    private static async Task EnsureUser(UserManager<AppUser> userManager, string userName, string email,
+        string fullName, string role, string? password, string passwordKey, bool demoEnabled)
+    {
+        var user = await userManager.FindByNameAsync(userName);
+
+        if (user == null)
+        {
+            if (string.IsNullOrWhiteSpace(password))
+                throw new InvalidOperationException($"{passwordKey} tanımlı değil.");
+
+            user = new AppUser { FullName = fullName, UserName = userName, Email = email };
+
+            var createResult = await userManager.CreateAsync(user, password);
+            if (!createResult.Succeeded)
+                throw new InvalidOperationException($"{userName} oluşturulamadı: {string.Join(" ", createResult.Errors.Select(e => e.Description))}");
+
+            var roleResult = await userManager.AddToRoleAsync(user, role);
+            if (!roleResult.Succeeded)
+                throw new InvalidOperationException($"{userName} için rol atanamadı.");
         }
 
-        // Customer kullanıcısı
-        if (await userManager.FindByEmailAsync("customer@gmail.com") == null)
-        {
-            var customerUser = new AppUser
-            {
-                FullName = "Customer User",
-                UserName = "customer",
-                Email = "customer@gmail.com",
-            };
+        if (user.LockoutEnabled == demoEnabled)
+            await userManager.SetLockoutEnabledAsync(user, !demoEnabled);
 
-            await userManager.CreateAsync(customerUser, "123456");
-            await userManager.AddToRoleAsync(customerUser, "Customer");
+        if (demoEnabled && !string.IsNullOrWhiteSpace(password) && !await userManager.CheckPasswordAsync(user, password))
+        {
+            var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+            var resetResult = await userManager.ResetPasswordAsync(user, resetToken, password);
+            if (!resetResult.Succeeded)
+                throw new InvalidOperationException($"{userName} şifresi güncellenemedi.");
+        }
+
+        if (demoEnabled && !string.IsNullOrWhiteSpace(password) && !await userManager.CheckPasswordAsync(user, password))
+        {
+            var resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+            var resetResult = await userManager.ResetPasswordAsync(user, resetToken, password);
+            if (!resetResult.Succeeded)
+                throw new InvalidOperationException($"{userName} şifresi güncellenemedi.");
         }
     }
 }

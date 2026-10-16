@@ -3,18 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { getMyOrders } from "./orderSlice";
 import { IOrder } from "../../model/IOrder";
-import { Spin, Tag } from "antd";
+import { Spin } from "antd";
 import "./Order.css";
+import { OrderStatusTag } from "../../utils/orderStatus";
 
-const statusColor = (durum: string) => {
-  switch (durum) {
-    case "Ödendi": return "green";
-    case "Kargoda": return "blue";
-    case "Teslim Edildi": return "cyan";
-    case "Ödeme Başarısız": return "red";
-    default: return "orange"; // Beklemede
-  }
-};
 
 const OrderPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -52,10 +44,10 @@ const OrderPage: React.FC = () => {
             {orders.map((order: IOrder) => (
               <div className="order-card" key={order.id}>
 
-                {/* Sipariş Başlık */}
+
                 <div className="order-card-header">
                   <div className="order-card-info">
-                    <span className="order-id">Sipariş #{order.id}</span>
+                    <span className="order-id">Sipariş {order.orderNumber}</span>
                     <span className="order-date">
                       {new Date(order.siparisTarihi).toLocaleDateString("tr-TR", {
                         day: "2-digit",
@@ -64,14 +56,17 @@ const OrderPage: React.FC = () => {
                       })}
                     </span>
                   </div>
-                  <Tag color={statusColor(order.durum)}>{order.durum}</Tag>
+                  <OrderStatusTag durum={order.durum} odemeAlindi={order.odemeAlindi} />
                 </div>
 
-                {/* Ürünler */}
+
                 <div className="order-card-items">
                   {order.orderItems.map((item) => (
                     <div className="order-card-item" key={item.id}>
-                      <span className="order-item-name">{item.urunAdi}</span>
+                      <span className="order-item-name">
+                        {item.urunAdi}
+                        {item.beden ? ` (${item.beden})` : ""}
+                      </span>
                       <span className="order-item-qty">x{item.miktar}</span>
                       <span className="order-item-price">
                         {(item.fiyat * item.miktar).toFixed(2)} ₺

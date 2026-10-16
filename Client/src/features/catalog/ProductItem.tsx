@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { IProductItem } from "../../model/IProduct";
 import { getImageUrl } from "../../utils/image";
+import { formatPrice } from "../../utils/format";
 import "./ProductItem.css";
 
 type Props = {
@@ -9,7 +10,7 @@ type Props = {
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <ul className="product-star">
+    <ul className="product-star" aria-label={`5 üzerinden ${rating.toFixed(1)} puan`}>
       {[1, 2, 3, 4, 5].map((star) => {
         const filled = rating >= star;
         const half = !filled && rating >= star - 0.5;
@@ -24,29 +25,18 @@ function StarRating({ rating }: { rating: number }) {
 }
 
 function ProductItem({ productItem }: Props) {
-  const mainImageUrl = getImageUrl(productItem.mainImage ?? "");
-  const hoverImageUrl = getImageUrl(productItem.hoverImage ?? "") || mainImageUrl;
-
-  const discountPrice =
-    productItem.newPrice - (productItem.newPrice * productItem.discount) / 100;
+  const mainImageUrl = getImageUrl(productItem.mainImage);
+  const hoverImageUrl = getImageUrl(productItem.hoverImage) || mainImageUrl;
+  const hasHoverImage = !!productItem.hoverImage && productItem.hoverImage !== productItem.mainImage;
+  const hasDiscount = productItem.oldPrice > productItem.newPrice;
 
   return (
     <div className="product-item glide__slide">
       <div className="product-image">
         <Link to={`/product/${productItem.id}`}>
-          <img
-            src={mainImageUrl}
-            alt={productItem.name}
-            className="img1"
-            loading="lazy"
-          />
-          {productItem.hoverImage && (
-            <img
-              src={hoverImageUrl}
-              alt={productItem.name}
-              className="img2"
-              loading="lazy"
-            />
+          <img src={mainImageUrl} alt={productItem.name} className="img1" loading="lazy" />
+          {hasHoverImage && (
+            <img src={hoverImageUrl} alt="" aria-hidden="true" className="img2" loading="lazy" />
           )}
         </Link>
       </div>
@@ -59,18 +49,11 @@ function ProductItem({ productItem }: Props) {
         <StarRating rating={productItem.averageRating ?? 0} />
 
         <div className="product-prices">
-          <strong className="new-price">${discountPrice.toFixed(2)}</strong>
-          <span className="old-price">${productItem.newPrice.toFixed(2)}</span>
+          <strong className="new-price">{formatPrice(productItem.newPrice)}</strong>
+          {hasDiscount && <span className="old-price">{formatPrice(productItem.oldPrice)}</span>}
         </div>
 
-        <span className="product-discount">-{productItem.discount}%</span>
-
-        <div className="product-links">
-          <button><i className="bi bi-basket-fill"></i></button>
-          <button><i className="bi bi-heart-fill"></i></button>
-          <a href="#"><i className="bi bi-eye-fill"></i></a>
-          <a href="#"><i className="bi bi-share-fill"></i></a>
-        </div>
+        {productItem.discount > 0 && <span className="product-discount">-%{productItem.discount}</span>}
       </div>
     </div>
   );

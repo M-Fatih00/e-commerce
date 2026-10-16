@@ -1,8 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace API.DTO;
 
 public class UpdateProductReviewDTO
 {
-    public int Id { get; set; }
+    [Required(ErrorMessage = "Yorum zorunludur.")]
+    [MaxLength(1000, ErrorMessage = "Yorum en fazla 1000 karakter olabilir.")]
     public string Text { get; set; } = string.Empty;
+
+    [Range(1, 5, ErrorMessage = "Puan 1 ile 5 arasında olmalıdır.")]
     public int Rating { get; set; }
 }

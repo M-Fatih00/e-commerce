@@ -1,10 +1,22 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace API.DTO;
 
 public class CreateCampaignDTO
 {
-    public int Index { get; set; }
+    [Required(ErrorMessage = "Başlık zorunludur.")]
+    [MaxLength(100, ErrorMessage = "Başlık en fazla 100 karakter olabilir.")]
     public string Title { get; set; } = null!;
+
+    [MaxLength(300, ErrorMessage = "Açıklama en fazla 300 karakter olabilir.")]
     public string? Description { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "Kategori seçin.")]
     public int CategoryId { get; set; }
-    public IFormFile Resim { get; set; } = null!;
+
+    [Range(0, 99, ErrorMessage = "Sıra 0 ile 99 arasında olmalıdır.")]
+    public int Index { get; set; }
+
+    [Required(ErrorMessage = "Görsel zorunludur.")]
+    public IFormFile? Resim { get; set; }
 }

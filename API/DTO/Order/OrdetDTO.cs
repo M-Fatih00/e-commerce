@@ -3,6 +3,7 @@ namespace API.DTO;
 public class OrderDTO
 {
     public int Id { get; set; }
+    public string OrderNumber { get; set; } = null!;
     public DateTime SiparisTarihi { get; set; }
     public string AdSoyad { get; set; } = null!;
     public string Username { get; set; } = null!;
@@ -12,16 +13,16 @@ public class OrderDTO
     public string Telefon { get; set; } = null!;
     public string SiparisNotu { get; set; } = "";
     public string Durum { get; set; } = null!;
+    public bool OdemeAlindi { get; set; }
     public decimal AraToplam { get; set; }
     public decimal KuponIndirimi { get; set; }
     public string? KuponKodu { get; set; }
     public decimal TeslimatUcreti { get; set; }
     public decimal Toplam { get; set; }
-    public string? IyzicoToken { get; set; }
     public string? StripeSessionUrl { get; set; }
     public List<OrderItemDTO> OrderItems { get; set; } = new();
 }
- 
+
 public class OrderItemDTO
 {
     public int Id { get; set; }
@@ -30,4 +31,5 @@ public class OrderItemDTO
     public string UrunResmi { get; set; } = null!;
     public decimal Fiyat { get; set; }
     public int Miktar { get; set; }
+    public string? Beden { get; set; }
 }

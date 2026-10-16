@@ -1,95 +1,85 @@
 import React, { useState } from "react";
-import { message } from "antd";
-import { useDispatch, useSelector } from "react-redux";
-import { createReview } from "./productReviewSlice";
-import { AppDispatch, RootState } from "../../../store/store";
+import { Input, Rate, message } from "antd";
+import { Link } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "../../../store/store";
+import { createReview, ReviewError } from "./productReviewSlice";
+
+const MAX_LENGTH = 1000;
 
 interface ReviewFormProps {
   productId: number;
 }
 
 const ReviewForm: React.FC<ReviewFormProps> = ({ productId }) => {
-  const [rating, setRating] = useState<number>(0);
-  const [review, setReview] = useState<string>("");
-  const dispatch = useDispatch<AppDispatch>();
+  const dispatch = useAppDispatch();
+  const user = useAppSelector((state) => state.auth.user);
+  const alreadyReviewed = useAppSelector((state) => state.productReview.reviews.some((r) => r.isMine));
 
-  const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [rating, setRating] = useState(0);
+  const [text, setText] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleRatingChange = (e: React.MouseEvent<HTMLAnchorElement>, newRating: number): void => {
+  if (!user) {
+    return (
+      <p className="rv-hint">
+        Yorum yapmak için <Link to="/auth">giriş yapın</Link>.
+      </p>
+    );
+  }
+
+  if (alreadyReviewed) {
+    return <p className="rv-hint">Bu ürüne yorum yaptınız. Yorumunuzu listeden düzenleyebilirsiniz.</p>;
+  }
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setRating(newRating);
-  };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
-    e.preventDefault();
-
-    if (rating === 0) {
-      message.warning("Lütfen bir puan seçiniz!");
+    if (!rating) {
+      message.warning("Lütfen bir puan seçin.");
+      return;
+    }
+    if (text.trim().length < 3) {
+      message.warning("Yorum en az 3 karakter olmalıdır.");
       return;
     }
 
-    if (!isAuthenticated || !user) {
-      message.error("Yorum yapmak için giriş yapmalısınız.");
-      return;
-    }
-
+    setSubmitting(true);
     try {
-      await dispatch(createReview({ productId, text: review, rating })).unwrap();
-      message.success("Yorum başarıyla eklendi.");
-      setReview("");
+      await dispatch(createReview({ productId, text: text.trim(), rating })).unwrap();
+      message.success("Yorumunuz eklendi.");
+      setText("");
       setRating(0);
-    } catch (error: any) {
-      message.error(
-        typeof error === "string"
-          ? error
-          : error?.message || "Yorum eklenirken bir hata oluştu."
-      );
+    } catch (error) {
+      const err = error as ReviewError;
+      if (err?.status === 400) message.error(err.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <>
-    <form className="comment-form" onSubmit={handleSubmit}>
-      <div className="comment-form-rating">
-        <label>
-          Your rating <span className="required">*</span>
-        </label>
-        <div className="stars">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <a
-              key={star}
-              href="#"
-              className={`star ${rating === star ? "active" : ""}`}
-              onClick={(e: React.MouseEvent<HTMLAnchorElement>) => handleRatingChange(e, star)}
-            >
-              {Array.from({ length: star }).map((_, i) => (
-                <i key={i} className="bi bi-star-fill"></i>
-              ))}
-            </a>
-          ))}
-        </div>
-      </div>
+    <form className="rv-form" onSubmit={handleSubmit}>
+      <span className="rv-label">Puanınız</span>
+      <Rate value={rating} onChange={setRating} />
 
-      <div className="comment-form-comment form-comment">
-        <label htmlFor="comment">
-          Your review <span className="required">*</span>
-        </label>
-        <textarea
-          id="comment"
-          cols={50}
-          rows={10}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReview(e.target.value)}
-          value={review}
-          required
-        />
-      </div>
+      <label htmlFor="review-text" className="rv-label">
+        Yorumunuz
+      </label>
+      <Input.TextArea
+        id="review-text"
+        rows={5}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        maxLength={MAX_LENGTH}
+        showCount
+        placeholder="Ürün hakkındaki düşüncelerinizi ya da sorunuzu yazın..."
+      />
 
-      <div className="form-submit">
-        <input type="submit" className="btn submit" value="Submit" />
-      </div>
+      <button type="submit" className="btn rv-submit" disabled={submitting}>
+        {submitting ? "Gönderiliyor..." : "Yorumu Gönder"}
+      </button>
     </form>
-    </>
-  )
+  );
 };
 
 export default ReviewForm;

@@ -1,4 +1,5 @@
 import { Layout, Menu, Dropdown, Spin } from "antd";
+import type { MenuProps } from "antd";
 import {
   UserOutlined,
   LaptopOutlined,
@@ -12,14 +13,89 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PictureOutlined,
+  SettingOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet, Navigate } from "react-router-dom";
+import { ReactNode, Suspense, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { logoutUser } from "../../features/Auth/authSlice";
-import { Suspense, useState } from "react";
 import UserAvatar from "../../features/Auth/UserAvatar";
 
 const { Sider, Content, Header } = Layout;
+
+type NavLink = { key: string; label: string; path: string };
+type NavGroup = { key: string; label: string; icon: ReactNode; children: NavLink[] };
+type NavItem = (NavLink & { icon: ReactNode }) | NavGroup;
+type FlatLink = NavLink & { parent?: NavGroup };
+
+const NAV: NavItem[] = [
+  { key: "dashboard", label: "Dashboard", icon: <DashboardOutlined />, path: "/admin" },
+  {
+    key: "categories",
+    label: "Kategoriler",
+    icon: <AppstoreOutlined />,
+    children: [
+      { key: "categories-list", label: "Kategori Listesi", path: "/admin/categories" },
+      { key: "categories-create", label: "Yeni Kategori", path: "/admin/categories/create" },
+    ],
+  },
+  {
+    key: "products",
+    label: "Ürünler",
+    icon: <LaptopOutlined />,
+    children: [
+      { key: "products-list", label: "Ürün Listesi", path: "/admin/products" },
+      { key: "products-create", label: "Yeni Ürün", path: "/admin/products/create" },
+    ],
+  },
+  {
+    key: "blogs",
+    label: "Blog",
+    icon: <BookOutlined />,
+    children: [
+      { key: "blogs-list", label: "Blog Listesi", path: "/admin/blogs" },
+      { key: "blogs-create", label: "Yeni Blog", path: "/admin/blogs/create" },
+    ],
+  },
+  {
+    key: "coupons",
+    label: "Kuponlar",
+    icon: <BarcodeOutlined />,
+    children: [
+      { key: "coupons-list", label: "Kupon Listesi", path: "/admin/coupons" },
+      { key: "coupons-create", label: "Yeni Kupon", path: "/admin/coupons/create" },
+    ],
+  },
+  {
+    key: "campaigns",
+    label: "Kampanyalar",
+    icon: <PictureOutlined />,
+    children: [
+      { key: "campaigns-list", label: "Kampanya Listesi", path: "/admin/campaigns" },
+      { key: "campaigns-create", label: "Yeni Kampanya", path: "/admin/campaigns/create" },
+    ],
+  },
+  { key: "users", label: "Kullanıcılar", icon: <UserOutlined />, path: "/admin/users" },
+  { key: "orders", label: "Siparişler", icon: <ShoppingCartOutlined />, path: "/admin/orders" },
+  { key: "settings-contact", label: "İletişim Bilgileri", icon: <SettingOutlined />, path: "/admin/settings/contact" },
+];
+
+const FLAT_LINKS: FlatLink[] = NAV.flatMap((item) =>
+  "children" in item
+    ? item.children.map((child) => ({ ...child, parent: item }))
+    : [{ key: item.key, label: item.label, path: item.path }],
+);
+
+const findActiveLink = (pathname: string): FlatLink | undefined =>
+  FLAT_LINKS.filter(
+    (link) => pathname === link.path || (link.path !== "/admin" && pathname.startsWith(`${link.path}/`)),
+  ).sort((a, b) => b.path.length - a.path.length)[0];
+
+const getBreadcrumb = (pathname: string, active?: FlatLink): string[] => {
+  if (!active) return ["Admin Panel"];
+  if (!active.parent) return [active.label];
+  return [active.parent.label, pathname.includes("/update/") ? "Güncelle" : active.label];
+};
 
 const AdminFallback = (
   <div
@@ -41,169 +117,49 @@ const AdminLayout = () => {
   const { user, roles, status } = useAppSelector((state) => state.auth);
   const [collapsed, setCollapsed] = useState(false);
 
+  const activeLink = findActiveLink(location.pathname);
+  const [openKeys, setOpenKeys] = useState<string[]>(activeLink?.parent ? [activeLink.parent.key] : []);
+
+  useEffect(() => {
+    const parentKey = findActiveLink(location.pathname)?.parent?.key;
+    if (parentKey) setOpenKeys((prev) => (prev.includes(parentKey) ? prev : [...prev, parentKey]));
+  }, [location.pathname]);
+
   if (status !== "ready") return null;
   if (!user) return <Navigate to="/auth" replace />;
   if (!roles.includes("Admin")) return <Navigate to="/not-found" replace />;
 
   const siderWidth = collapsed ? 80 : 220;
+  const breadcrumb = getBreadcrumb(location.pathname, activeLink);
 
-  const menuItems = [
+  const menuItems: MenuProps["items"] = [
+    ...NAV.map((item) =>
+      "children" in item
+        ? {
+            key: item.key,
+            icon: item.icon,
+            label: item.label,
+            children: item.children.map((child) => ({
+              key: child.key,
+              label: child.label,
+              onClick: () => navigate(child.path),
+            })),
+          }
+        : {
+            key: item.key,
+            icon: item.icon,
+            label: item.label,
+            onClick: () => navigate(item.path),
+          },
+    ),
+    { type: "divider" as const },
     {
-      key: "1",
-      icon: <DashboardOutlined />,
-      label: "Dashboard",
-      onClick: () => navigate("/admin"),
-      path: "/admin",
-    },
-    {
-      key: "2",
-      icon: <AppstoreOutlined />,
-      label: "Kategoriler",
-      children: [
-        {
-          key: "3",
-          label: "Kategori Listesi",
-          onClick: () => navigate("/admin/categories"),
-          path: "/admin/categories",
-        },
-        {
-          key: "4",
-          label: "Yeni Kategori",
-          onClick: () => navigate("/admin/categories/create"),
-          path: "/admin/categories/create",
-        },
-      ],
-    },
-    {
-      key: "5",
-      icon: <LaptopOutlined />,
-      label: "Ürünler",
-      children: [
-        {
-          key: "6",
-          label: "Ürün Listesi",
-          onClick: () => navigate("/admin/products"),
-          path: "/admin/products",
-        },
-        {
-          key: "7",
-          label: "Yeni Ürün",
-          onClick: () => navigate("/admin/products/create"),
-          path: "/admin/products/create",
-        },
-      ],
-    },
-    {
-      key: "8",
-      icon: <BookOutlined />,
-      label: "Blog",
-      children: [
-        {
-          key: "9",
-          label: "Blog Listesi",
-          onClick: () => navigate("/admin/blogs"),
-          path: "/admin/blogs",
-        },
-        {
-          key: "10",
-          label: "Yeni Blog",
-          onClick: () => navigate("/admin/blogs/create"),
-          path: "/admin/blogs/create",
-        },
-      ],
-    },
-    {
-      key: "11",
-      icon: <BarcodeOutlined />,
-      label: "Kuponlar",
-      children: [
-        {
-          key: "12",
-          label: "Kupon Listesi",
-          onClick: () => navigate("/admin/coupons"),
-          path: "/admin/coupons",
-        },
-        {
-          key: "13",
-          label: "Yeni Kupon",
-          onClick: () => navigate("/admin/coupons/create"),
-          path: "/admin/coupons/create",
-        },
-      ],
-    },
-    {
-      key: "17",
-      icon: <PictureOutlined />,
-      label: "Kampanyalar",
-      children: [
-        {
-          key: "18",
-          label: "Kampanya Listesi",
-          onClick: () => navigate("/admin/campaigns"),
-          path: "/admin/campaigns",
-        },
-        {
-          key: "19",
-          label: "Yeni Kampanya",
-          onClick: () => navigate("/admin/campaigns/create"),
-          path: "/admin/campaigns/create",
-        },
-      ],
-    },
-    {
-      key: "14",
-      icon: <UserOutlined />,
-      label: "Kullanıcılar",
-      onClick: () => navigate("/admin/users"),
-      path: "/admin/users",
-    },
-    {
-      key: "15",
-      icon: <ShoppingCartOutlined />,
-      label: "Siparişler",
-      onClick: () => navigate("/admin/orders"),
-      path: "/admin/orders",
-    },
-    {
-      key: "divider",
-      type: "divider" as const,
-    },
-    {
-      key: "16",
+      key: "home",
       icon: <RollbackOutlined />,
       label: "Ana Sayfa",
       onClick: () => navigate("/"),
     },
   ];
-
-  const getActiveKey = () => {
-    for (const item of menuItems) {
-      if ("children" in item && item.children) {
-        for (const child of item.children) {
-          if ("path" in child && child.path === location.pathname)
-            return child.key;
-        }
-      } else {
-        if ("path" in item && item.path === location.pathname) return item.key;
-      }
-    }
-    return "1";
-  };
-
-  const getPageTitle = () => {
-    for (const item of menuItems) {
-      if ("children" in item && item.children) {
-        for (const child of item.children) {
-          if ("path" in child && child.path === location.pathname)
-            return child.label;
-        }
-      } else {
-        if ("path" in item && item.path === location.pathname)
-          return item.label;
-      }
-    }
-    return "Admin Panel";
-  };
 
   const userMenuItems = [
     {
@@ -281,7 +237,8 @@ const AdminLayout = () => {
         <Menu
           mode="inline"
           items={menuItems}
-          selectedKeys={[getActiveKey()]}
+          selectedKeys={activeLink ? [activeLink.key] : []}
+          {...(collapsed ? {} : { openKeys, onOpenChange: setOpenKeys })}
           theme="dark"
           motion={{
             motionName: "",
@@ -319,34 +276,43 @@ const AdminLayout = () => {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <div
+            <button
+              type="button"
               onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? "Menüyü genişlet" : "Menüyü daralt"}
               style={{
                 cursor: "pointer",
                 fontSize: 18,
                 color: "#555",
                 display: "flex",
                 alignItems: "center",
+                background: "none",
+                border: "none",
+                padding: 0,
               }}
             >
               {collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            </div>
-            <div>
+            </button>
+            <nav aria-label="Konum">
               <span style={{ color: "#999", fontSize: 13 }}>Admin</span>
-              <span style={{ color: "#999", fontSize: 13, margin: "0 6px" }}>
-                /
-              </span>
-              <span style={{ color: "#1a1a2e", fontSize: 13, fontWeight: 500 }}>
-                {getPageTitle()}
-              </span>
-            </div>
+              {breadcrumb.map((part, index) => (
+                <span key={`${part}-${index}`}>
+                  <span style={{ color: "#999", fontSize: 13, margin: "0 6px" }}>/</span>
+                  <span
+                    style={{
+                      color: index === breadcrumb.length - 1 ? "#1a1a2e" : "#999",
+                      fontSize: 13,
+                      fontWeight: index === breadcrumb.length - 1 ? 500 : 400,
+                    }}
+                  >
+                    {part}
+                  </span>
+                </span>
+              ))}
+            </nav>
           </div>
 
-          <Dropdown
-            menu={{ items: userMenuItems }}
-            placement="bottomRight"
-            arrow
-          >
+          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
             <div
               style={{
                 display: "flex",
@@ -357,25 +323,12 @@ const AdminLayout = () => {
                 borderRadius: 8,
                 transition: "background 0.2s",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.background = "#f5f6fa")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.background = "transparent")
-              }
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f6fa")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
-              <UserAvatar
-                fullName={user.fullName}
-                avatar={user.avatar}
-                size={34}
-                fontSize={14}
-              />
+              <UserAvatar fullName={user.fullName} avatar={user.avatar} size={34} fontSize={14} />
               <div style={{ lineHeight: 1.3 }}>
-                <div
-                  style={{ fontSize: 13, fontWeight: 500, color: "#1a1a2e" }}
-                >
-                  {user.fullName}
-                </div>
+                <div style={{ fontSize: 13, fontWeight: 500, color: "#1a1a2e" }}>{user.fullName}</div>
                 <div style={{ fontSize: 11, color: "#999" }}>Admin</div>
               </div>
             </div>

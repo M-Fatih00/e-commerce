@@ -20,11 +20,6 @@ const CartItem: React.FC<CartItemProps> = memo(({ cartItem }) => {
 
   const isLoading = useAppSelector(selectItemLoading(cartItem.urunId));
 
-  const discountedPrice =
-    cartItem.indirim > 0
-      ? cartItem.fiyat - (cartItem.fiyat * cartItem.indirim) / 100
-      : cartItem.fiyat;
-
   const handleAdd = async () => {
     const result = await dispatch(
       addItem({
@@ -72,7 +67,6 @@ const CartItem: React.FC<CartItemProps> = memo(({ cartItem }) => {
     <tr className="cart-item">
       <td></td>
 
-      {/* RESİM + SİL */}
       <td className="cart-image">
         <Link to={`/product/${cartItem.urunId}`}>
           <img
@@ -87,7 +81,6 @@ const CartItem: React.FC<CartItemProps> = memo(({ cartItem }) => {
         />
       </td>
 
-      {/* ÜRÜN ADI + BEDEN + RENK */}
       <td>
         <Link to={`/product/${cartItem.urunId}`}>{cartItem.urunAdi}</Link>
         <div
@@ -139,10 +132,21 @@ const CartItem: React.FC<CartItemProps> = memo(({ cartItem }) => {
         </div>
       </td>
 
-      {/* FİYAT */}
-      <td>{discountedPrice.toFixed(2)} ₺</td>
+      <td>
+        <div>{cartItem.fiyat.toFixed(2)} ₺</div>
+        {cartItem.eskiFiyat && (
+          <div
+            style={{
+              fontSize: 12,
+              color: "#999",
+              textDecoration: "line-through",
+            }}
+          >
+            {cartItem.eskiFiyat.toFixed(2)} ₺
+          </div>
+        )}
+      </td>
 
-      {/* MİKTAR + / - */}
       <td className="product-quantity">
         <div className="quantity-control">
           <button
@@ -163,9 +167,8 @@ const CartItem: React.FC<CartItemProps> = memo(({ cartItem }) => {
         </div>
       </td>
 
-      {/* TOPLAM */}
       <td className="product-subtotal">
-        {(discountedPrice * cartItem.miktar).toFixed(2)} ₺
+        {(cartItem.fiyat * cartItem.miktar).toFixed(2)} ₺
       </td>
     </tr>
   );

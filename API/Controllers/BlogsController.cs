@@ -1,85 +1,94 @@
 using API.Data;
 using API.DTO;
+using API.Entity;
+using API.Filters;
+using API.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
-// [Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/[controller]")]
 public class BlogsController : ControllerBase
 {
+    private const long UploadRequestLimit = ImageValidator.MaxSize + 1024 * 1024;
+
     private readonly DataContext _context;
-    public BlogsController(DataContext context)
+    private readonly IWebHostEnvironment _env;
+
+    public BlogsController(DataContext context, IWebHostEnvironment env)
     {
         _context = context;
+        _env = env;
     }
 
-
+    [AllowAnonymous]
     [HttpGet]
     public async Task<IActionResult> GetAllBlogs()
     {
         var blogs = await _context.Blogs
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedDate)
             .Select(x => new ListBlogDTO
             {
                 Id = x.Id,
                 Title = x.Title,
                 Img = x.Img,
-                CreatedDate = x.CreatedDate,
-            }).ToListAsync();
+                CreatedDate = x.CreatedDate
+            })
+            .ToListAsync();
 
         return Ok(blogs);
     }
 
-
-
+    [AllowAnonymous]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetBlog(int id)
     {
-        var blog = await _context.Blogs
-            .FirstOrDefaultAsync(x => x.Id == id);
-
+        var blog = await _context.Blogs.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         if (blog == null)
-            return NotFound("Blog bulunamadı.");
+            return NotFound(new { message = "Blog bulunamadı." });
 
-        var result = new BlogDetailDTO
+        return Ok(new BlogDetailDTO
         {
             Id = blog.Id,
             Title = blog.Title,
             Img = blog.Img,
-            Description = blog.Description,
+            Description = HtmlContentSanitizer.Sanitize(blog.Description),
             CreatedDate = blog.CreatedDate,
-            UpdatedDate = blog.UpdatedDate,
-        };
-
-        return Ok(result);
+            UpdatedDate = blog.UpdatedDate
+        });
     }
 
-
     [HttpPost]
+    [DemoDisabled]
+    [RequestSizeLimit(UploadRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = UploadRequestLimit)]
     public async Task<IActionResult> CreateBlog([FromForm] CreateBlogDTO dto)
     {
-        var uploadPath = Path.Combine(
-            Directory.GetCurrentDirectory(),
-            "wwwroot/img/blogs"
-        );
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        var fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
+        var title = dto.Title.Trim();
+        if (title.Length == 0)
+            return BadRequest(new { message = "Başlık zorunludur." });
 
-        var filePath = Path.Combine(uploadPath, fileName);
+        var content = HtmlContentSanitizer.Sanitize(dto.Description);
+        if (HtmlContentSanitizer.ToPlainText(content).Length == 0)
+            return BadRequest(new { message = "Blog içeriği zorunludur." });
 
-        using (var stream = new FileStream(filePath, FileMode.Create))
-        {
-            await dto.Image.CopyToAsync(stream);
-        }
+        var (extension, imageError) = await ImageValidator.ValidateAsync(dto.Image);
+        if (imageError != null)
+            return BadRequest(new { message = imageError });
 
         var blog = new Blog
         {
-            Title = dto.Title,
-            Img = "blogs/" + fileName,
-            Description = dto.Description,
+            Title = title,
+            Img = await SaveImage(dto.Image!, extension!),
+            Description = content,
             CreatedDate = DateTime.Now,
             UpdatedDate = DateTime.Now
         };
@@ -87,84 +96,92 @@ public class BlogsController : ControllerBase
         _context.Blogs.Add(blog);
         await _context.SaveChangesAsync();
 
-        return Ok();
+        return Ok(new { message = "Blog oluşturuldu.", id = blog.Id });
     }
 
-
-
-    [HttpPut]
-    public async Task<IActionResult> UpdateBlog([FromForm] UpdateBlogDTO dto)
+    [HttpPut("{id}")]
+    [DemoDisabled]
+    [RequestSizeLimit(UploadRequestLimit)]
+    [RequestFormLimits(MultipartBodyLengthLimit = UploadRequestLimit)]
+    public async Task<IActionResult> UpdateBlog(int id, [FromForm] UpdateBlogDTO dto)
     {
-        var blog = await _context.Blogs.FindAsync(dto.Id);
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
+        var blog = await _context.Blogs.FindAsync(id);
         if (blog == null)
-            return NotFound("Blog bulunamadı");
+            return NotFound(new { message = "Blog bulunamadı." });
 
-        if (!string.IsNullOrEmpty(dto.Title))
+        if (!string.IsNullOrWhiteSpace(dto.Title))
+            blog.Title = dto.Title.Trim();
+
+        if (dto.Description != null)
         {
-            blog.Title = dto.Title;
+            var content = HtmlContentSanitizer.Sanitize(dto.Description);
+            if (HtmlContentSanitizer.ToPlainText(content).Length == 0)
+                return BadRequest(new { message = "Blog içeriği boş olamaz." });
+
+            blog.Description = content;
         }
 
-        if (!string.IsNullOrEmpty(dto.Description))
-        {
-            blog.Description = dto.Description;
-        }
-
-        // IMAGE 
+        string? oldImage = null;
         if (dto.Image != null)
         {
-            var uploadPath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot/img/blogs"
-            );
+            var (extension, imageError) = await ImageValidator.ValidateAsync(dto.Image);
+            if (imageError != null)
+                return BadRequest(new { message = imageError });
 
-            var fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
-            var filePath = Path.Combine(uploadPath, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await dto.Image.CopyToAsync(stream);
-            }
-
-            blog.Img = "blogs/" + fileName;
+            oldImage = blog.Img;
+            blog.Img = await SaveImage(dto.Image, extension!);
         }
 
         blog.UpdatedDate = DateTime.Now;
-
         await _context.SaveChangesAsync();
 
-        return Ok("Blog güncellendi");
+        DeleteUpload(oldImage);
+
+        return Ok(new { message = "Blog güncellendi." });
     }
 
-
-
     [HttpDelete("{id}")]
+    [DemoDisabled]
     public async Task<IActionResult> DeleteBlog(int id)
     {
         var blog = await _context.Blogs.FindAsync(id);
-
         if (blog == null)
-            return NotFound("Blog bulunamadı");
+            return NotFound(new { message = "Blog bulunamadı." });
 
-        // IMAGE DELETE
-        if (!string.IsNullOrEmpty(blog.Img))
-        {
-            var filePath = Path.Combine(
-                Directory.GetCurrentDirectory(),
-                "wwwroot/img/blogs",
-                blog.Img
-            );
-
-            if (System.IO.File.Exists(filePath))
-            {
-                System.IO.File.Delete(filePath);
-            }
-        }
+        var image = blog.Img;
 
         _context.Blogs.Remove(blog);
         await _context.SaveChangesAsync();
 
-        return Ok("Blog silindi");
+        DeleteUpload(image);
+
+        return Ok(new { message = "Blog silindi." });
     }
 
+    private async Task<string> SaveImage(IFormFile file, string extension)
+    {
+        var directory = Path.Combine(_env.WebRootPath, "img", "blogs");
+        Directory.CreateDirectory(directory);
+
+        var fileName = Guid.NewGuid() + extension;
+        await using var stream = new FileStream(Path.Combine(directory, fileName), FileMode.CreateNew);
+        await file.CopyToAsync(stream);
+
+        return $"blogs/{fileName}";
+    }
+
+    private void DeleteUpload(string? image)
+    {
+        if (string.IsNullOrEmpty(image)) return;
+
+        var blogsDir = Path.GetFullPath(Path.Combine(_env.WebRootPath, "img", "blogs"));
+        var path = Path.GetFullPath(Path.Combine(_env.WebRootPath, "img", image));
+        var isUpload = Guid.TryParse(Path.GetFileNameWithoutExtension(path), out _);
+
+        if (isUpload && path.StartsWith(blogsDir + Path.DirectorySeparatorChar) && System.IO.File.Exists(path))
+            System.IO.File.Delete(path);
+    }
 }

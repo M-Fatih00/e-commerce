@@ -1,6 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace API.DTO;
 
 public class AvatarDTO
 {
-    public IFormFile Avatar { get; set; } = null!;
+    [Required(ErrorMessage = "Dosya seçilmedi.")]
+    public IFormFile? Avatar { get; set; }
 }
