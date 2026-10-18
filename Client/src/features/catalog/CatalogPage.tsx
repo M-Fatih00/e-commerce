@@ -1,5 +1,5 @@
+import Loader from "../../components/Loader";
 import { useEffect } from "react";
-import { CircularProgress } from "@mui/material";
 import { fetchProducts } from "./catalogSlice";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import Products from "./Products";
@@ -14,7 +14,7 @@ export default function CatalogPage(){
             dispatch(fetchProducts());
     }, [isLoaded]);
 
-    if(status === "loadingProducts") return <CircularProgress />;
+    if(status === "loadingProducts") return <Loader />;
 
     return(
         <Products />

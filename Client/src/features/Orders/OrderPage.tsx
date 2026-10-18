@@ -1,9 +1,9 @@
+import Loader from "../../components/Loader";
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { getMyOrders } from "./orderSlice";
 import { IOrder } from "../../model/IOrder";
-import { Spin } from "antd";
 import "./Order.css";
 import { OrderStatusTag } from "../../utils/orderStatus";
 
@@ -21,7 +21,7 @@ const OrderPage: React.FC = () => {
     return (
       <section className="order-page">
         <div className="container">
-          <Spin size="large" />
+          <Loader />
         </div>
       </section>
     );

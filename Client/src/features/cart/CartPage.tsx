@@ -1,3 +1,4 @@
+import Loader from "../../components/Loader";
 import React from "react";
 import CartProgress from "./CartProgress";
 import CartTable from "./CartTable";
@@ -5,7 +6,6 @@ import CartCoupon from "./CartCoupon";
 import CartTotals from "./CartTotals";
 import { useAppSelector } from "../../store/store";
 import { selectAllCartItems } from "./cartSlice";
-import { Spin } from "antd";
 import { Link } from "react-router-dom";
 import "./Cart.css";
 
@@ -18,7 +18,7 @@ const CartPage: React.FC = () => {
     return (
       <section className="cart-page">
         <div className="container">
-          <Spin size="large" />
+          <Loader />
         </div>
       </section>
     );

@@ -1,5 +1,5 @@
-import { Layout, Menu, Dropdown, Spin } from "antd";
-import type { MenuProps } from "antd";
+import Loader from "../../components/Loader";
+import { Dropdown, Layout, Menu, type MenuProps } from "antd";
 import {
   UserOutlined,
   LaptopOutlined,
@@ -20,23 +20,42 @@ import { ReactNode, Suspense, useEffect, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { logoutUser } from "../../features/Auth/authSlice";
 import UserAvatar from "../../features/Auth/UserAvatar";
+import Logo from "../../components/Logo";
 
 const { Sider, Content, Header } = Layout;
 
 type NavLink = { key: string; label: string; path: string };
-type NavGroup = { key: string; label: string; icon: ReactNode; children: NavLink[] };
+type NavGroup = {
+  key: string;
+  label: string;
+  icon: ReactNode;
+  children: NavLink[];
+};
 type NavItem = (NavLink & { icon: ReactNode }) | NavGroup;
 type FlatLink = NavLink & { parent?: NavGroup };
 
 const NAV: NavItem[] = [
-  { key: "dashboard", label: "Dashboard", icon: <DashboardOutlined />, path: "/admin" },
+  {
+    key: "dashboard",
+    label: "Dashboard",
+    icon: <DashboardOutlined />,
+    path: "/admin",
+  },
   {
     key: "categories",
     label: "Kategoriler",
     icon: <AppstoreOutlined />,
     children: [
-      { key: "categories-list", label: "Kategori Listesi", path: "/admin/categories" },
-      { key: "categories-create", label: "Yeni Kategori", path: "/admin/categories/create" },
+      {
+        key: "categories-list",
+        label: "Kategori Listesi",
+        path: "/admin/categories",
+      },
+      {
+        key: "categories-create",
+        label: "Yeni Kategori",
+        path: "/admin/categories/create",
+      },
     ],
   },
   {
@@ -45,7 +64,11 @@ const NAV: NavItem[] = [
     icon: <LaptopOutlined />,
     children: [
       { key: "products-list", label: "Ürün Listesi", path: "/admin/products" },
-      { key: "products-create", label: "Yeni Ürün", path: "/admin/products/create" },
+      {
+        key: "products-create",
+        label: "Yeni Ürün",
+        path: "/admin/products/create",
+      },
     ],
   },
   {
@@ -63,7 +86,11 @@ const NAV: NavItem[] = [
     icon: <BarcodeOutlined />,
     children: [
       { key: "coupons-list", label: "Kupon Listesi", path: "/admin/coupons" },
-      { key: "coupons-create", label: "Yeni Kupon", path: "/admin/coupons/create" },
+      {
+        key: "coupons-create",
+        label: "Yeni Kupon",
+        path: "/admin/coupons/create",
+      },
     ],
   },
   {
@@ -71,13 +98,36 @@ const NAV: NavItem[] = [
     label: "Kampanyalar",
     icon: <PictureOutlined />,
     children: [
-      { key: "campaigns-list", label: "Kampanya Listesi", path: "/admin/campaigns" },
-      { key: "campaigns-create", label: "Yeni Kampanya", path: "/admin/campaigns/create" },
+      {
+        key: "campaigns-list",
+        label: "Kampanya Listesi",
+        path: "/admin/campaigns",
+      },
+      {
+        key: "campaigns-create",
+        label: "Yeni Kampanya",
+        path: "/admin/campaigns/create",
+      },
     ],
   },
-  { key: "users", label: "Kullanıcılar", icon: <UserOutlined />, path: "/admin/users" },
-  { key: "orders", label: "Siparişler", icon: <ShoppingCartOutlined />, path: "/admin/orders" },
-  { key: "settings-contact", label: "İletişim Bilgileri", icon: <SettingOutlined />, path: "/admin/settings/contact" },
+  {
+    key: "users",
+    label: "Kullanıcılar",
+    icon: <UserOutlined />,
+    path: "/admin/users",
+  },
+  {
+    key: "orders",
+    label: "Siparişler",
+    icon: <ShoppingCartOutlined />,
+    path: "/admin/orders",
+  },
+  {
+    key: "settings-contact",
+    label: "İletişim Bilgileri",
+    icon: <SettingOutlined />,
+    path: "/admin/settings/contact",
+  },
 ];
 
 const FLAT_LINKS: FlatLink[] = NAV.flatMap((item) =>
@@ -88,27 +138,21 @@ const FLAT_LINKS: FlatLink[] = NAV.flatMap((item) =>
 
 const findActiveLink = (pathname: string): FlatLink | undefined =>
   FLAT_LINKS.filter(
-    (link) => pathname === link.path || (link.path !== "/admin" && pathname.startsWith(`${link.path}/`)),
+    (link) =>
+      pathname === link.path ||
+      (link.path !== "/admin" && pathname.startsWith(`${link.path}/`)),
   ).sort((a, b) => b.path.length - a.path.length)[0];
 
 const getBreadcrumb = (pathname: string, active?: FlatLink): string[] => {
   if (!active) return ["Admin Panel"];
   if (!active.parent) return [active.label];
-  return [active.parent.label, pathname.includes("/update/") ? "Güncelle" : active.label];
+  return [
+    active.parent.label,
+    pathname.includes("/update/") ? "Güncelle" : active.label,
+  ];
 };
 
-const AdminFallback = (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      height: "60vh",
-    }}
-  >
-    <Spin size="large" />
-  </div>
-);
+const AdminFallback = <Loader minHeight={400} />;
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -118,11 +162,16 @@ const AdminLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
 
   const activeLink = findActiveLink(location.pathname);
-  const [openKeys, setOpenKeys] = useState<string[]>(activeLink?.parent ? [activeLink.parent.key] : []);
+  const [openKeys, setOpenKeys] = useState<string[]>(
+    activeLink?.parent ? [activeLink.parent.key] : [],
+  );
 
   useEffect(() => {
     const parentKey = findActiveLink(location.pathname)?.parent?.key;
-    if (parentKey) setOpenKeys((prev) => (prev.includes(parentKey) ? prev : [...prev, parentKey]));
+    if (parentKey)
+      setOpenKeys((prev) =>
+        prev.includes(parentKey) ? prev : [...prev, parentKey],
+      );
   }, [location.pathname]);
 
   if (status !== "ready") return null;
@@ -202,23 +251,7 @@ const AdminLayout = () => {
           }}
           onClick={() => navigate("/admin")}
         >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: "linear-gradient(135deg, #2c3e50, #3498db)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 16,
-              fontWeight: 700,
-              color: "#fff",
-              flexShrink: 0,
-            }}
-          >
-            A
-          </div>
+          <Logo variant="light" showText={false} height={34} />
           {!collapsed && (
             <span
               style={{
@@ -297,10 +330,15 @@ const AdminLayout = () => {
               <span style={{ color: "#999", fontSize: 13 }}>Admin</span>
               {breadcrumb.map((part, index) => (
                 <span key={`${part}-${index}`}>
-                  <span style={{ color: "#999", fontSize: 13, margin: "0 6px" }}>/</span>
+                  <span
+                    style={{ color: "#999", fontSize: 13, margin: "0 6px" }}
+                  >
+                    /
+                  </span>
                   <span
                     style={{
-                      color: index === breadcrumb.length - 1 ? "#1a1a2e" : "#999",
+                      color:
+                        index === breadcrumb.length - 1 ? "#1a1a2e" : "#999",
                       fontSize: 13,
                       fontWeight: index === breadcrumb.length - 1 ? 500 : 400,
                     }}
@@ -312,7 +350,11 @@ const AdminLayout = () => {
             </nav>
           </div>
 
-          <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" arrow>
+          <Dropdown
+            menu={{ items: userMenuItems }}
+            placement="bottomRight"
+            arrow
+          >
             <div
               style={{
                 display: "flex",
@@ -323,12 +365,25 @@ const AdminLayout = () => {
                 borderRadius: 8,
                 transition: "background 0.2s",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f6fa")}
-              onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.background = "#f5f6fa")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.background = "transparent")
+              }
             >
-              <UserAvatar fullName={user.fullName} avatar={user.avatar} size={34} fontSize={14} />
+              <UserAvatar
+                fullName={user.fullName}
+                avatar={user.avatar}
+                size={34}
+                fontSize={14}
+              />
               <div style={{ lineHeight: 1.3 }}>
-                <div style={{ fontSize: 13, fontWeight: 500, color: "#1a1a2e" }}>{user.fullName}</div>
+                <div
+                  style={{ fontSize: 13, fontWeight: 500, color: "#1a1a2e" }}
+                >
+                  {user.fullName}
+                </div>
                 <div style={{ fontSize: 11, color: "#999" }}>Admin</div>
               </div>
             </div>

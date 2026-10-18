@@ -125,7 +125,7 @@ const CampaignPageAdmin: React.FC = () => {
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde kampanya formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı."
+          title="Demo sürümünde kampanya formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

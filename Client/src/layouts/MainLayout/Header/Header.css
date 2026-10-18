@@ -328,3 +328,56 @@ header .menu-dropdown-content a:hover {
     padding: 8px 0;
   }
 }
+
+
+.header-left .logo {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.header-left .logo svg {
+  height: 52px;
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .header-left .logo svg {
+    height: 44px;
+  }
+}
+
+@media (max-width: 576px) {
+  .header-login-label {
+    display: none;
+  }
+}
+
+@media (max-width: 400px) {
+  .header-left .logo svg {
+    height: 34px;
+  }
+}
+
+
+
+.header-right-links {
+  gap: 20px;
+}
+
+.header-right-links .bi-person,
+.header-right-links .bi-search,
+.header-right-links .bi-bag {
+  font-size: 23px;
+}
+
+@media (max-width: 576px) {
+  .header-right-links {
+    gap: 16px;
+  }
+
+  .header-right-links .bi-person,
+  .header-right-links .bi-search,
+  .header-right-links .bi-bag {
+    font-size: 22px;
+  }
+}

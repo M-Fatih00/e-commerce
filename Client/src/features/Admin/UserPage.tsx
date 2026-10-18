@@ -185,7 +185,7 @@ const UserPage: React.FC = () => {
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde rol değiştirme ve kullanıcı silme kapalı."
+          title="Demo sürümünde rol değiştirme ve kullanıcı silme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

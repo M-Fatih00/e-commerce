@@ -56,7 +56,7 @@ const CategoryForm: React.FC<Props> = ({ mode, initialName, currentImage, submit
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
+          title="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

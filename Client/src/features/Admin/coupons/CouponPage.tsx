@@ -87,7 +87,7 @@ const CouponPage: React.FC = () => {
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde kupon formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı. Mağazada HOSGELDIN10 ve YAZA20 kuponlarını deneyebilirsiniz."
+          title="Demo sürümünde kupon formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı. Mağazada HOSGELDIN10 ve YAZA20 kuponlarını deneyebilirsiniz."
           style={{ marginBottom: 16 }}
         />
       )}

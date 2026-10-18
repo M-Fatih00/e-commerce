@@ -1,3 +1,4 @@
+import Loader from "../../../components/Loader";
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../store/store";
@@ -7,7 +8,6 @@ import Info from "./Info/Info";
 import Tabs from "./Tabs/Tabs";
 import { fetchProductDetails } from "./productDetailsSlice";
 import "./ProductDetails.css";
-import { Spin } from "antd";
 
 function ProductDetailsPage() {
   const { id } = useParams();
@@ -31,7 +31,7 @@ function ProductDetailsPage() {
           minHeight: "400px",
         }}
       >
-        <Spin size="large" />
+        <Loader />
       </div>
     );
   if (!product) return <div>Product not found</div>;

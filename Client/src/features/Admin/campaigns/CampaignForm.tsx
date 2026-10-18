@@ -74,7 +74,7 @@ const CampaignForm: React.FC<Props> = ({ mode, initialValues, currentImage, disa
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
+          title="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

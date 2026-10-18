@@ -1,5 +1,6 @@
+import Loader from "../../../components/Loader";
 import React, { useEffect } from "react";
-import { Button, Spin, message } from "antd";
+import { Button, message } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../../store/store";
 import { couponSelectors, fetchCouponById, updateCoupon, CouponInput } from "./couponSlice";
@@ -46,7 +47,7 @@ const UpdateCoupon: React.FC = () => {
         />
       ) : (
         <div style={{ display: "grid", placeItems: "center", minHeight: 200 }}>
-          <Spin size="large" />
+          <Loader />
         </div>
       )}
     </div>

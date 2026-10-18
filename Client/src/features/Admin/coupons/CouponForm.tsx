@@ -26,7 +26,7 @@ const CouponForm: React.FC<Props> = ({ mode, initialValues, submitting, onSubmit
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
+          title="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

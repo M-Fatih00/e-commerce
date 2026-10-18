@@ -1,5 +1,6 @@
+import Loader from "../../../components/Loader";
 import React, { useEffect, useState } from "react";
-import { Button, Spin, message } from "antd";
+import { Button, message } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import requests from "../../../api/requests";
 import { showFormError } from "../../../utils/errors";
@@ -54,7 +55,7 @@ const UpdateCategory: React.FC = () => {
         />
       ) : (
         <div style={{ display: "grid", placeItems: "center", minHeight: 200 }}>
-          <Spin size="large" />
+          <Loader />
         </div>
       )}
     </div>
