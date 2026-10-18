@@ -53,3 +53,28 @@
 .blog-item .blog-info-bottom a:hover {
   color: #1367ef;
 }
+
+
+
+.blog-item-skeleton .blog-skeleton-image {
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 0;
+}
+
+.blog-item-skeleton .blog-skeleton-date {
+  width: 90px;
+  height: 14px;
+  margin-bottom: 12px;
+}
+
+.blog-item-skeleton .blog-skeleton-title {
+  width: 80%;
+  height: 44px;
+}
+
+.blog-item-skeleton .blog-skeleton-link {
+  width: 80px;
+  height: 14px;
+  margin-top: 16px;
+}

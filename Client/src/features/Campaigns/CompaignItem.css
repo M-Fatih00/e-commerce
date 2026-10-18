@@ -47,32 +47,30 @@
   }
 }
 
-/*-----------------------*/
 
-/* %50 %50 */
 .campaign-item.half {
   flex: 0 0 calc(50% - 15px);
 }
 
-/* büyük */
+
 .campaign-item.large {
   flex: 0 0 calc(60% - 15px);
 }
 
-/* küçük */
+
 .campaign-item.small {
   flex: 0 0 calc(40% - 15px);
 }
 
 
-/* ── Tablet (768px) ── */
+
 @media (max-width: 768px) {
   .campaign-item.half,
   .campaign-item.large,
   .campaign-item.small {
     flex: 0 0 calc(50% - 8px) !important;
-    min-height: 140px; /* Tablet yüksekliği düşürüldü */
-    padding: 15px 15px; /* İç boşluklar azaltıldı */
+    min-height: 140px;
+    padding: 15px 15px; 
   }
   .campaigns .campaign-item .campaign-title {
     font-size: 16px;
@@ -84,29 +82,29 @@
   }
 
   .campaign-btn {
-    padding: 0 10px !important; /* Buton boyutunu biraz daha düşürdük */
-    font-size: 11px;   /* Yazıyı küçülttük */
+    padding: 0 10px !important;
+    font-size: 11px;  
   }
 }
 
-/* ── Mobil küçük (576px) ── */
+
 @media (max-width: 576px) {
   .campaign-item.half,
   .campaign-item.large,
   .campaign-item.small {
-    flex: 0 0 calc(50% - 7.5px) !important; /* Yan yana 2'li düzen düzeni */
-    min-height: 110px; /* Mobil yüksekliği ciddi oranda düşürüldü */
-    padding: 10px 10px; /* Yazıların sığması için padding minimuma indirildi */
+    flex: 0 0 calc(50% - 7.5px) !important; 
+    min-height: 110px; 
+    padding: 10px 10px; 
   }
   .campaigns .campaign-item .campaign-title {
-    font-size: 13px; /* Mobilde yazının taşmaması için küçültüldü */
+    font-size: 13px; 
     line-height: 16px;
   }
   .campaigns .campaign-item .campaign-desc {
-    font-size: 10px; /* Açıklama yazısı küçültüldü */
-    display: -webkit-box; /* 1. Esnek kutu modelini aktif eder */
-    -webkit-box-orient: vertical; /* 2. Metnin dikey hizalanacağını belirtir */
-    -webkit-line-clamp: 2; /* 3. Metni maksimum 2 satırla sınırlar */
+    font-size: 10px;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     line-clamp: 2;
     overflow: hidden;
   }
@@ -135,10 +133,64 @@
     overflow: hidden;
   }
 
-  /* Mobilde butonların 2'li kutuya tam sığması için ekledik */
   .campaign-btn {
-    padding: 4px 10px; /* Mini mobil boyutu */
-    font-size: 9px;     /* Yazı boyutunu minimuma çektik */
-    border-radius: 4px; /* Köşeleri çok kaba durmasın diye hafifçe yumuşattık */
+    padding: 4px 10px; 
+    font-size: 9px;     
+    border-radius: 4px; 
+  }
+}
+
+
+
+
+.campaign-item.campaign-item-skeleton {
+  background-color: #f5f5f5;
+}
+
+.campaign-item-skeleton .campaign-skeleton-title {
+  width: 60%;
+  height: 30px;
+}
+
+.campaign-item-skeleton .campaign-skeleton-desc {
+  width: 80%;
+  height: 14px;
+  margin: 40px 0;
+}
+
+.campaign-item-skeleton .campaign-skeleton-button {
+  width: 130px;
+  height: 44px;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .campaign-item-skeleton .campaign-skeleton-title {
+    height: 18px;
+  }
+
+  .campaign-item-skeleton .campaign-skeleton-desc {
+    height: 11px;
+    margin: 8px 0;
+  }
+
+  .campaign-item-skeleton .campaign-skeleton-button {
+    width: 90px;
+    height: 26px;
+  }
+}
+
+@media (max-width: 576px) {
+  .campaign-item-skeleton .campaign-skeleton-title {
+    height: 14px;
+  }
+
+  .campaign-item-skeleton .campaign-skeleton-desc {
+    margin: 10px 0 20px;
+  }
+
+  .campaign-item-skeleton .campaign-skeleton-button {
+    width: 70px;
+    height: 22px;
   }
 }

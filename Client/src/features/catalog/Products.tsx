@@ -1,6 +1,7 @@
 import Slider from "react-slick";
 import { useEffect } from "react";
 import ProductItem from "./ProductItem";
+import ProductItemSkeleton from "./ProductItemSkeleton";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { fetchProducts, selectAllProducts } from "./catalogSlice";
 import Reveal from "../../components/Reveal";
@@ -12,7 +13,7 @@ type ArrowProps = {
 
 function NextBtn({ onClick }: ArrowProps) {
   return (
-    <button className="glide__arrow glide__arrow--right" onClick={onClick}>
+    <button type="button" className="glide__arrow glide__arrow--right" onClick={onClick} aria-label="Sonraki ürünler">
       <i className="bi bi-chevron-right"></i>
     </button>
   );
@@ -20,7 +21,7 @@ function NextBtn({ onClick }: ArrowProps) {
 
 function PrevBtn({ onClick }: ArrowProps) {
   return (
-    <button className="glide__arrow glide__arrow--left" data-glide-dir="<" onClick={onClick}>
+    <button type="button" className="glide__arrow glide__arrow--left" onClick={onClick} aria-label="Önceki ürünler">
       <i className="bi bi-chevron-left"></i>
     </button>
   );
@@ -28,7 +29,6 @@ function PrevBtn({ onClick }: ArrowProps) {
 
 const getInitialSlides = () => {
   const w = window.innerWidth;
-  if (w < 576) return 2;
   if (w < 768) return 2;
   if (w < 992) return 3;
   return 4;
@@ -45,10 +45,13 @@ function Products() {
     }
   }, [isLoaded, dispatch]);
 
+  const slidesToShow = getInitialSlides();
+  const showSkeleton = !isLoaded && products.length === 0;
+
   const sliderSettings = {
     dots: false,
     infinite: true,
-    slidesToShow: getInitialSlides(),
+    slidesToShow,
     slidesToScroll: 1,
     nextArrow: <NextBtn />,
     prevArrow: <PrevBtn />,
@@ -68,13 +71,27 @@ function Products() {
           <h2>Öne Çıkan Ürünler</h2>
           <p>Sezonun en çok tercih edilen parçaları</p>
         </div>
-        <div className="product-wrapper product-carousel">
-          <Slider {...sliderSettings}>
-            {products.map((product) => (
-              <ProductItem productItem={product as any} key={product.id} />
+
+        {showSkeleton ? (
+          <div
+            className="product-skeleton-grid"
+            style={{ gridTemplateColumns: `repeat(${slidesToShow}, 1fr)` }}
+            aria-busy="true"
+            aria-label="Ürünler yükleniyor"
+          >
+            {Array.from({ length: slidesToShow }, (_, i) => (
+              <ProductItemSkeleton key={i} />
             ))}
-          </Slider>
-        </div>
+          </div>
+        ) : (
+          <div className="product-wrapper product-carousel">
+            <Slider {...sliderSettings}>
+              {products.map((product) => (
+                <ProductItem productItem={product as any} key={product.id} />
+              ))}
+            </Slider>
+          </div>
+        )}
       </Reveal>
     </section>
   );

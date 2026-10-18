@@ -172,3 +172,33 @@
   .product-wrapper .glide__arrow--right { right: 0; }
   .product-wrapper .glide__arrow i { font-size: 24px; }
 }
+
+
+
+.product-item-skeleton {
+  background-color: #f5f5f5;
+}
+
+.product-item-skeleton .product-skeleton-image {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 0;
+}
+
+.product-item-skeleton .product-skeleton-title {
+  width: 70%;
+  height: 14px;
+  margin: 18px auto 0;
+}
+
+.product-item-skeleton .product-skeleton-stars {
+  width: 80px;
+  height: 12px;
+  margin: 10px auto;
+}
+
+.product-item-skeleton .product-skeleton-price {
+  width: 90px;
+  height: 16px;
+  margin: 0 auto 15px;
+}

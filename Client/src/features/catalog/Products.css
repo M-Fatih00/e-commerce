@@ -21,3 +21,8 @@
     margin-bottom: 20px;
   }
 }
+
+.products .product-skeleton-grid {
+  display: grid;
+  gap: 20px;
+}
