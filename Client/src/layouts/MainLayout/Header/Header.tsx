@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "../../../store/store";
 import { logoutUser } from "../../../features/Auth/authSlice";
 import { selectCartItemCount } from "../../../features/cart/cartSlice";
 import UserAvatar from "../../../features/Auth/UserAvatar";
+import Logo from "../../../components/Logo";
 
 type HeaderProps = {
   setIsSearchShow: React.Dispatch<React.SetStateAction<boolean>>;
@@ -52,12 +53,8 @@ function Header({ setIsSearchShow }: HeaderProps) {
             </div>
 
             <div className="header-left">
-              <Link
-                to={"/"}
-                className="logo"
-                onClick={() => window.scrollTo(0, 0)}
-              >
-                LOGO
+              <Link to="/" className="logo" aria-label="Ana sayfa" onClick={() => window.scrollTo(0, 0)}>
+                <Logo height={40} />
               </Link>
             </div>
 
@@ -267,6 +264,7 @@ function Header({ setIsSearchShow }: HeaderProps) {
                 {!user && (
                   <Link
                     to={"/auth"}
+                    aria-label="Giriş Yap"
                     style={{
                       display: "flex",
                       alignItems: "center",
@@ -277,8 +275,8 @@ function Header({ setIsSearchShow }: HeaderProps) {
                       textDecoration: "none",
                     }}
                   >
-                    <i className="bi bi-person" style={{ fontSize: 20 }} />
-                    Giriş Yap
+                    <i className="bi bi-person" aria-hidden="true" />
+                    <span className="header-login-label">Giriş Yap</span>
                   </Link>
                 )}
 

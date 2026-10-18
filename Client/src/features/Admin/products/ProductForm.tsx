@@ -136,7 +136,7 @@ const ProductForm: React.FC<Props> = ({
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
+          title="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

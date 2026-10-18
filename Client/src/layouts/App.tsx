@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../store/store";
 import { ToastContainer } from "react-toastify";
 import { CssBaseline } from "@mui/material";
-import { Spin } from "antd";
+import Loader from "../components/Loader";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import "react-toastify/dist/ReactToastify.css";
@@ -28,21 +28,7 @@ function App() {
   }, [isAuthenticated, dispatch]);
 
   if (status === "loading") {
-    return (
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: "#fff",
-          zIndex: 9999,
-        }}
-      >
-        <Spin size="large" />
-      </div>
-    );
+    return <Loader fullScreen />;
   }
 
   return (

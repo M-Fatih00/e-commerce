@@ -1,5 +1,6 @@
+import Loader from "../../components/Loader";
 import React, { useEffect, useState } from "react";
-import { Alert, Button, Card, Form, Input, message, Upload, Divider, Tabs, Spin, Collapse } from "antd";
+import { Alert, Button, Card, Form, Input, message, Upload, Divider, Tabs, Collapse } from "antd";
 import type { UploadProps } from "antd";
 import { UploadOutlined, EditOutlined, SaveOutlined, CloseOutlined, LockOutlined } from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "../../store/store";
@@ -109,7 +110,7 @@ const ProfilePage: React.FC = () => {
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde profil düzenleme ve fotoğraf yükleme kapalı."
+          title="Demo sürümünde profil düzenleme ve fotoğraf yükleme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}
@@ -236,7 +237,7 @@ const ProfilePage: React.FC = () => {
     <Card>
       {ordersLoading ? (
         <div className="profile-orders-loading">
-          <Spin size="large" />
+          <Loader />
         </div>
       ) : orders.length === 0 ? (
         <div className="profile-orders-empty">

@@ -298,3 +298,15 @@ input[type="number"]::-webkit-inner-spin-button {
     transition: none;
   }
 }
+
+
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid #1367ef;
+  outline-offset: 3px;
+  border-radius: 4px;
+}

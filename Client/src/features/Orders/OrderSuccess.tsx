@@ -1,5 +1,6 @@
+import Loader from "../../components/Loader";
 import React, { useEffect, useRef, useState } from "react";
-import { Button, Result, Spin } from "antd";
+import { Button, Result } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch } from "../../store/store";
 import { clearCurrentOrder } from "./orderSlice";
@@ -53,7 +54,7 @@ const OrderSuccess: React.FC = () => {
     <section style={{ padding: "60px 0" }}>
       <div className="container">
         {status === "verifying" && (
-          <Result icon={<Spin size="large" />} title="Ödemeniz doğrulanıyor..." />
+          <Loader label="Ödemeniz doğrulanıyor" minHeight={360} />
         )}
 
         {status === "success" && (

@@ -1,5 +1,6 @@
+import Loader from "../../../components/Loader";
 import React, { useEffect } from "react";
-import { Rate, Spin } from "antd";
+import { Rate } from "antd";
 import "./ProductReviews.css";
 import { useAppDispatch, useAppSelector } from "../../../store/store";
 import { getReviewsByProduct } from "./productReviewSlice";
@@ -27,7 +28,7 @@ const ProductReviewPage: React.FC<ReviewPageProps> = ({ active, productId }) => 
         <section>
           {loading ? (
             <div className="rv-loading">
-              <Spin />
+              <Loader minHeight={160} />
             </div>
           ) : reviews.length > 0 ? (
             <>

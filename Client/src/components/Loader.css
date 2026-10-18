@@ -1,0 +1,63 @@
+.app-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+}
+
+.app-loader-full {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #ffffff;
+}
+
+.app-loader-bag {
+  transform-origin: 32px 40px;
+  animation: loader-breathe 1.4s ease-in-out infinite;
+}
+
+.app-loader-handle {
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: loader-handle 1.4s ease-in-out infinite;
+}
+
+.app-loader-label {
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+@keyframes loader-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.92);
+  }
+}
+
+@keyframes loader-handle {
+  0% {
+    stroke-dashoffset: 40;
+  }
+  50% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -40;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-loader-bag,
+  .app-loader-handle {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}

@@ -398,7 +398,7 @@ const OrderPageAdmin: React.FC = () => {
         {selectedOrder && selectedMeta && (
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <Tag color={selectedMeta.color} icon={selectedMeta.icon} bordered={false}>
+              <Tag color={selectedMeta.color} icon={selectedMeta.icon} variant="filled">
                 {selectedMeta.label}
               </Tag>
               <span className="op-muted">{formatDateTime(selectedOrder.siparisTarihi)}</span>
@@ -414,14 +414,14 @@ const OrderPageAdmin: React.FC = () => {
             )}
 
             {selectedOrder.durum === STATUS.pending && (
-              <Alert type="warning" showIcon message="Müşterinin ödemesi bekleniyor." />
+              <Alert type="warning" showIcon title="Müşterinin ödemesi bekleniyor." />
             )}
 
             {selectedOrder.durum === STATUS.cancelled && (
               <Alert
                 type={selectedOrder.odemeAlindi ? "error" : "info"}
                 showIcon
-                message={
+                title={
                   selectedOrder.odemeAlindi
                     ? "Sipariş iptal edildi, ödeme müşteriye iade edildi."
                     : "Müşteri ödemeyi tamamlamadı."

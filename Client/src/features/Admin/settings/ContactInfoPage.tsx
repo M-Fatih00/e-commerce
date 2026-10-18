@@ -1,5 +1,6 @@
+import Loader from "../../../components/Loader";
 import React, { useEffect, useState } from "react";
-import { Alert, Button, Form, Input, Spin, message } from "antd";
+import { Alert, Button, Form, Input, message } from "antd";
 import { ClockCircleOutlined, EnvironmentOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
 import requests from "../../../api/requests";
 import DemoLockButton from "../../../components/DemoLockButton";
@@ -82,14 +83,14 @@ const ContactInfoPage: React.FC = () => {
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
+          title="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
           style={{ marginTop: 16 }}
         />
       )}
 
       {!loaded ? (
         <div style={{ display: "grid", placeItems: "center", minHeight: 240 }}>
-          <Spin size="large" />
+          <Loader />
         </div>
       ) : (
         <div className="ci-grid">

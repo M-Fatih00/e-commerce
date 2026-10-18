@@ -126,7 +126,7 @@ const CategoryPageAdmin: React.FC = () => {
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde kategori formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı."
+          title="Demo sürümünde kategori formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

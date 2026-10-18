@@ -1,5 +1,5 @@
+import Loader from "../../components/Loader";
 import { useEffect } from "react";
-import { CircularProgress } from "@mui/material";
 import { fetchCategories } from "./categorySlice";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import Categories from "./Categories";
@@ -14,7 +14,7 @@ export default function CategoryPage(){
             dispatch(fetchCategories());
     }, [isLoaded]);
 
-    if(status === "loading") return <CircularProgress />;
+    if(status === "loading") return <Loader />;
 
     return(
         <Categories />

@@ -118,7 +118,7 @@ const BlogPageAdmin: React.FC = () => {
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde blog formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı."
+          title="Demo sürümünde blog formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

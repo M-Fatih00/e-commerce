@@ -124,7 +124,7 @@ const ProductPageAdmin: React.FC = () => {
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde ürün formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı."
+          title="Demo sürümünde ürün formlarını inceleyebilirsiniz; ekleme, güncelleme ve silme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}

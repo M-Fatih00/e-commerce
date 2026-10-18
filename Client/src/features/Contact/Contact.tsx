@@ -105,7 +105,7 @@ function Contact() {
                 type="info"
                 showIcon
                 icon={<LockOutlined />}
-                message="Demo sürümünde iletişim formu kapalıdır. Formu inceleyebilirsiniz, ancak mesaj gönderilmez."
+                title="Demo sürümünde iletişim formu kapalıdır. Formu inceleyebilirsiniz, ancak mesaj gönderilmez."
               />
             )}
 

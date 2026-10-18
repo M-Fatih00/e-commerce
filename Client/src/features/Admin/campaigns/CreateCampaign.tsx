@@ -43,7 +43,7 @@ const CreateCampaign: React.FC = () => {
         <Alert
           type="warning"
           showIcon
-          message={`En fazla ${MAX_CAMPAIGNS} kampanya eklenebilir. Yeni kampanya için mevcut bir kampanyayı silin.`}
+          title={`En fazla ${MAX_CAMPAIGNS} kampanya eklenebilir. Yeni kampanya için mevcut bir kampanyayı silin.`}
           style={{ marginBottom: 16 }}
         />
       )}

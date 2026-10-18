@@ -1,4 +1,4 @@
-import { CircularProgress } from "@mui/material";
+import Loader from "../../components/Loader";
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { fetchBlogs, selectAllBlogs } from "./blogSlice";
@@ -16,7 +16,7 @@ export default function BlogPage({ limit }: { limit?: number }) {
   }, [isLoaded, dispatch]);
 
   if (listStatus === "loading") {
-    return <CircularProgress />;
+    return <Loader />;
   }
 
   return (

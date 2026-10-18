@@ -1,6 +1,6 @@
+import Loader from "../../components/Loader";
 import { useParams } from "react-router-dom";
 import { useEffect } from "react";
-import { CircularProgress } from "@mui/material";
 
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { fetchBlogById, selectBlogById } from "./blogSlice";
@@ -24,7 +24,7 @@ export default function BlogDetailsPage() {
   }, [dispatch, id]);
 
   if (detailStatus === "loadingBlog") {
-    return <CircularProgress />;
+    return <Loader />;
   }
 
   if (!blog) {

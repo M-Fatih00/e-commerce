@@ -1,5 +1,6 @@
+import Loader from "../../components/Loader";
 import React, { useState } from "react";
-import { Button, Form, Input, Spin, message } from "antd";
+import { Button, Form, Input, message } from "antd";
 import { Navigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { createOrder } from "../Orders/orderSlice";
@@ -44,7 +45,7 @@ const CheckoutPage: React.FC = () => {
     return (
       <section className="checkout-page">
         <div className="container" style={{ display: "grid", placeItems: "center", minHeight: 300 }}>
-          <Spin size="large" />
+          <Loader />
         </div>
       </section>
     );

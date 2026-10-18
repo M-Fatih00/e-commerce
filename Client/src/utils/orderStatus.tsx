@@ -42,7 +42,7 @@ type OrderStatusTagProps = {
 export function OrderStatusTag({ durum, odemeAlindi = true }: OrderStatusTagProps) {
   const meta = getOrderStatus(durum, odemeAlindi);
   return (
-    <Tag color={meta.color} icon={meta.icon} bordered={false}>
+    <Tag color={meta.color} icon={meta.icon} variant="filled">
       {meta.label}
     </Tag>
   );

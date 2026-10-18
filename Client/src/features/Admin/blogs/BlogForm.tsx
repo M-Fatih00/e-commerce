@@ -73,7 +73,7 @@ const BlogForm: React.FC<Props> = ({ mode, initialTitle, initialContent, current
           type="info"
           showIcon
           icon={<LockOutlined />}
-          message="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
+          title="Demo sürümünde formu inceleyebilirsiniz, ancak kaydetme kapalı."
           style={{ marginBottom: 16 }}
         />
       )}
