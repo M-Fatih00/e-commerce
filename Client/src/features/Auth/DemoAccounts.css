@@ -1,0 +1,92 @@
+.demo-accounts {
+  border: 1px solid #d6e4fd;
+  background-color: #f3f7ff;
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin: 16px 0 24px;
+}
+
+.demo-accounts-title {
+  display: block;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0b3d91;
+}
+
+.demo-accounts-text {
+  margin: 4px 0 14px;
+  font-size: 14px;
+  color: #4b6aa3;
+}
+
+.demo-accounts-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.demo-accounts .demo-account {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  border: 1px solid #c9dafb;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #1367ef;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.demo-accounts .demo-account:hover {
+  border-color: #1367ef;
+}
+
+.demo-accounts .demo-account.active {
+  background-color: #e7f0ff;
+  border-color: #1367ef;
+}
+
+.demo-accounts .demo-account i {
+  font-size: 18px;
+}
+
+@media (max-width: 576px) {
+  .demo-accounts {
+    padding: 14px;
+    margin: 12px 0 20px;
+    border-radius: 8px;
+  }
+
+  .demo-accounts-title {
+    font-size: 15px;
+  }
+
+  .demo-accounts-text {
+    font-size: 13px;
+    margin: 2px 0 12px;
+  }
+
+  .demo-accounts-list {
+    gap: 8px;
+  }
+
+  .demo-accounts .demo-account {
+    height: 42px;
+    gap: 6px;
+    font-size: 14px;
+  }
+
+  .demo-accounts .demo-account i {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 340px) {
+  .demo-accounts-list {
+    grid-template-columns: 1fr;
+  }
+}

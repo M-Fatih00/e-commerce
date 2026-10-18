@@ -206,6 +206,10 @@ const Contact = {
     requests.put("contact-info", data),
 };
 
+const Demo = {
+  accounts: () => requests.get("demo/accounts"),
+};
+
 const Users = {
   list: () => requests.get("users"),
   addRole: (id: string, body: { role: string; password: string }) =>
@@ -262,4 +266,5 @@ export default {
   Order,
   Users,
   Contact,
+  Demo,
 };
