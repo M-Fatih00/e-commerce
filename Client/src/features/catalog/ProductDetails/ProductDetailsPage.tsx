@@ -34,7 +34,7 @@ function ProductDetailsPage() {
         <Loader />
       </div>
     );
-  if (!product) return <div>Product not found</div>;
+  if (!product) return <div className="container" style={{ padding: "60px 0", textAlign: "center" }}>Ürün bulunamadı.</div>;
 
   return (
     <section className="single-product">
