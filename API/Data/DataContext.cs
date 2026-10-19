@@ -66,12 +66,12 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
 
         // 1. Seed Category
         modelBuilder.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "Smartphone", ImageUrl = "categories/categories1.png" },
-            new Category { Id = 2, Name = "Watches", ImageUrl = "categories/categories2.png" },
-            new Category { Id = 3, Name = "Electronics", ImageUrl = "categories/categories3.png" },
-            new Category { Id = 4, Name = "Furnitures", ImageUrl = "categories/categories4.png" },
-            new Category { Id = 5, Name = "Collections", ImageUrl = "categories/categories5.png" },
-            new Category { Id = 6, Name = "Fashion", ImageUrl = "categories/categories6.png" }
+            new Category { Id = 1, Name = "Akıllı Telefon", ImageUrl = "categories/categories1.png" },
+            new Category { Id = 2, Name = "Saatler", ImageUrl = "categories/categories2.png" },
+            new Category { Id = 3, Name = "Elektronik", ImageUrl = "categories/categories3.png" },
+            new Category { Id = 4, Name = "Mobilya", ImageUrl = "categories/categories4.png" },
+            new Category { Id = 5, Name = "Koleksiyonlar", ImageUrl = "categories/categories5.png" },
+            new Category { Id = 6, Name = "Moda", ImageUrl = "categories/categories6.png" }
         );
 
         // 2. Seed Products (JSON'dan gelen veriler)

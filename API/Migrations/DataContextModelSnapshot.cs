@@ -305,37 +305,37 @@ namespace API.Migrations
                         {
                             Id = 1,
                             ImageUrl = "categories/categories1.png",
-                            Name = "Smartphone"
+                            Name = "Akıllı Telefon"
                         },
                         new
                         {
                             Id = 2,
                             ImageUrl = "categories/categories2.png",
-                            Name = "Watches"
+                            Name = "Saatler"
                         },
                         new
                         {
                             Id = 3,
                             ImageUrl = "categories/categories3.png",
-                            Name = "Electronics"
+                            Name = "Elektronik"
                         },
                         new
                         {
                             Id = 4,
                             ImageUrl = "categories/categories4.png",
-                            Name = "Furnitures"
+                            Name = "Mobilya"
                         },
                         new
                         {
                             Id = 5,
                             ImageUrl = "categories/categories5.png",
-                            Name = "Collections"
+                            Name = "Koleksiyonlar"
                         },
                         new
                         {
                             Id = 6,
                             ImageUrl = "categories/categories6.png",
-                            Name = "Fashion"
+                            Name = "Moda"
                         });
                 });
 
