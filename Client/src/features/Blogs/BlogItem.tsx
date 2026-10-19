@@ -7,24 +7,35 @@ interface Props {
   blogItem: IBlog;
 }
 
+const dateFormatter = new Intl.DateTimeFormat("tr-TR", {
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+});
+
 function BlogItem({ blogItem }: Props) {
+  const date = new Date(blogItem.createdDate);
+  const detailUrl = `/blog/${blogItem.id}`;
+
   return (
     <li className="blog-item">
-      <Link to={`/blog/${blogItem.id}`} className="blog-image">
-        <img src={getImageUrl(blogItem.img)} alt={blogItem.title} />
+      <Link to={detailUrl} className="blog-image" tabIndex={-1} aria-hidden="true">
+        <img src={getImageUrl(blogItem.img)} alt="" loading="lazy" />
       </Link>
 
       <div className="blog-info">
         <div className="blog-info-top">
-          <span>{new Date(blogItem.createdDate).toLocaleDateString()}</span>
+          <time dateTime={date.toISOString()}>{dateFormatter.format(date)}</time>
         </div>
 
         <div className="blog-info-center">
-          <Link to={`/blog/${blogItem.id}`}>{blogItem.title}</Link>
+          <Link to={detailUrl}>{blogItem.title}</Link>
         </div>
 
         <div className="blog-info-bottom">
-          <Link to={`/blog/${blogItem.id}`}>Read More</Link>
+          <Link to={detailUrl} aria-label={`${blogItem.title} yazısının devamını oku`}>
+            Devamını Oku
+          </Link>
         </div>
       </div>
     </li>
