@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import "./Breadcrumb.css";
 
 interface BreadcrumbProps {
@@ -5,22 +6,24 @@ interface BreadcrumbProps {
   productName?: string;
 }
 
-function Breadcrumb({ categoryName = "Category", productName }: BreadcrumbProps) {
+function Breadcrumb({ categoryName, productName }: BreadcrumbProps) {
   return (
     <div className="single-topbar">
-      <nav className="breadcrumb">
+      <nav className="breadcrumb" aria-label="Sayfa konumu">
         <ul>
           <li>
-            <a href="/">Home</a>
+            <Link to="/">Anasayfa</Link>
           </li>
 
           <li>
-            <a href="#">{categoryName}</a>
+            <Link to="/shop">{categoryName || "Mağaza"}</Link>
           </li>
 
-          <li>
-            <a href="#">{productName}</a>
-          </li>
+          {productName && (
+            <li>
+              <a aria-current="page">{productName}</a>
+            </li>
+          )}
         </ul>
       </nav>
     </div>
