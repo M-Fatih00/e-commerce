@@ -74,7 +74,7 @@ public static class DemoDataSeeder
             return;
 
         var coupons = await context.Coupons.AsNoTracking().OrderBy(c => c.Id).ToListAsync();
-        var prefix = config["Order:NumberPrefix"] ?? "ES";
+
         var random = new Random(2026);
         var now = DateTime.Now;
 
@@ -147,7 +147,7 @@ public static class DemoDataSeeder
             var shipping = ShippingRules.Calculate(saleTotal, random.Next(0, 4) == 0);
 
             string number;
-            do number = OrderNumberGenerator.Generate(prefix);
+            do number = OrderNumberGenerator.Generate();
             while (!usedNumbers.Add(number));
 
             var order = new Order

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, Col, Empty, Row, Statistic, Table } from "antd";
 import ReactApexChart from "react-apexcharts";
 import requests from "../../api/requests";
-import { formatPrice } from "../../utils/format";
+import { formatPrice, formatOrderNumber } from "../../utils/format";
 import { OrderStatusTag } from "../../utils/orderStatus";
 
 interface AylikVeri {
@@ -123,7 +123,7 @@ const Dashboard = () => {
       title: "Sipariş",
       dataIndex: "orderNumber",
       key: "orderNumber",
-      render: (value: string) => <b>{value}</b>,
+      render: (value: string) => <b>{formatOrderNumber(value)}</b>,
     },
     { title: "Müşteri", dataIndex: "adSoyad", key: "adSoyad" },
     {

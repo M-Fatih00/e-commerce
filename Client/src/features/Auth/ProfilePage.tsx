@@ -1,3 +1,4 @@
+import { formatOrderNumber } from "../../utils/format";
 import Loader from "../../components/Loader";
 import React, { useEffect, useState } from "react";
 import { Alert, Button, Card, Form, Input, message, Upload, Divider, Tabs, Collapse } from "antd";
@@ -195,7 +196,7 @@ const ProfilePage: React.FC = () => {
     label: (
       <div className="profile-order-header">
         <div className="profile-order-info">
-          <span className="profile-order-id">Sipariş {order.orderNumber}</span>
+          <span className="profile-order-id">Sipariş {formatOrderNumber(order.orderNumber)}</span>
           <span className="profile-order-date">
             {new Date(order.siparisTarihi).toLocaleDateString("tr-TR", {
               day: "2-digit",
