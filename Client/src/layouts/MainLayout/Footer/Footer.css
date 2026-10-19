@@ -288,3 +288,20 @@
     width: 50%;
   }
 }
+
+
+.footer-logo a {
+  display: inline-flex;
+}
+
+.footer-copyright > img {
+  max-height: 24px;
+  width: auto;
+}
+
+@media (max-width: 768px) {
+  .footer-widgets .widget-nav-menu h4:focus-visible {
+    outline: 2px solid #1367ef;
+    outline-offset: 2px;
+  }
+}

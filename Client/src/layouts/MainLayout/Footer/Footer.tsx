@@ -1,21 +1,103 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { message } from "antd";
 import "./Footer.css";
 import Policy from "../Policy/Policy";
+import Logo from "../../../components/Logo";
+import { useAppDispatch, useAppSelector } from "../../../store/store";
+import { fetchCategories, selectAllCategories } from "../../../features/Categories/categorySlice";
+
+type SectionKey = "information" | "account" | "shop" | "categories";
+
+type NavLinkItem = {
+  label: string;
+  to?: string;
+};
+
+const INFORMATION_LINKS: NavLinkItem[] = [
+  { label: "Hakkımızda" },
+  { label: "Gizlilik Politikası" },
+  { label: "İade Politikası" },
+  { label: "Kargo Politikası" },
+  { label: "Toptan Satış" },
+];
+
+const ACCOUNT_LINKS: NavLinkItem[] = [
+  { label: "Hesabım", to: "/profile" },
+  { label: "Siparişlerim", to: "/order" },
+  { label: "Favorilerim" },
+  { label: "Sepetim", to: "/cart" },
+  { label: "Sipariş Takibi", to: "/order" },
+];
+
+const SHOP_LINKS: NavLinkItem[] = [
+  { label: "Mağaza", to: "/shop" },
+  { label: "Çok Satanlar", to: "/shop" },
+  { label: "İndirimli Ürünler", to: "/shop" },
+  { label: "Yeni Ürünler", to: "/shop" },
+  { label: "İş Ortaklığı" },
+];
+
+const MAX_CATEGORIES = 5;
+
+function renderLink(item: NavLinkItem) {
+  return (
+    <li key={item.label}>
+      {item.to ? <Link to={item.to}>{item.label}</Link> : <a href="#">{item.label}</a>}
+    </li>
+  );
+}
 
 function Footer() {
-
   const Base_URL = import.meta.env.VITE_BASE_URL;
+  const year = new Date().getFullYear();
 
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+  const dispatch = useAppDispatch();
+  const categories = useAppSelector(selectAllCategories);
+  const { isLoaded: categoriesLoaded } = useAppSelector((state) => state.category);
+
+  const [openSections, setOpenSections] = useState<Record<SectionKey, boolean>>({
     information: false,
     account: false,
     shop: false,
     categories: false,
   });
 
-  const toggleSection = (key: string) => {
+  useEffect(() => {
+    if (!categoriesLoaded) dispatch(fetchCategories());
+  }, [categoriesLoaded, dispatch]);
+
+  const toggleSection = (key: SectionKey) => {
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   };
+
+  const handleToggleKey = (e: React.KeyboardEvent, key: SectionKey) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleSection(key);
+    }
+  };
+
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    message.info("Bülten aboneliği yakında aktif olacak.");
+  };
+
+  const renderSection = (key: SectionKey, title: string, items: React.ReactNode) => (
+    <div className={`widget-nav-menu ${openSections[key] ? "open" : ""}`}>
+      <h4
+        role="button"
+        tabIndex={0}
+        aria-expanded={openSections[key]}
+        onClick={() => toggleSection(key)}
+        onKeyDown={(e) => handleToggleKey(e, key)}
+      >
+        {title}
+        <i className="bi bi-chevron-down accordion-icon" aria-hidden="true"></i>
+      </h4>
+      <ul className="menu-list">{items}</ul>
+    </div>
+  );
 
   return (
     <React.Fragment>
@@ -28,26 +110,27 @@ function Footer() {
                 <div className="footer-subscribe">
                   <div className="footer-subscribe-top">
                     <h3 className="subscribe-title">
-                      Get our emails for info on new items, sales and more.
+                      Yeni ürünler, kampanyalar ve daha fazlası için bültenimize abone ol.
                     </h3>
                     <p className="subscribe-desc">
-                      We'll email you a voucher worth $10 off your first order
-                      over $50.
+                      İlk siparişinde kullanabileceğin indirim kodunu e-postana gönderelim.
                     </p>
                   </div>
                   <div className="footer-subscribe-bottom">
-                    <form>
+                    <form onSubmit={handleSubscribe}>
                       <input
-                        type="text"
-                        placeholder="Enter your email address."
+                        type="email"
+                        placeholder="E-posta adresini gir"
+                        aria-label="E-posta adresi"
+                        autoComplete="email"
                       />
-                      <button className="btn">Subscribe</button>
+                      <button type="submit" className="btn">
+                        Abone Ol
+                      </button>
                     </form>
                     <p className="privacy-text">
-                      By subscribing you agree to our{" "}
-                      <a href="#">
-                        Terms & Conditions and Privacy & Cookies Policy.
-                      </a>
+                      Abone olarak <a href="#">Kullanım Koşulları ile Gizlilik ve Çerez Politikası</a>'nı
+                      kabul etmiş olursun.
                     </p>
                   </div>
                 </div>
@@ -55,135 +138,88 @@ function Footer() {
               <div className="footer-contact-wrapper">
                 <div className="footer-contact-top">
                   <h3 className="contact-title">
-                    Need help? <br />
+                    Yardıma mı ihtiyacın var? <br />
                     (+90) 123 456 78 90
                   </h3>
-                  <p className="contact-desc">
-                    We are available 8:00am – 7:00pm
-                  </p>
+                  <p className="contact-desc">Hafta içi 08:00 – 19:00 arası ulaşabilirsin.</p>
                 </div>
                 <div className="footer-contact-bottom">
                   <div className="download-app">
                     <a href="#">
-                      <img src={`${Base_URL}/img/footer/app-store.png`} alt="" />
+                      <img src={`${Base_URL}/img/footer/app-store.png`} alt="App Store'dan indir" />
                     </a>
                     <a href="#">
-                      <img src={`${Base_URL}/img/footer/google-play.png`} alt="" />
+                      <img src={`${Base_URL}/img/footer/google-play.png`} alt="Google Play'den indir" />
                     </a>
                   </div>
                   <p className="privacy-text">
-                    <strong>Shopping App:</strong> Try our View in Your Room
-                    feature, manage registries and save payment info.
+                    <strong>Mobil Uygulama:</strong> Siparişlerini takip et, favorilerini kaydet ve
+                    ödeme bilgilerini güvenle sakla.
                   </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
+
         <div className="widgets-row">
           <div className="container">
             <div className="footer-widgets">
               <div className="brand-info">
                 <div className="footer-logo">
-                  <a href="index.html" className="logo">
-                    LOGO
-                  </a>
+                  <Link to="/" aria-label="Anasayfa">
+                    <Logo height={44} />
+                  </Link>
                 </div>
                 <div className="footer-desc">
                   <p>
-                    {" "}
-                    Quis ipsum suspendisse ultrices gravida. Risus commodo
-                    viverra maecenas accumsan lacus vel facilisis in termapol.
+                    Sezonun öne çıkan parçalarını, zamansız klasiklerle bir araya getiren online
+                    moda ve giyim mağazası.
                   </p>
                 </div>
                 <div className="footer-contact">
                   <p>
-                    <a href="tel:555 555 55 55">(+800) 1234 5678 90</a> –{" "}
+                    <a href="tel:+901234567890">(+90) 123 456 78 90</a> –{" "}
                     <a href="mailto:info@example.com">info@example.com</a>
                   </p>
                 </div>
               </div>
 
-              <div className={`widget-nav-menu ${openSections.information ? "open" : ""}`}>
-                <h4 onClick={() => toggleSection("information")}>
-                  Information
-                  <i className="bi bi-chevron-down accordion-icon"></i>
-                </h4>
-                <ul className="menu-list">
-                  <li><a href="#">About Us</a></li>
-                  <li><a href="#">Privacy Policy</a></li>
-                  <li><a href="#">Returns Policy</a></li>
-                  <li><a href="#">Shipping Policy</a></li>
-                  <li><a href="#">Dropshipping</a></li>
-                </ul>
-              </div>
-
-              <div className={`widget-nav-menu ${openSections.account ? "open" : ""}`}>
-                <h4 onClick={() => toggleSection("account")}>
-                  Account
-                  <i className="bi bi-chevron-down accordion-icon"></i>
-                </h4>
-                <ul className="menu-list">
-                  <li><a href="#">Dashboard</a></li>
-                  <li><a href="#">My Orders</a></li>
-                  <li><a href="#">My Wishlist</a></li>
-                  <li><a href="#">Account details</a></li>
-                  <li><a href="#">Track My Orders</a></li>
-                </ul>
-              </div>
-
-              <div className={`widget-nav-menu ${openSections.shop ? "open" : ""}`}>
-                <h4 onClick={() => toggleSection("shop")}>
-                  Shop
-                  <i className="bi bi-chevron-down accordion-icon"></i>
-                </h4>
-                <ul className="menu-list">
-                  <li><a href="#">Affiliate</a></li>
-                  <li><a href="#">Bestsellers</a></li>
-                  <li><a href="#">Discount</a></li>
-                  <li><a href="#">Latest Products</a></li>
-                  <li><a href="#">Sale Products</a></li>
-                </ul>
-              </div>
-
-              <div className={`widget-nav-menu ${openSections.categories ? "open" : ""}`}>
-                <h4 onClick={() => toggleSection("categories")}>
-                  Categories
-                  <i className="bi bi-chevron-down accordion-icon"></i>
-                </h4>
-                <ul className="menu-list">
-                  <li><a href="#">Women</a></li>
-                  <li><a href="#">Men</a></li>
-                  <li><a href="#">Bags</a></li>
-                  <li><a href="#">Outerwear</a></li>
-                  <li><a href="#">Shoes</a></li>
-                </ul>
-              </div>
+              {renderSection("information", "Bilgi", INFORMATION_LINKS.map(renderLink))}
+              {renderSection("account", "Hesabım", ACCOUNT_LINKS.map(renderLink))}
+              {renderSection("shop", "Mağaza", SHOP_LINKS.map(renderLink))}
+              {renderSection(
+                "categories",
+                "Kategoriler",
+                categories.slice(0, MAX_CATEGORIES).map((category) => (
+                  <li key={category.id}>
+                    <Link to={`/shop?category=${category.id}`}>{category.name}</Link>
+                  </li>
+                )),
+              )}
             </div>
           </div>
         </div>
+
         <div className="copyright-row">
           <div className="container">
             <div className="footer-copyright">
               <div className="site-copyright">
                 <p>
-                  Copyright 2022 © E-Commerce Theme. All right reserved. Powered
-                  by Mehmet Fatih Canıbek.
+                  © {year} E-Commerce. Tüm hakları saklıdır. Geliştirici: Mehmet Fatih Canıbek.
                 </p>
               </div>
-              <a href="#">
-                <img src={`${Base_URL}/img/footer/cards.png`} alt="" />
-              </a>
+              <img src={`${Base_URL}/img/footer/cards.png`} alt="Kabul edilen ödeme yöntemleri" />
               <div className="footer-menu">
                 <ul className="footer-menu-list">
                   <li className="list-item">
-                    <a href="#">Privacy Policy</a>
+                    <a href="#">Gizlilik Politikası</a>
                   </li>
                   <li className="list-item">
-                    <a href="#">Terms and Conditions</a>
+                    <a href="#">Kullanım Koşulları</a>
                   </li>
                   <li className="list-item">
-                    <a href="#">Returns Policy</a>
+                    <a href="#">İade Politikası</a>
                   </li>
                 </ul>
               </div>
