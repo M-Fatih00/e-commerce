@@ -43,3 +43,27 @@
     padding: 15px 0px;
   }
 }
+
+
+
+@media (max-width: 576px) {
+  .policy {
+    margin-top: 24px;
+  }
+
+  .policy .policy-list {
+    gap: 14px 10px;
+  }
+
+  .policy .policy-item i {
+    font-size: 30px;
+  }
+
+  .policy .policy-item .policy-texts strong {
+    font-size: 13px;
+  }
+
+  .policy .policy-item .policy-texts span {
+    font-size: 11px;
+  }
+}
