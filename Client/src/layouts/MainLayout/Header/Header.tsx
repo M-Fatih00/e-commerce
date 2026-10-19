@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Proptypes from "prop-types";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Header.css";
 import { useAppDispatch, useAppSelector } from "../../../store/store";
 import { logoutUser } from "../../../features/Auth/authSlice";
 import { selectCartItemCount } from "../../../features/cart/cartSlice";
+import { fetchCategories, selectAllCategories } from "../../../features/Categories/categorySlice";
 import UserAvatar from "../../../features/Auth/UserAvatar";
 import Logo from "../../../components/Logo";
 
@@ -12,15 +13,41 @@ type HeaderProps = {
   setIsSearchShow: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+const MAX_MENU_CATEGORIES = 12;
+
+const SHOP_LINKS = [
+  { label: "Tüm Ürünler", to: "/shop" },
+  { label: "Sepetim", to: "/cart" },
+  { label: "Siparişlerim", to: "/order" },
+  { label: "Hesabım", to: "/profile" },
+];
+
 function Header({ setIsSearchShow }: HeaderProps) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const cartItemCount = useAppSelector(selectCartItemCount);
   const { user, roles } = useAppSelector((state) => state.auth);
+  const categories = useAppSelector(selectAllCategories);
+  const { isLoaded: categoriesLoaded } = useAppSelector((state) => state.category);
   const { pathname } = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const closeMenu = () => setMenuOpen(false);
+
+  useEffect(() => {
+    if (!categoriesLoaded) dispatch(fetchCategories());
+  }, [categoriesLoaded, dispatch]);
+
+  const isShopActive = pathname.startsWith("/shop") || pathname.startsWith("/product");
+
+  const linkClass = (active: boolean) => `menu-link ${active ? "active" : ""}`;
+
+  const handleIconKey = (e: React.KeyboardEvent, action: () => void) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      action();
+    }
+  };
 
   const handleLogout = async () => {
     if (window.confirm("Çıkış yapmak istediğinize emin misiniz?")) {
@@ -30,13 +57,12 @@ function Header({ setIsSearchShow }: HeaderProps) {
   };
 
   return (
-    <header>
+    <header lang="tr">
       <div className="global-notification">
         <div className="container">
           <p>
-            SUMMER SALE FOR ALL SWIM SUITS AND FREE EXPRESS INTERNATIONAL
-            DELIVERY - OFF 50%!
-            <Link to="/shop"> SHOP NOW </Link>
+            Yeni sezon ürünleri mağazada!
+            <Link to="/shop"> ALIŞVERİŞE BAŞLA</Link>
           </p>
         </div>
       </div>
@@ -48,12 +74,17 @@ function Header({ setIsSearchShow }: HeaderProps) {
               <i
                 className="bi bi-list"
                 id="btn-menu"
+                role="button"
+                tabIndex={0}
+                aria-label="Menüyü aç"
+                aria-expanded={menuOpen}
                 onClick={() => setMenuOpen(true)}
+                onKeyDown={(e) => handleIconKey(e, () => setMenuOpen(true))}
               ></i>
             </div>
 
             <div className="header-left">
-              <Link to="/" className="logo" aria-label="Ana sayfa" onClick={() => window.scrollTo(0, 0)}>
+              <Link to="/" className="logo" aria-label="Anasayfa" onClick={() => window.scrollTo(0, 0)}>
                 <Logo height={40} />
               </Link>
             </div>
@@ -70,162 +101,54 @@ function Header({ setIsSearchShow }: HeaderProps) {
               />
             )}
 
-            <div
-              className={`header-center ${menuOpen ? "open" : ""}`}
-              id="sidebar"
-            >
-              <nav className="navigation" onClick={closeMenu}>
+            <div className={`header-center ${menuOpen ? "open" : ""}`} id="sidebar">
+              <nav className="navigation" onClick={closeMenu} aria-label="Ana menü">
                 <ul className="menu-list">
                   <li className="menu-list-item">
-                    <Link
-                      to={"/"}
-                      className={`menu-link ${pathname === "/" && "active"}`}
-                      onClick={() => window.scrollTo(0, 0)}
-                    >
-                      Home
-                      <i className="bi bi-chevron-down"></i>
+                    <Link to="/" className={linkClass(pathname === "/")} onClick={() => window.scrollTo(0, 0)}>
+                      Anasayfa
                     </Link>
-                    <div className="menu-dropdown-wrapper">
-                      <ul className="menu-dropdown-content">
-                        <li>
-                          <a href="#">Home Clean</a>
-                        </li>
-                        <li>
-                          <a href="#">Home Collection</a>
-                        </li>
-                        <li>
-                          <a href="#">Home Minimal</a>
-                        </li>
-                        <li>
-                          <a href="#">Home Modern</a>
-                        </li>
-                        <li>
-                          <a href="#">Home Parallax</a>
-                        </li>
-                        <li>
-                          <a href="#">Home Strong</a>
-                        </li>
-                        <li>
-                          <a href="#">Home Style</a>
-                        </li>
-                        <li>
-                          <a href="#">Home Unique</a>
-                        </li>
-                        <li>
-                          <a href="#">Home RTL</a>
-                        </li>
-                      </ul>
-                    </div>
                   </li>
 
                   <li className="menu-list-item megamenu-wrapper">
-                    <Link
-                      to={"/shop"}
-                      className={`menu-link ${pathname === "/shop" && "active"}`}
-                    >
-                      Shop
-                      <i className="bi bi-chevron-down"></i>
+                    <Link to="/shop" className={linkClass(isShopActive)}>
+                      Mağaza
+                      <i className="bi bi-chevron-down" aria-hidden="true"></i>
                     </Link>
                     <div className="menu-dropdown-wrapper">
                       <div className="menu-dropdown-megamenu">
                         <div className="megamenu-links">
+                          {categories.length > 0 && (
+                            <div className="megamenu-products">
+                              <h3 className="megamenu-products-title">Kategoriler</h3>
+                              <ul className="megamenu-menu-list megamenu-category-list">
+                                {categories.slice(0, MAX_MENU_CATEGORIES).map((category) => (
+                                  <li key={category.id}>
+                                    <Link to={`/shop?category=${category.id}`}>{category.name}</Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
                           <div className="megamenu-products">
-                            <h3 className="megamenu-products-title">
-                              Shop Style
-                            </h3>
+                            <h3 className="megamenu-products-title">Alışveriş</h3>
                             <ul className="megamenu-menu-list">
-                              <li>
-                                <a href="#">Shop Standard</a>
-                              </li>
-                              <li>
-                                <a href="#">Shop Full</a>
-                              </li>
-                              <li>
-                                <a href="#">Shop Only Categories</a>
-                              </li>
-                              <li>
-                                <a href="#">Shop Image Categories</a>
-                              </li>
-                              <li>
-                                <a href="#">Shop Sub Categories</a>
-                              </li>
-                              <li>
-                                <a href="#">Shop List</a>
-                              </li>
-                              <li>
-                                <a href="#">Hover Style 1</a>
-                              </li>
-                              <li>
-                                <a href="#">Hover Style 2</a>
-                              </li>
-                              <li>
-                                <a href="#">Hover Style 3</a>
-                              </li>
-                            </ul>
-                          </div>
-                          <div className="megamenu-products">
-                            <h3 className="megamenu-products-title">
-                              Filter Layout
-                            </h3>
-                            <ul className="megamenu-menu-list">
-                              <li>
-                                <a href="#">Sidebar</a>
-                              </li>
-                              <li>
-                                <a href="#">Filter Side Out</a>
-                              </li>
-                              <li>
-                                <a href="#">Filter Dropdown</a>
-                              </li>
-                              <li>
-                                <a href="#">Filter Drawer</a>
-                              </li>
-                            </ul>
-                          </div>
-                          <div className="megamenu-products">
-                            <h3 className="megamenu-products-title">
-                              Shop Loader
-                            </h3>
-                            <ul className="megamenu-menu-list">
-                              <li>
-                                <a href="#">Shop Pagination</a>
-                              </li>
-                              <li>
-                                <a href="#">Shop Infinity</a>
-                              </li>
-                              <li>
-                                <a href="#">Shop Load More</a>
-                              </li>
-                              <li>
-                                <a href="#">Cart Modal</a>
-                              </li>
-                              <li>
-                                <a href="#">Cart Drawer</a>
-                              </li>
-                              <li>
-                                <a href="#">Cart Page</a>
-                              </li>
+                              {SHOP_LINKS.map((item) => (
+                                <li key={item.label}>
+                                  <Link to={item.to}>{item.label}</Link>
+                                </li>
+                              ))}
                             </ul>
                           </div>
                         </div>
                         <div className="megamenu-single">
-                          <a href="#">
-                            <img
-                              src={`${import.meta.env.VITE_BASE_URL}/img/mega-menu.jpg`}
-                              alt=""
-                            />
-                          </a>
-                          <h3 className="megamenu-single-title">
-                            JOIN THE LAYERING GANG
-                          </h3>
-                          <h4 className="megamenu-single-subtitle">
-                            Suspendisse faucibus nunc et pellentesque
-                          </h4>
-                          <Link
-                            to="/shop"
-                            className="megamenu-single-button btn btn-sm"
-                          >
-                            Shop Now
+                          <Link to="/shop">
+                            <img src={`${import.meta.env.VITE_BASE_URL}/img/mega-menu.jpg`} alt="" />
+                          </Link>
+                          <h3 className="megamenu-single-title">YENİ SEZON KOLEKSİYONU</h3>
+                          <h4 className="megamenu-single-subtitle">Sezonun öne çıkan parçalarını keşfet</h4>
+                          <Link to="/shop" className="megamenu-single-button btn btn-sm">
+                            Alışverişe Başla
                           </Link>
                         </div>
                       </div>
@@ -233,20 +156,14 @@ function Header({ setIsSearchShow }: HeaderProps) {
                   </li>
 
                   <li className="menu-list-item">
-                    <Link
-                      to={"/blog"}
-                      className={`menu-link ${pathname === "/blog" && "active"}`}
-                    >
+                    <Link to="/blog" className={linkClass(pathname.startsWith("/blog"))}>
                       Blog
                     </Link>
                   </li>
 
                   <li className="menu-list-item">
-                    <Link
-                      to={"/contact"}
-                      className={`menu-link ${pathname === "/contact" && "active"}`}
-                    >
-                      Contact
+                    <Link to="/contact" className={linkClass(pathname === "/contact")}>
+                      İletişim
                     </Link>
                   </li>
                 </ul>
@@ -254,10 +171,13 @@ function Header({ setIsSearchShow }: HeaderProps) {
               <i
                 className="bi-x-circle"
                 id="close-sidebar"
+                role="button"
+                tabIndex={0}
+                aria-label="Menüyü kapat"
                 onClick={closeMenu}
+                onKeyDown={(e) => handleIconKey(e, closeMenu)}
               ></i>
             </div>
-
 
             <div className="header-right">
               <div className="header-right-links">
@@ -279,7 +199,6 @@ function Header({ setIsSearchShow }: HeaderProps) {
                     <span className="header-login-label">Giriş Yap</span>
                   </Link>
                 )}
-
 
                 {roles?.includes("Admin") && (
                   <button
@@ -314,70 +233,49 @@ function Header({ setIsSearchShow }: HeaderProps) {
                       borderRadius: 8,
                       transition: "background 0.15s",
                     }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "#f5f6fa")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "transparent")
-                    }
+                    onMouseEnter={(e) => (e.currentTarget.style.background = "#f5f6fa")}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                   >
-                    <UserAvatar
-                      fullName={user.fullName}
-                      avatar={user.avatar}
-                      size={32}
-                      fontSize={12}
-                    />
+                    <UserAvatar fullName={user.fullName} avatar={user.avatar} size={32} fontSize={12} />
                     <div style={{ lineHeight: 1.3 }}>
                       <div
                         className="header-user-name"
-                        style={{
-                          fontSize: 12,
-                          fontWeight: 600,
-                          color: "#1a1a2e",
-                        }}
+                        style={{ fontSize: 12, fontWeight: 600, color: "#1a1a2e" }}
                       >
                         {user.fullName}
                       </div>
-                      <div
-                        className="header-user-sub"
-                        style={{ fontSize: 10, color: "#999" }}
-                      >
+                      <div className="header-user-sub" style={{ fontSize: 10, color: "#999" }}>
                         Profilim
                       </div>
                     </div>
                   </Link>
                 )}
 
-
                 {user && (
                   <button
                     className="search-button"
                     onClick={handleLogout}
                     title="Çıkış Yap"
+                    aria-label="Çıkış Yap"
                     style={{ color: "#999" }}
                   >
-                    <i
-                      className="bi bi-box-arrow-right"
-                      style={{ fontSize: 18 }}
-                    />
+                    <i className="bi bi-box-arrow-right" style={{ fontSize: 18 }} />
                   </button>
                 )}
 
-
                 <div style={{ width: 1, height: 20, background: "#dee0ea" }} />
-
 
                 <button
                   className="search-button"
                   onClick={() => setIsSearchShow(true)}
                   title="Ara"
+                  aria-label="Ürün ara"
                 >
                   <i className="bi bi-search" />
                 </button>
 
-
                 <div className="header-cart">
-                  <Link to={"/cart"} className="header-cart-link">
+                  <Link to={"/cart"} className="header-cart-link" aria-label={`Sepet, ${cartItemCount} ürün`}>
                     <i className="bi bi-bag" />
                     <span className="header-cart-count">{cartItemCount}</span>
                   </Link>

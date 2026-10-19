@@ -1,9 +1,11 @@
 import { message } from "antd";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./Search.css";
 import { Link } from "react-router-dom";
 import requests from "../../../api/requests";
 import { IProductItem } from "../../../model/IProduct";
+import { getImageUrl } from "../../../utils/image";
+import { formatPrice } from "../../../utils/format";
 
 interface SearchProps {
   isSearchShow: boolean;
@@ -13,13 +15,29 @@ interface SearchProps {
 const Search: React.FC<SearchProps> = ({ isSearchShow, setIsSearchShow }) => {
   const [query, setQuery] = useState<string>("");
   const [searchResults, setSearchResults] = useState<IProductItem[] | null>(null);
-  const baseUrl = import.meta.env.VITE_BASE_URL;
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleCloseModal = () => {
     setIsSearchShow(false);
     setSearchResults(null);
     setQuery("");
   };
+
+  useEffect(() => {
+    if (!isSearchShow) return;
+
+    const focusTimer = setTimeout(() => inputRef.current?.focus(), 50);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") handleCloseModal();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isSearchShow]);
 
   useEffect(() => {
     if (query.trim().length === 0) {
@@ -32,65 +50,63 @@ const Search: React.FC<SearchProps> = ({ isSearchShow, setIsSearchShow }) => {
         const data = await requests.Catalog.search(query.trim());
         setSearchResults(data);
       } catch {
-        message.error("Ürün getirme hatası!");
+        message.error("Ürünler getirilemedi. Lütfen tekrar deneyin.");
       }
     }, 400);
 
     return () => clearTimeout(timeout);
   }, [query]);
 
+  const showMessage = !searchResults || searchResults.length === 0;
+
   return (
     <>
-      <div className={`modal-search ${isSearchShow ? "show" : ""}`}>
+      <div
+        className={`modal-search ${isSearchShow ? "show" : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="search-title"
+        aria-hidden={!isSearchShow}
+      >
         <div className="modal-wrapper">
-          <h3 className="modal-title">Search for products</h3>
-          <p className="modal-text">
-            Start typing to see products you are looking for.
-          </p>
+          <h3 className="modal-title" id="search-title">
+            Ürün Ara
+          </h3>
+          <p className="modal-text">Aradığın ürünleri görmek için yazmaya başla.</p>
 
           <form className="search-form" onSubmit={(e) => e.preventDefault()}>
             <input
+              ref={inputRef}
               type="text"
-              placeholder="Search a product"
+              placeholder="Ürün adı yaz"
+              aria-label="Ürün adı"
               value={query}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
-              autoFocus
             />
-            <button type="button">
+            <button type="submit" aria-label="Ara">
               <i className="bi bi-search"></i>
             </button>
           </form>
 
           <div className="search-results">
             <div className="search-heading">
-              <h3>RESULTS FROM PRODUCT</h3>
+              <h3>ÜRÜN SONUÇLARI</h3>
             </div>
-            <div
-              className="results"
-              style={{
-                display: `${searchResults?.length === 0 || !searchResults ? "flex" : "grid"}`,
-              }}
-            >
+            <div className="results" style={{ display: showMessage ? "flex" : "grid" }} aria-live="polite">
               {!searchResults && (
-                <b
-                  className="result-item"
-                  style={{ justifyContent: "center", width: "100%" }}
-                >
-                  Ürün Ara...
-                </b>
+                <p className="result-item" style={{ justifyContent: "center", width: "100%", margin: 0 }}>
+                  Aramak istediğin ürünün adını yaz.
+                </p>
               )}
 
               {searchResults?.length === 0 && (
-                <a
-                  href="#"
-                  className="result-item"
-                  style={{ justifyContent: "center", width: "100%" }}
-                >
-                  😔 Aradığınız Ürün Bulunamadı 😔
-                </a>
+                <p className="result-item" style={{ justifyContent: "center", width: "100%", margin: 0 }}>
+                  Aradığın ürün bulunamadı.
+                </p>
               )}
 
-              {searchResults && searchResults.length > 0 &&
+              {searchResults &&
+                searchResults.length > 0 &&
                 searchResults.map((resultItem) => (
                   <Link
                     to={`/product/${resultItem.id}`}
@@ -99,16 +115,13 @@ const Search: React.FC<SearchProps> = ({ isSearchShow, setIsSearchShow }) => {
                     onClick={handleCloseModal}
                   >
                     <img
-                      src={`${baseUrl}/img/${resultItem.mainImage}`}
+                      src={getImageUrl(resultItem.mainImage)}
                       className="search-thumb"
-                      alt={resultItem.name}
+                      alt=""
                     />
                     <div className="search-info">
                       <h4>{resultItem.name}</h4>
-                      <span className="search-sku">SKU: PD0016</span>
-                      <span className="search-price">
-                        {resultItem.newPrice.toFixed(2)} ₺
-                      </span>
+                      <span className="search-price">{formatPrice(resultItem.newPrice)}</span>
                     </div>
                   </Link>
                 ))}
@@ -118,7 +131,16 @@ const Search: React.FC<SearchProps> = ({ isSearchShow, setIsSearchShow }) => {
           <i
             className="bi bi-x-circle"
             id="close-search"
+            role="button"
+            tabIndex={0}
+            aria-label="Aramayı kapat"
             onClick={handleCloseModal}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handleCloseModal();
+              }
+            }}
           ></i>
         </div>
         <div className="modal-overlay" onClick={handleCloseModal}></div>

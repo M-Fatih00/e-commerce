@@ -381,3 +381,23 @@ header .menu-dropdown-content a:hover {
     font-size: 22px;
   }
 }
+
+
+.megamenu-wrapper .megamenu-menu-list.megamenu-category-list {
+  display: block;
+  columns: 2;
+  column-gap: 32px;
+}
+
+.megamenu-wrapper .megamenu-category-list li {
+  break-inside: avoid;
+  margin-bottom: 2px;
+}
+
+.megamenu-wrapper .megamenu-menu-list a {
+  transition: color 0.2s ease;
+}
+
+.megamenu-wrapper .megamenu-menu-list a:hover {
+  color: #1367ef;
+}
