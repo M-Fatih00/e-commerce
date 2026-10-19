@@ -17,14 +17,14 @@ public static class SeedDatabase
         var demoEnabled = config.GetValue("Demo:Enabled", false);
 
         await EnsureUser(userManager, "admin", "admin@example.com", "Admin User", "Admin",
-            config["Seed:AdminPassword"], "Seed:AdminPassword", demoEnabled);
+            config["Seed:AdminPassword"], "Seed:AdminPassword", demoEnabled, "demo-avatars/admin1.jpg");
 
         await EnsureUser(userManager, "customer", "customer@example.com", "Customer User", "Customer",
-            config["Seed:CustomerPassword"], "Seed:CustomerPassword", demoEnabled);
+            config["Seed:CustomerPassword"], "Seed:CustomerPassword", demoEnabled, "demo-avatars/user1.jpg");
     }
 
     private static async Task EnsureUser(UserManager<AppUser> userManager, string userName, string email,
-        string fullName, string role, string? password, string passwordKey, bool demoEnabled)
+        string fullName, string role, string? password, string passwordKey, bool demoEnabled, string? avatar)
     {
         var user = await userManager.FindByNameAsync(userName);
 
@@ -33,7 +33,7 @@ public static class SeedDatabase
             if (string.IsNullOrWhiteSpace(password))
                 throw new InvalidOperationException($"{passwordKey} tanımlı değil.");
 
-            user = new AppUser { FullName = fullName, UserName = userName, Email = email };
+            user = new AppUser { FullName = fullName, UserName = userName, Email = email, Avatar = avatar };
 
             var createResult = await userManager.CreateAsync(user, password);
             if (!createResult.Succeeded)
@@ -43,6 +43,11 @@ public static class SeedDatabase
             var roleResult = await userManager.AddToRoleAsync(user, role);
             if (!roleResult.Succeeded)
                 throw new InvalidOperationException($"{userName} için rol atanamadı.");
+        }
+        else if (string.IsNullOrEmpty(user.Avatar) && !string.IsNullOrEmpty(avatar))
+        {
+            user.Avatar = avatar;
+            await userManager.UpdateAsync(user);
         }
 
         if (user.LockoutEnabled == demoEnabled)
