@@ -120,7 +120,7 @@ const Dashboard = () => {
 
   const columns = [
     {
-      title: "Sipariş",
+      title: "Sipariş No",
       dataIndex: "orderNumber",
       key: "orderNumber",
       render: (value: string) => <b>{formatOrderNumber(value)}</b>,

@@ -236,7 +236,7 @@ const OrderPageAdmin: React.FC = () => {
 
   const columns = [
     {
-      title: "Sipariş",
+      title: "Sipariş No",
       key: "order",
       width: 150,
       render: (_: unknown, record: IOrder) => (
@@ -376,7 +376,7 @@ const OrderPageAdmin: React.FC = () => {
       </div>
 
       <Modal
-        title={selectedOrder ? `Sipariş ${formatOrderNumber(selectedOrder.orderNumber)}` : ""}
+        title={selectedOrder ? `Sipariş No: ${formatOrderNumber(selectedOrder.orderNumber)}` : ""}
         open={selectedOrder !== null}
         onCancel={() => setSelectedOrder(null)}
         width={720}
