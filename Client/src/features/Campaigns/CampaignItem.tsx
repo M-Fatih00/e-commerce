@@ -30,7 +30,7 @@ function CampaignItem({
       <p className="campaign-desc">{description}</p>
 
       <Link to={`/shop?category=${categoryId}`} className="btn btn-primary campaign-btn">
-        View All
+        Tümünü Gör
         <i className="bi bi-arrow-right"></i>
       </Link>
     </div>

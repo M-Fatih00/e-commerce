@@ -204,37 +204,37 @@ namespace API.Migrations
                         {
                             Id = 1,
                             CategoryId = 6,
-                            Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+                            Description = "Sezonun en çok konuşulan parçaları şimdi mağazada.",
                             ImageUrl = "campaigns/banner1.png",
                             Index = 0,
-                            Title = "Fashion Month Ready in Capital Shop"
+                            Title = "Yeni Sezon Koleksiyonu"
                         },
                         new
                         {
                             Id = 2,
                             CategoryId = 5,
-                            Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+                            Description = "En çok tercih edilen ürünleri keşfet, tarzını tamamla.",
                             ImageUrl = "campaigns/banner2.png",
                             Index = 1,
-                            Title = "Fashion Month Ready in Capital Shop"
+                            Title = "Haftanın Favorileri"
                         },
                         new
                         {
                             Id = 3,
                             CategoryId = 6,
-                            Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+                            Description = "Her dolapta olması gereken, uzun ömürlü parçalar.",
                             ImageUrl = "campaigns/banner3.png",
                             Index = 2,
-                            Title = "Fashion Month Ready in Capital Shop"
+                            Title = "Zamansız Klasikler"
                         },
                         new
                         {
                             Id = 4,
                             CategoryId = 5,
-                            Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+                            Description = "Seçili ürünlerde kaçırılmayacak fiyatlar.",
                             ImageUrl = "campaigns/banner4.png",
                             Index = 3,
-                            Title = "Fashion Month Ready in Capital Shop"
+                            Title = "Fırsat Köşesi"
                         });
                 });
 

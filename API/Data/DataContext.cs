@@ -258,10 +258,10 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
         );
 
         modelBuilder.Entity<Campaign>().HasData(
-            new Campaign { Id = 1, Index = 0, Title = "Fashion Month Ready in Capital Shop", Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor", CategoryId = 6, ImageUrl = "campaigns/banner1.png" },
-            new Campaign { Id = 2, Index = 1, Title = "Fashion Month Ready in Capital Shop", Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor", CategoryId = 5, ImageUrl = "campaigns/banner2.png" },
-            new Campaign { Id = 3, Index = 2, Title = "Fashion Month Ready in Capital Shop", Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor", CategoryId = 6, ImageUrl = "campaigns/banner3.png" },
-            new Campaign { Id = 4, Index = 3, Title = "Fashion Month Ready in Capital Shop", Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor", CategoryId = 5, ImageUrl = "campaigns/banner4.png" }
+            new Campaign { Id = 1, Index = 0, Title = "Yeni Sezon Koleksiyonu", Description = "Sezonun en çok konuşulan parçaları şimdi mağazada.", CategoryId = 6, ImageUrl = "campaigns/banner1.png" },
+            new Campaign { Id = 2, Index = 1, Title = "Haftanın Favorileri", Description = "En çok tercih edilen ürünleri keşfet, tarzını tamamla.", CategoryId = 5, ImageUrl = "campaigns/banner2.png" },
+            new Campaign { Id = 3, Index = 2, Title = "Zamansız Klasikler", Description = "Her dolapta olması gereken, uzun ömürlü parçalar.", CategoryId = 6, ImageUrl = "campaigns/banner3.png" },
+            new Campaign { Id = 4, Index = 3, Title = "Fırsat Köşesi", Description = "Seçili ürünlerde kaçırılmayacak fiyatlar.", CategoryId = 5, ImageUrl = "campaigns/banner4.png" }
         );
 
 
