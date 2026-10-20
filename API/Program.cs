@@ -261,3 +261,6 @@ static void ApplyCacheHeaders(HttpContext context)
         ? "public, max-age=31536000, immutable"
         : "no-cache";
 }
+
+
+public partial class Program { }
