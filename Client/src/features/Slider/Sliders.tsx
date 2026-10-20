@@ -6,6 +6,10 @@ import requests from "../../api/requests";
 interface SliderData {
   id: number;
   resim: string;
+  baslik?: string | null;
+  altBaslik?: string | null;
+  butonMetni?: string | null;
+  butonLinki?: string | null;
 }
 
 const INTERVAL_MS = 5000;
@@ -30,12 +34,28 @@ function Sliders() {
     return () => clearTimeout(timer);
   }, [sliders.length, currentSlide]);
 
-  if (loading) return <div className="slider-placeholder" aria-hidden="true" />;
+  if (loading) {
+    return (
+      <section
+        className="slider-skeleton"
+        aria-busy="true"
+        aria-label="Öne çıkanlar yükleniyor"
+      >
+        <div className="slider-skeleton-content">
+          <span className="skeleton-block slider-skeleton-title" />
+          <span className="skeleton-block slider-skeleton-heading" />
+          <span className="skeleton-block slider-skeleton-heading short" />
+          <span className="skeleton-block slider-skeleton-button" />
+        </div>
+      </section>
+    );
+  }
   if (sliders.length === 0) return null;
 
   const hasMultiple = sliders.length > 1;
 
-  const goTo = (index: number) => setCurrentSlide((index + sliders.length) % sliders.length);
+  const goTo = (index: number) =>
+    setCurrentSlide((index + sliders.length) % sliders.length);
 
   return (
     <section
@@ -44,15 +64,30 @@ function Sliders() {
       aria-label="Öne çıkanlar"
     >
       <div className="slider-elements">
-        <SliderItem key={currentSlide} imageSrc={sliders[currentSlide].resim} />
+        <SliderItem
+          key={currentSlide}
+          imageSrc={sliders[currentSlide].resim}
+          title={sliders[currentSlide].baslik}
+          heading={sliders[currentSlide].altBaslik}
+          buttonText={sliders[currentSlide].butonMetni}
+          buttonLink={sliders[currentSlide].butonLinki}
+        />
 
         {hasMultiple && (
           <>
             <div className="slider-buttons">
-              <button type="button" onClick={() => goTo(currentSlide - 1)} aria-label="Önceki slayt">
+              <button
+                type="button"
+                onClick={() => goTo(currentSlide - 1)}
+                aria-label="Önceki slayt"
+              >
                 <i className="bi bi-chevron-left" />
               </button>
-              <button type="button" onClick={() => goTo(currentSlide + 1)} aria-label="Sonraki slayt">
+              <button
+                type="button"
+                onClick={() => goTo(currentSlide + 1)}
+                aria-label="Sonraki slayt"
+              >
                 <i className="bi bi-chevron-right" />
               </button>
             </div>

@@ -174,6 +174,11 @@ builder.Services.AddRateLimiter(options =>
     options.AddPolicy("review", context => SlidingWindowByIp(context, reviewPerHour, TimeSpan.FromHours(1)));
 });
 
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(365);
+});
+
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<API.Services.TokenService>();
@@ -190,6 +195,9 @@ var app = builder.Build();
 
 app.UseForwardedHeaders();
 app.UseMiddleware<ExceptionHandling>();
+
+if (!app.Environment.IsDevelopment())
+    app.UseHsts();
 
 app.Use(async (context, next) =>
 {
@@ -261,3 +269,6 @@ static void ApplyCacheHeaders(HttpContext context)
         ? "public, max-age=31536000, immutable"
         : "no-cache";
 }
+
+
+public partial class Program { }

@@ -1,13 +1,19 @@
-import { message, Spin } from "antd";
+import { message } from "antd";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { loginUser } from "./authSlice";
+import DemoAccounts from "./DemoAccounts";
+import { IDemoAccount } from "../../model/IDemoAccount";
 
 type LoginForm = {
   userName: string;
   password: string;
   rememberMe: boolean;
+};
+
+type Props = {
+  onSwitch?: () => void;
 };
 
 const RETRY_KEY = "loginRetryAt";
@@ -31,7 +37,7 @@ function writeRetryAt(value: number | null) {
   }
 }
 
-export default function LoginPage() {
+export default function LoginPage({ onSwitch }: Props) {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
 
@@ -42,6 +48,7 @@ export default function LoginPage() {
     password: "",
     rememberMe: false,
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const [retryAt, setRetryAt] = useState<number>(readRetryAt);
   const [now, setNow] = useState<number>(Date.now());
@@ -65,6 +72,14 @@ export default function LoginPage() {
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleDemoSelect = (account: IDemoAccount) => {
+    setFormData((prev) => ({
+      ...prev,
+      userName: account.userName,
+      password: account.password,
+    }));
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -98,44 +113,54 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="account-column">
-      <h2>Login</h2>
+    <>
+      <h1 className="auth-title">Tekrar hoş geldin</h1>
+      <p className="auth-subtitle">Hesabına giriş yaparak alışverişe devam et.</p>
 
-      <form onSubmit={handleLogin}>
-        <div>
-          <label>
-            <span>
-              Username <span className="required">*</span>
-            </span>
-            <input
-              type="text"
-              name="userName"
-              value={formData.userName}
-              onChange={handleInputChange}
-              autoComplete="username"
-              required
-            />
-          </label>
+      <DemoAccounts selectedUserName={formData.userName} onSelect={handleDemoSelect} />
+
+      <form className="auth-form" onSubmit={handleLogin}>
+        <div className="auth-field">
+          <label htmlFor="login-username">Kullanıcı Adı</label>
+          <input
+            id="login-username"
+            className="auth-input"
+            type="text"
+            name="userName"
+            value={formData.userName}
+            onChange={handleInputChange}
+            autoComplete="username"
+            required
+          />
         </div>
 
-        <div>
-          <label>
-            <span>
-              Password <span className="required">*</span>
-            </span>
+        <div className="auth-field">
+          <label htmlFor="login-password">Şifre</label>
+          <div className="auth-password">
             <input
-              type="password"
+              id="login-password"
+              className="auth-input"
+              type={showPassword ? "text" : "password"}
               name="password"
               value={formData.password}
               onChange={handleInputChange}
               autoComplete="current-password"
               required
             />
-          </label>
+            <button
+              type="button"
+              className="auth-password-toggle"
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Şifreyi gizle" : "Şifreyi göster"}
+              aria-pressed={showPassword}
+            >
+              <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`} />
+            </button>
+          </div>
         </div>
 
-        <p className="remember">
-          <label>
+        <div className="auth-row">
+          <label className="auth-check">
             <input
               type="checkbox"
               checked={formData.rememberMe}
@@ -146,28 +171,33 @@ export default function LoginPage() {
                 })
               }
             />
-            <span>Remember me</span>
+            <span>Beni hatırla</span>
           </label>
 
-          <button
-            className="btn btn-sm"
-            disabled={loading || remaining > 0}
-            style={{ minWidth: 160, fontVariantNumeric: "tabular-nums" }}
-          >
-            {loading ? (
-              <Spin size="small" />
-            ) : remaining > 0 ? (
-              `Tekrar dene (${String(remaining).padStart(2, "0")})`
-            ) : (
-              "Login"
-            )}
+          <a href="#" className="auth-link-muted">
+            Şifremi unuttum
+          </a>
+        </div>
+
+        <button type="submit" className="auth-submit" disabled={loading || remaining > 0}>
+          {loading ? (
+            <span className="auth-spinner" aria-label="Giriş yapılıyor" />
+          ) : remaining > 0 ? (
+            `Tekrar dene (${String(remaining).padStart(2, "0")})`
+          ) : (
+            "Giriş Yap"
+          )}
+        </button>
+      </form>
+
+      {onSwitch && (
+        <p className="auth-switch">
+          Hesabın yok mu?{" "}
+          <button type="button" onClick={onSwitch}>
+            Kayıt ol
           </button>
         </p>
-
-        <a href="#" className="form-link">
-          Lost your password?
-        </a>
-      </form>
-    </div>
+      )}
+    </>
   );
 }

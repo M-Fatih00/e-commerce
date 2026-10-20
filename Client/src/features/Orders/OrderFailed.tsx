@@ -1,3 +1,4 @@
+import { formatOrderNumber } from "../../utils/format";
 import React, { useEffect, useRef } from "react";
 import { Button, Result } from "antd";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -23,7 +24,7 @@ const OrderFailed: React.FC = () => {
           title="Ödeme Tamamlanmadı"
           subTitle={
             orderNumber
-              ? `${orderNumber} numaralı sipariş için ödeme alınamadı. Sepetiniz duruyor, tekrar deneyebilirsiniz.`
+              ? `${formatOrderNumber(orderNumber)} numaralı sipariş için ödeme alınamadı. Sepetiniz duruyor, tekrar deneyebilirsiniz.`
               : "Ödeme alınamadı. Sepetiniz duruyor, tekrar deneyebilirsiniz."
           }
           extra={[

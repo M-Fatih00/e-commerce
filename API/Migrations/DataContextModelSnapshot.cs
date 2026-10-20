@@ -204,37 +204,37 @@ namespace API.Migrations
                         {
                             Id = 1,
                             CategoryId = 6,
-                            Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+                            Description = "Sezonun en çok konuşulan parçaları şimdi mağazada.",
                             ImageUrl = "campaigns/banner1.png",
                             Index = 0,
-                            Title = "Fashion Month Ready in Capital Shop"
+                            Title = "Yeni Sezon Koleksiyonu"
                         },
                         new
                         {
                             Id = 2,
                             CategoryId = 5,
-                            Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+                            Description = "En çok tercih edilen ürünleri keşfet, tarzını tamamla.",
                             ImageUrl = "campaigns/banner2.png",
                             Index = 1,
-                            Title = "Fashion Month Ready in Capital Shop"
+                            Title = "Haftanın Favorileri"
                         },
                         new
                         {
                             Id = 3,
                             CategoryId = 6,
-                            Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+                            Description = "Her dolapta olması gereken, uzun ömürlü parçalar.",
                             ImageUrl = "campaigns/banner3.png",
                             Index = 2,
-                            Title = "Fashion Month Ready in Capital Shop"
+                            Title = "Zamansız Klasikler"
                         },
                         new
                         {
                             Id = 4,
                             CategoryId = 5,
-                            Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor",
+                            Description = "Seçili ürünlerde kaçırılmayacak fiyatlar.",
                             ImageUrl = "campaigns/banner4.png",
                             Index = 3,
-                            Title = "Fashion Month Ready in Capital Shop"
+                            Title = "Fırsat Köşesi"
                         });
                 });
 
@@ -305,37 +305,37 @@ namespace API.Migrations
                         {
                             Id = 1,
                             ImageUrl = "categories/categories1.png",
-                            Name = "Smartphone"
+                            Name = "Akıllı Telefon"
                         },
                         new
                         {
                             Id = 2,
                             ImageUrl = "categories/categories2.png",
-                            Name = "Watches"
+                            Name = "Saatler"
                         },
                         new
                         {
                             Id = 3,
                             ImageUrl = "categories/categories3.png",
-                            Name = "Electronics"
+                            Name = "Elektronik"
                         },
                         new
                         {
                             Id = 4,
                             ImageUrl = "categories/categories4.png",
-                            Name = "Furnitures"
+                            Name = "Mobilya"
                         },
                         new
                         {
                             Id = 5,
                             ImageUrl = "categories/categories5.png",
-                            Name = "Collections"
+                            Name = "Koleksiyonlar"
                         },
                         new
                         {
                             Id = 6,
                             ImageUrl = "categories/categories6.png",
-                            Name = "Fashion"
+                            Name = "Moda"
                         });
                 });
 
@@ -1148,6 +1148,18 @@ namespace API.Migrations
                     b.Property<bool>("Aktif")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("AltBaslik")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Baslik")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ButonLinki")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ButonMetni")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Index")
                         .HasColumnType("INTEGER");
 
@@ -1164,6 +1176,10 @@ namespace API.Migrations
                         {
                             Id = 1,
                             Aktif = true,
+                            AltBaslik = "Yeni sezon ürünlerini keşfedin",
+                            Baslik = "YENİ SEZON",
+                            ButonLinki = "/shop",
+                            ButonMetni = "Alışverişe Başla",
                             Index = 0,
                             Resim = "slider/slider1.jpg"
                         },
@@ -1171,6 +1187,10 @@ namespace API.Migrations
                         {
                             Id = 2,
                             Aktif = true,
+                            AltBaslik = "En çok tercih edilen parçalar",
+                            Baslik = "HAFTANIN FAVORİLERİ",
+                            ButonLinki = "/shop?category=6",
+                            ButonMetni = "İncele",
                             Index = 1,
                             Resim = "slider/slider2.jpg"
                         },
@@ -1178,6 +1198,10 @@ namespace API.Migrations
                         {
                             Id = 3,
                             Aktif = true,
+                            AltBaslik = "Seçili ürünlerde kaçırılmayacak fiyatlar",
+                            Baslik = "FIRSAT KÖŞESİ",
+                            ButonLinki = "/shop",
+                            ButonMetni = "Fırsatları Gör",
                             Index = 2,
                             Resim = "slider/slider3.jpg"
                         });

@@ -1,3 +1,4 @@
+import { formatOrderNumber } from "../../utils/format";
 import Loader from "../../components/Loader";
 import React, { useEffect, useRef, useState } from "react";
 import { Button, Result } from "antd";
@@ -61,7 +62,7 @@ const OrderSuccess: React.FC = () => {
           <Result
             status="success"
             title="Siparişiniz Alındı"
-            subTitle={`Sipariş numaranız: ${orderNumber}`}
+            subTitle={`Sipariş numaranız: ${formatOrderNumber(orderNumber ?? "")}`}
             extra={[
               <Button type="primary" key="home" onClick={() => navigate("/")}>
                 Alışverişe Devam Et

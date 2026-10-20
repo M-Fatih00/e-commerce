@@ -4,8 +4,10 @@ namespace API.Services;
 
 public static class OrderNumberGenerator
 {
-    private const string Alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-
-    public static string Generate(string prefix) =>
-        $"{prefix}-{RandomNumberGenerator.GetString(Alphabet, 6)}";
+    public static string Generate()
+    {
+        var first = RandomNumberGenerator.GetInt32(1, 10);
+        var rest = RandomNumberGenerator.GetInt32(0, 1_000_000_000);
+        return $"{first}{rest:D9}";
+    }
 }

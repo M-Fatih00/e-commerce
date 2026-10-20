@@ -8,3 +8,5 @@ API/appsettings.Development.json
 API/wwwroot/assets
 API/wwwroot/index.html
 API/wwwroot/uploads
+API.Tests
+API/wwwroot/img/avatars

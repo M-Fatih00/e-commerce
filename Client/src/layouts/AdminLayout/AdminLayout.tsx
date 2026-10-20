@@ -14,6 +14,7 @@ import {
   MenuUnfoldOutlined,
   PictureOutlined,
   SettingOutlined,
+  FundProjectionScreenOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation, Outlet, Navigate } from "react-router-dom";
 import { ReactNode, Suspense, useEffect, useState } from "react";
@@ -107,6 +108,19 @@ const NAV: NavItem[] = [
         key: "campaigns-create",
         label: "Yeni Kampanya",
         path: "/admin/campaigns/create",
+      },
+    ],
+  },
+  {
+    key: "sliders",
+    label: "Slider",
+    icon: <FundProjectionScreenOutlined />,
+    children: [
+      { key: "sliders-list", label: "Slider Listesi", path: "/admin/sliders" },
+      {
+        key: "sliders-create",
+        label: "Yeni Slider",
+        path: "/admin/sliders/create",
       },
     ],
   },

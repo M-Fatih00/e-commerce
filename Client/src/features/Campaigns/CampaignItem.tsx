@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import "./CompaignItem.css";
+import "./CampaignItem.css";
 
 type Props = {
   title: string;
@@ -30,7 +30,7 @@ function CampaignItem({
       <p className="campaign-desc">{description}</p>
 
       <Link to={`/shop?category=${categoryId}`} className="btn btn-primary campaign-btn">
-        View All
+        Tümünü Gör
         <i className="bi bi-arrow-right"></i>
       </Link>
     </div>

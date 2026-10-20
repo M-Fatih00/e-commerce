@@ -4,8 +4,9 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { getMyOrders } from "./orderSlice";
 import { IOrder } from "../../model/IOrder";
-import "./Order.css";
 import { OrderStatusTag } from "../../utils/orderStatus";
+import { formatOrderNumber } from "../../utils/format";
+import "./Order.css";
 
 
 const OrderPage: React.FC = () => {
@@ -47,7 +48,7 @@ const OrderPage: React.FC = () => {
 
                 <div className="order-card-header">
                   <div className="order-card-info">
-                    <span className="order-id">Sipariş {order.orderNumber}</span>
+                    <span className="order-id">Sipariş {formatOrderNumber(order.orderNumber)}</span>
                     <span className="order-date">
                       {new Date(order.siparisTarihi).toLocaleDateString("tr-TR", {
                         day: "2-digit",

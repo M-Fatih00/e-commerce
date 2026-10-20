@@ -15,13 +15,13 @@ public static class DemoDataSeeder
     private const string Cancelled = "İptal";
     private const int OrderCount = 18;
 
-    private static readonly (string UserName, string FullName, string City, string PostalCode)[] Shoppers =
-    {
-        ("ayse.kaya", "Ayşe Kaya", "İstanbul", "34710"),
-        ("mehmet.demir", "Mehmet Demir", "Ankara", "06420"),
-        ("zeynep.sahin", "Zeynep Şahin", "İzmir", "35220"),
-        ("emre.celik", "Emre Çelik", "Bursa", "16110"),
-        ("elif.yildiz", "Elif Yıldız", "Antalya", "07100")
+    private static readonly (string UserName, string FullName, string City, string PostalCode, string? Avatar)[] Shoppers =
+{
+        ("ayse.kaya", "Ayşe Kaya", "İstanbul", "34710", "demo-avatars/user2.jpg"),
+        ("mehmet.demir", "Mehmet Demir", "Ankara", "06420", "demo-avatars/user3.jpg"),
+        ("zeynep.sahin", "Zeynep Şahin", "İzmir", "35220", "demo-avatars/user4.jpg"),
+        ("emre.celik", "Emre Çelik", "Bursa", "16110", "demo-avatars/user5.jpg"),
+        ("elif.yildiz", "Elif Yıldız", "Antalya", "07100", null)
     };
 
     private static readonly string[] Streets =
@@ -57,9 +57,32 @@ public static class DemoDataSeeder
     public static bool IsDemoPayment(string? id) =>
         id?.StartsWith(PaymentPrefix, StringComparison.Ordinal) == true;
 
+    private static async Task EnsureShopperAvatars(UserManager<AppUser> userManager)
+    {
+        foreach (var shopper in Shoppers)
+        {
+            if (shopper.Avatar == null)
+                continue;
+
+            var user = await userManager.FindByNameAsync(shopper.UserName);
+            if (user == null || !string.IsNullOrEmpty(user.Avatar))
+                continue;
+
+            user.Avatar = shopper.Avatar;
+            var result = await userManager.UpdateAsync(user);
+            if (!result.Succeeded)
+                throw new InvalidOperationException(
+                    $"{shopper.UserName} için avatar atanamadı: {string.Join(" ", result.Errors.Select(e => e.Description))}");
+        }
+    }
     public static async Task SeedAsync(DataContext context, UserManager<AppUser> userManager, IConfiguration config)
     {
-        if (!config.GetValue("Demo:Enabled", false) || await context.Orders.AnyAsync())
+        if (!config.GetValue("Demo:Enabled", false))
+            return;
+
+        await EnsureShopperAvatars(userManager);
+
+        if (await context.Orders.AnyAsync())
             return;
 
         var products = await context.Products
@@ -74,7 +97,7 @@ public static class DemoDataSeeder
             return;
 
         var coupons = await context.Coupons.AsNoTracking().OrderBy(c => c.Id).ToListAsync();
-        var prefix = config["Order:NumberPrefix"] ?? "ES";
+
         var random = new Random(2026);
         var now = DateTime.Now;
 
@@ -147,7 +170,7 @@ public static class DemoDataSeeder
             var shipping = ShippingRules.Calculate(saleTotal, random.Next(0, 4) == 0);
 
             string number;
-            do number = OrderNumberGenerator.Generate(prefix);
+            do number = OrderNumberGenerator.Generate();
             while (!usedNumbers.Add(number));
 
             var order = new Order
@@ -180,6 +203,7 @@ public static class DemoDataSeeder
         await context.SaveChangesAsync();
 
         await SeedReviews(context, orders, random, now);
+        await EnsureShopperAvatars(userManager);
     }
 
     private static async Task SeedReviews(DataContext context, List<(Order Order, bool ByShopper)> orders, Random random, DateTime now)

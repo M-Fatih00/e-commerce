@@ -51,11 +51,9 @@ public class OrderController : ControllerBase
 
     private async Task<string> GenerateUniqueOrderNumber()
     {
-        var prefix = _config["Order:NumberPrefix"] ?? "ES";
-
         for (var attempt = 0; attempt < 5; attempt++)
         {
-            var number = OrderNumberGenerator.Generate(prefix);
+            var number = OrderNumberGenerator.Generate();
             if (!await _context.Orders.AnyAsync(o => o.OrderNumber == number))
                 return number;
         }

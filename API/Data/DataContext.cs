@@ -66,12 +66,12 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
 
         // 1. Seed Category
         modelBuilder.Entity<Category>().HasData(
-            new Category { Id = 1, Name = "Smartphone", ImageUrl = "categories/categories1.png" },
-            new Category { Id = 2, Name = "Watches", ImageUrl = "categories/categories2.png" },
-            new Category { Id = 3, Name = "Electronics", ImageUrl = "categories/categories3.png" },
-            new Category { Id = 4, Name = "Furnitures", ImageUrl = "categories/categories4.png" },
-            new Category { Id = 5, Name = "Collections", ImageUrl = "categories/categories5.png" },
-            new Category { Id = 6, Name = "Fashion", ImageUrl = "categories/categories6.png" }
+            new Category { Id = 1, Name = "Akıllı Telefon", ImageUrl = "categories/categories1.png" },
+            new Category { Id = 2, Name = "Saatler", ImageUrl = "categories/categories2.png" },
+            new Category { Id = 3, Name = "Elektronik", ImageUrl = "categories/categories3.png" },
+            new Category { Id = 4, Name = "Mobilya", ImageUrl = "categories/categories4.png" },
+            new Category { Id = 5, Name = "Koleksiyonlar", ImageUrl = "categories/categories5.png" },
+            new Category { Id = 6, Name = "Moda", ImageUrl = "categories/categories6.png" }
         );
 
         // 2. Seed Products (JSON'dan gelen veriler)
@@ -252,16 +252,16 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
 
         // Seed Slider
         modelBuilder.Entity<Slider>().HasData(
-            new Slider { Id = 1, Index = 0, Resim = "slider/slider1.jpg", Aktif = true },
-            new Slider { Id = 2, Index = 1, Resim = "slider/slider2.jpg", Aktif = true },
-            new Slider { Id = 3, Index = 2, Resim = "slider/slider3.jpg", Aktif = true }
+            new Slider { Id = 1, Index = 0, Resim = "slider/slider1.jpg", Aktif = true, Baslik = "YENİ SEZON", AltBaslik = "Yeni sezon ürünlerini keşfedin", ButonMetni = "Alışverişe Başla", ButonLinki = "/shop" },
+            new Slider { Id = 2, Index = 1, Resim = "slider/slider2.jpg", Aktif = true, Baslik = "HAFTANIN FAVORİLERİ", AltBaslik = "En çok tercih edilen parçalar", ButonMetni = "İncele", ButonLinki = "/shop?category=6" },
+            new Slider { Id = 3, Index = 2, Resim = "slider/slider3.jpg", Aktif = true, Baslik = "FIRSAT KÖŞESİ", AltBaslik = "Seçili ürünlerde kaçırılmayacak fiyatlar", ButonMetni = "Fırsatları Gör", ButonLinki = "/shop" }
         );
 
         modelBuilder.Entity<Campaign>().HasData(
-            new Campaign { Id = 1, Index = 0, Title = "Fashion Month Ready in Capital Shop", Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor", CategoryId = 6, ImageUrl = "campaigns/banner1.png" },
-            new Campaign { Id = 2, Index = 1, Title = "Fashion Month Ready in Capital Shop", Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor", CategoryId = 5, ImageUrl = "campaigns/banner2.png" },
-            new Campaign { Id = 3, Index = 2, Title = "Fashion Month Ready in Capital Shop", Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor", CategoryId = 6, ImageUrl = "campaigns/banner3.png" },
-            new Campaign { Id = 4, Index = 3, Title = "Fashion Month Ready in Capital Shop", Description = "Lorem ipsum dolor sit amet consectetur adipiscing elit dolor", CategoryId = 5, ImageUrl = "campaigns/banner4.png" }
+            new Campaign { Id = 1, Index = 0, Title = "Yeni Sezon Koleksiyonu", Description = "Sezonun en çok konuşulan parçaları şimdi mağazada.", CategoryId = 6, ImageUrl = "campaigns/banner1.png" },
+            new Campaign { Id = 2, Index = 1, Title = "Haftanın Favorileri", Description = "En çok tercih edilen ürünleri keşfet, tarzını tamamla.", CategoryId = 5, ImageUrl = "campaigns/banner2.png" },
+            new Campaign { Id = 3, Index = 2, Title = "Zamansız Klasikler", Description = "Her dolapta olması gereken, uzun ömürlü parçalar.", CategoryId = 6, ImageUrl = "campaigns/banner3.png" },
+            new Campaign { Id = 4, Index = 3, Title = "Fırsat Köşesi", Description = "Seçili ürünlerde kaçırılmayacak fiyatlar.", CategoryId = 5, ImageUrl = "campaigns/banner4.png" }
         );
 
 

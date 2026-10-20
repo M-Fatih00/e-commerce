@@ -37,3 +37,6 @@ API/wwwroot/robots.txt
 
 *.db-shm
 *.db-wal
+
+API/wwwroot/img/avatars/
+.DS_Store

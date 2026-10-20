@@ -1,38 +1,26 @@
-import "./Policy.css"
+import "./Policy.css";
+
+const POLICIES = [
+  { icon: "bi-truck", title: "ÜCRETSİZ KARGO", text: "Belirli tutarın üzerindeki siparişlerde" },
+  { icon: "bi-headset", title: "MÜŞTERİ DESTEĞİ", text: "Hafta içi 08:00 – 19:00" },
+  { icon: "bi-arrow-clockwise", title: "KOLAY İADE", text: "14 gün içinde iade hakkı" },
+  { icon: "bi-credit-card", title: "GÜVENLİ ÖDEME", text: "Stripe altyapısıyla güvenli ödeme" },
+];
 
 function Policy() {
   return (
     <section className="policy">
       <div className="container">
         <ul className="policy-list">
-          <li className="policy-item">
-            <i className="bi bi-truck"></i>
-            <div className="policy-texts">
-              <strong>FREE DELIVERY</strong>
-              <span>From $59.89</span>
-            </div>
-          </li>
-          <li className="policy-item">
-            <i className="bi bi-headset"></i>
-            <div className="policy-texts">
-              <strong>SUPPORT 24/7</strong>
-              <span>Online 24 hours</span>
-            </div>
-          </li>
-          <li className="policy-item">
-            <i className="bi bi-arrow-clockwise"></i>
-            <div className="policy-texts">
-              <strong> 30 DAYS RETURN</strong>
-              <span>Simply return it within 30 days</span>
-            </div>
-          </li>
-          <li className="policy-item">
-            <i className="bi bi-credit-card"></i>
-            <div className="policy-texts">
-              <strong> PAYMENT METHOD</strong>
-              <span>Secure Payment</span>
-            </div>
-          </li>
+          {POLICIES.map((item) => (
+            <li className="policy-item" key={item.title}>
+              <i className={`bi ${item.icon}`} aria-hidden="true"></i>
+              <div className="policy-texts">
+                <strong>{item.title}</strong>
+                <span>{item.text}</span>
+              </div>
+            </li>
+          ))}
         </ul>
       </div>
     </section>

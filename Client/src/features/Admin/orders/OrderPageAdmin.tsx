@@ -1,3 +1,4 @@
+import { formatOrderNumber } from "../../../utils/format";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -24,10 +25,10 @@ import {
   StopOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
-import requests from "../../api/requests";
-import { showFormError } from "../../utils/errors";
-import { getOrderStatus, OrderStatusTag } from "../../utils/orderStatus";
-import { IOrder } from "../../model/IOrder";
+import requests from "../../../api/requests";
+import { showFormError } from "../../../utils/errors";
+import { getOrderStatus, OrderStatusTag } from "../../../utils/orderStatus";
+import { IOrder } from "../../../model/IOrder";
 import "./OrderPageAdmin.css";
 
 const STATUS = {
@@ -167,7 +168,7 @@ const OrderPageAdmin: React.FC = () => {
   const confirmCancel = (order: IOrder) => {
     const isPaid = order.durum === STATUS.paid;
     modal.confirm({
-      title: isPaid ? `${order.orderNumber} iptal edilip iade edilsin mi?` : `${order.orderNumber} iptal edilsin mi?`,
+      title: isPaid ? `${formatOrderNumber(order.orderNumber)} iptal edilip iade edilsin mi?` : `${formatOrderNumber(order.orderNumber)} iptal edilsin mi?`,
       content: isPaid
         ? `${money(order.toplam)} müşteriye Stripe üzerinden iade edilir ve stok geri eklenir. Bu işlem geri alınamaz.`
         : "Müşterinin ödeme sayfası kapatılır.",
@@ -209,7 +210,7 @@ const OrderPageAdmin: React.FC = () => {
     return orders.filter((o) => {
       if (!matchesFilter(o, filter)) return false;
       if (!term) return true;
-      return [o.orderNumber, o.adSoyad, o.username].some((value) =>
+      return [o.orderNumber, formatOrderNumber(o.orderNumber), o.adSoyad, o.username].some((value) =>
         value?.toLocaleLowerCase("tr-TR").includes(term),
       );
     });
@@ -235,12 +236,12 @@ const OrderPageAdmin: React.FC = () => {
 
   const columns = [
     {
-      title: "Sipariş",
+      title: "Sipariş No",
       key: "order",
       width: 150,
       render: (_: unknown, record: IOrder) => (
         <div>
-          <div className="op-order-no">{record.orderNumber}</div>
+          <div className="op-order-no">{formatOrderNumber(record.orderNumber)}</div>
           <div className="op-muted">{formatDate(record.siparisTarihi)}</div>
         </div>
       ),
@@ -375,7 +376,7 @@ const OrderPageAdmin: React.FC = () => {
       </div>
 
       <Modal
-        title={selectedOrder ? `Sipariş ${selectedOrder.orderNumber}` : ""}
+        title={selectedOrder ? `Sipariş No: ${formatOrderNumber(selectedOrder.orderNumber)}` : ""}
         open={selectedOrder !== null}
         onCancel={() => setSelectedOrder(null)}
         width={720}
