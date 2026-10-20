@@ -4,10 +4,17 @@ import { useAppDispatch, useAppSelector } from "../store/store";
 import { fetchProducts, selectAllProducts } from "./catalog/catalogSlice";
 import { fetchCategories, selectAllCategories } from "./Categories/categorySlice";
 import ProductItem from "./catalog/ProductItem";
+import ProductItemSkeleton from "./catalog/ProductItemSkeleton";
 import { getImageUrl } from "../utils/image";
 import "./ShopPage.css";
 
 const MAX_STAGGER = 11;
+const PRODUCT_SKELETON_COUNT = 8;
+const CATEGORY_SKELETON_COUNT = 5;
+
+function parseCategory(value: string | null) {
+  return value && /^\d+$/.test(value) ? Number(value) : null;
+}
 
 export default function ShopPage() {
   const dispatch = useAppDispatch();
@@ -16,12 +23,8 @@ export default function ShopPage() {
   const isProductsLoaded = useAppSelector((state) => state.catalog.isLoaded);
   const isCategoriesLoaded = useAppSelector((state) => state.category.isLoaded);
 
-  const [searchParams] = useSearchParams();
-
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(() => {
-    const category = searchParams.get("category");
-    return category ? parseInt(category) : null;
-  });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedCategory = parseCategory(searchParams.get("category"));
 
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState("default");
@@ -30,6 +33,18 @@ export default function ShopPage() {
     if (!isProductsLoaded) dispatch(fetchProducts());
     if (!isCategoriesLoaded) dispatch(fetchCategories());
   }, [isProductsLoaded, isCategoriesLoaded, dispatch]);
+
+  const setSelectedCategory = (id: number | null) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (id === null) next.delete("category");
+        else next.set("category", String(id));
+        return next;
+      },
+      { replace: true },
+    );
+  };
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
@@ -58,6 +73,16 @@ export default function ShopPage() {
     return result;
   }, [products, selectedCategory, search, sortBy]);
 
+  const showProductSkeleton = !isProductsLoaded && products.length === 0;
+  const showCategorySkeleton = !isCategoriesLoaded && categories.length === 0;
+  const selectedCategoryName = categories.find((c) => c.id === selectedCategory)?.name;
+
+  const heroText = showProductSkeleton
+    ? "Ürünler yükleniyor…"
+    : selectedCategoryName
+      ? `${selectedCategoryName} kategorisinde ${filteredProducts.length} ürün`
+      : `${filteredProducts.length} ürün listeleniyor`;
+
   const gridKey = `${selectedCategory ?? "all"}-${sortBy}`;
 
   return (
@@ -65,28 +90,42 @@ export default function ShopPage() {
       <div className="shop-hero">
         <div className="container">
           <h1 className="shop-hero-title">Mağaza</h1>
-          <p className="shop-hero-sub">{filteredProducts.length} ürün listeleniyor</p>
+          <p className="shop-hero-sub" aria-live="polite">
+            {heroText}
+          </p>
         </div>
       </div>
 
       <div className="container">
         <div className="shop-categories">
-          <button
-            className={`shop-cat-btn ${selectedCategory === null ? "active" : ""}`}
-            onClick={() => setSelectedCategory(null)}
-          >
-            Tümü
-          </button>
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              className={`shop-cat-btn ${selectedCategory === cat.id ? "active" : ""}`}
-              onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
-            >
-              {cat.imageUrl && <img src={getImageUrl(cat.imageUrl)} alt="" className="shop-cat-img" />}
-              {cat.name}
-            </button>
-          ))}
+          {showCategorySkeleton ? (
+            Array.from({ length: CATEGORY_SKELETON_COUNT }, (_, i) => (
+              <span key={i} className="skeleton-block shop-cat-skeleton" aria-hidden="true" />
+            ))
+          ) : (
+            <>
+              <button
+                type="button"
+                className={`shop-cat-btn ${selectedCategory === null ? "active" : ""}`}
+                aria-pressed={selectedCategory === null}
+                onClick={() => setSelectedCategory(null)}
+              >
+                Tümü
+              </button>
+              {categories.map((cat) => (
+                <button
+                  type="button"
+                  key={cat.id}
+                  className={`shop-cat-btn ${selectedCategory === cat.id ? "active" : ""}`}
+                  aria-pressed={selectedCategory === cat.id}
+                  onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                >
+                  {cat.imageUrl && <img src={getImageUrl(cat.imageUrl)} alt="" className="shop-cat-img" />}
+                  {cat.name}
+                </button>
+              ))}
+            </>
+          )}
         </div>
 
         <div className="shop-toolbar">
@@ -101,7 +140,12 @@ export default function ShopPage() {
               aria-label="Ürün ara"
             />
             {search && (
-              <button className="shop-search-clear" onClick={() => setSearch("")} aria-label="Aramayı temizle">
+              <button
+                type="button"
+                className="shop-search-clear"
+                onClick={() => setSearch("")}
+                aria-label="Aramayı temizle"
+              >
                 <i className="bi bi-x" />
               </button>
             )}
@@ -120,11 +164,18 @@ export default function ShopPage() {
           </select>
         </div>
 
-        {filteredProducts.length === 0 ? (
+        {showProductSkeleton ? (
+          <div className="shop-grid" aria-busy="true" aria-label="Ürünler yükleniyor">
+            {Array.from({ length: PRODUCT_SKELETON_COUNT }, (_, i) => (
+              <ProductItemSkeleton key={i} />
+            ))}
+          </div>
+        ) : filteredProducts.length === 0 ? (
           <div className="shop-empty animate-fade-in">
             <i className="bi bi-bag-x shop-empty-icon" aria-hidden="true" />
             <p>Ürün bulunamadı.</p>
             <button
+              type="button"
               className="shop-empty-reset"
               onClick={() => {
                 setSearch("");

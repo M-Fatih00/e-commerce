@@ -274,3 +274,34 @@
     height: 180px;
   }
 }
+
+
+
+.shop-cat-skeleton {
+  width: 96px;
+  height: 37px;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.shop-grid .product-item-skeleton .product-skeleton-image {
+  aspect-ratio: auto;
+  height: 320px;
+}
+
+@media (max-width: 768px) {
+  .shop-cat-skeleton {
+    width: 80px;
+    height: 31px;
+  }
+
+  .shop-grid .product-item-skeleton .product-skeleton-image {
+    height: 220px;
+  }
+}
+
+@media (max-width: 576px) {
+  .shop-grid .product-item-skeleton .product-skeleton-image {
+    height: 180px;
+  }
+}
