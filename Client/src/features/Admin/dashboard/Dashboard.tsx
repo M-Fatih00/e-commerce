@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card, Col, Empty, Row, Statistic, Table } from "antd";
 import ReactApexChart from "react-apexcharts";
-import requests from "../../api/requests";
-import { formatPrice, formatOrderNumber } from "../../utils/format";
-import { OrderStatusTag } from "../../utils/orderStatus";
+import requests from "../../../api/requests";
+import { formatPrice, formatOrderNumber } from "../../../utils/format";
+import { OrderStatusTag } from "../../../utils/orderStatus";
 
 interface AylikVeri {
   ay: string;

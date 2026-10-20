@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Alert, Button, Input, message, Modal, Popconfirm, Space, Table, Tag } from "antd";
 import { LockOutlined } from "@ant-design/icons";
-import requests from "../../api/requests";
-import DemoLockButton from "../../components/DemoLockButton";
-import { isDemo } from "../../utils/demo";
-import { showFormError } from "../../utils/errors";
-import { useAppSelector } from "../../store/store";
-import UserAvatar from "../Auth/UserAvatar";
-import { IUser } from "../../model/IUser";
+import requests from "../../../api/requests";
+import DemoLockButton from "../../../components/DemoLockButton";
+import { isDemo } from "../../../utils/demo";
+import { showFormError } from "../../../utils/errors";
+import { useAppSelector } from "../../../store/store";
+import UserAvatar from "../../Auth/UserAvatar";
+import { IUser } from "../../../model/IUser";
 
 type RoleAction = "add" | "remove";
 

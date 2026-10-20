@@ -20,7 +20,7 @@ import OrderFailed from "../features/Orders/OrderFailed";
 import ServerError from "../features/Errors/ServerError";
 import NotFound from "../features/Errors/NotFound";
 
-const Dashboard = lazyPage(() => import("../features/Admin/Dashboard"));
+const Dashboard = lazyPage(() => import("../features/Admin/dashboard/Dashboard"));
 
 const ProductPageAdmin = lazyPage(() => import("../features/Admin/products/ProductPageAdmin"));
 const CreateProduct = lazyPage(() => import("../features/Admin/products/CreateProduct"));
@@ -42,8 +42,8 @@ const CampaignPageAdmin = lazyPage(() => import("../features/Admin/campaigns/Cam
 const CreateCampaign = lazyPage(() => import("../features/Admin/campaigns/CreateCampaign"));
 const UpdateCampaign = lazyPage(() => import("../features/Admin/campaigns/UpdateCampaign"));
 
-const UserPage = lazyPage(() => import("../features/Admin/UserPage"));
-const OrderPageAdmin = lazyPage(() => import("../features/Admin/OrderPageAdmin"));
+const UserPage = lazyPage(() => import("../features/Admin/users/UserPage"));
+const OrderPageAdmin = lazyPage(() => import("../features/Admin/orders/OrderPageAdmin"));
 const ContactInfoPage = lazyPage(() => import("../features/Admin/settings/ContactInfoPage"));
 
 const SliderPageAdmin = lazyPage(() => import("../features/Admin/sliders/SliderPageAdmin"));

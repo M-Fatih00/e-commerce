@@ -1,4 +1,4 @@
-import { formatOrderNumber } from "../../utils/format";
+import { formatOrderNumber } from "../../../utils/format";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -25,10 +25,10 @@ import {
   StopOutlined,
   WalletOutlined,
 } from "@ant-design/icons";
-import requests from "../../api/requests";
-import { showFormError } from "../../utils/errors";
-import { getOrderStatus, OrderStatusTag } from "../../utils/orderStatus";
-import { IOrder } from "../../model/IOrder";
+import requests from "../../../api/requests";
+import { showFormError } from "../../../utils/errors";
+import { getOrderStatus, OrderStatusTag } from "../../../utils/orderStatus";
+import { IOrder } from "../../../model/IOrder";
 import "./OrderPageAdmin.css";
 
 const STATUS = {

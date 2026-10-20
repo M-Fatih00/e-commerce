@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import CampaignItem from "./CampaignItem";
 import requests from "../../api/requests";
-import "./Compaigns.css";
+import "./Campaigns.css";
 import { ICampaign } from "../../model/ICampaign";
 
 const SKELETON_COUNT = 4;

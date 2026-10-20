@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import "./CompaignItem.css";
+import "./CampaignItem.css";
 
 type Props = {
   title: string;
