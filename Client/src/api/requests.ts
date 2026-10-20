@@ -120,6 +120,14 @@ const Sliders = {
   details: (id: number) => requests.get(`sliders/${id}`),
   create: (data: FormData) => requests.post("sliders", data),
   update: (id: number, data: FormData) => requests.put(`sliders/${id}`, data),
+  updateStatus: (id: number, aktif: boolean) =>
+    axios
+      .put(`sliders/${id}/status`, JSON.stringify(aktif), {
+        headers: { "Content-Type": "application/json" },
+      })
+      .then((res: AxiosResponse) => res.data),
+  move: (id: number, direction: "up" | "down") =>
+    requests.put(`sliders/${id}/move?direction=${direction}`, {}),
   delete: (id: number) => requests.delete(`sliders/${id}`),
 };
 
@@ -199,11 +207,18 @@ const Dashboard = {
 };
 
 const Contact = {
-  send: (data: { name: string; email: string; subject: string; message: string }) =>
-    requests.post("contact", data),
+  send: (data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }) => requests.post("contact", data),
   getInfo: () => requests.get("contact-info"),
-  updateInfo: (data: { email: string; address: string; workingHours: string }) =>
-    requests.put("contact-info", data),
+  updateInfo: (data: {
+    email: string;
+    address: string;
+    workingHours: string;
+  }) => requests.put("contact-info", data),
 };
 
 const Demo = {

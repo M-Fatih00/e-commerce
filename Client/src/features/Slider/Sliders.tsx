@@ -6,6 +6,10 @@ import requests from "../../api/requests";
 interface SliderData {
   id: number;
   resim: string;
+  baslik?: string | null;
+  altBaslik?: string | null;
+  butonMetni?: string | null;
+  butonLinki?: string | null;
 }
 
 const INTERVAL_MS = 5000;
@@ -60,7 +64,14 @@ function Sliders() {
       aria-label="Öne çıkanlar"
     >
       <div className="slider-elements">
-        <SliderItem key={currentSlide} imageSrc={sliders[currentSlide].resim} />
+        <SliderItem
+          key={currentSlide}
+          imageSrc={sliders[currentSlide].resim}
+          title={sliders[currentSlide].baslik}
+          heading={sliders[currentSlide].altBaslik}
+          buttonText={sliders[currentSlide].butonMetni}
+          buttonLink={sliders[currentSlide].butonLinki}
+        />
 
         {hasMultiple && (
           <>

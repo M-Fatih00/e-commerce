@@ -252,9 +252,9 @@ public class DataContext(DbContextOptions options) : IdentityDbContext<AppUser, 
 
         // Seed Slider
         modelBuilder.Entity<Slider>().HasData(
-            new Slider { Id = 1, Index = 0, Resim = "slider/slider1.jpg", Aktif = true },
-            new Slider { Id = 2, Index = 1, Resim = "slider/slider2.jpg", Aktif = true },
-            new Slider { Id = 3, Index = 2, Resim = "slider/slider3.jpg", Aktif = true }
+            new Slider { Id = 1, Index = 0, Resim = "slider/slider1.jpg", Aktif = true, Baslik = "YENİ SEZON", AltBaslik = "Yeni sezon ürünlerini keşfedin", ButonMetni = "Alışverişe Başla", ButonLinki = "/shop" },
+            new Slider { Id = 2, Index = 1, Resim = "slider/slider2.jpg", Aktif = true, Baslik = "HAFTANIN FAVORİLERİ", AltBaslik = "En çok tercih edilen parçalar", ButonMetni = "İncele", ButonLinki = "/shop?category=6" },
+            new Slider { Id = 3, Index = 2, Resim = "slider/slider3.jpg", Aktif = true, Baslik = "FIRSAT KÖŞESİ", AltBaslik = "Seçili ürünlerde kaçırılmayacak fiyatlar", ButonMetni = "Fırsatları Gör", ButonLinki = "/shop" }
         );
 
         modelBuilder.Entity<Campaign>().HasData(

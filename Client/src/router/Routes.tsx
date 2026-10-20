@@ -46,6 +46,10 @@ const UserPage = lazyPage(() => import("../features/Admin/UserPage"));
 const OrderPageAdmin = lazyPage(() => import("../features/Admin/OrderPageAdmin"));
 const ContactInfoPage = lazyPage(() => import("../features/Admin/settings/ContactInfoPage"));
 
+const SliderPageAdmin = lazyPage(() => import("../features/Admin/sliders/SliderPageAdmin"));
+const CreateSlider = lazyPage(() => import("../features/Admin/sliders/CreateSlider"));
+const UpdateSlider = lazyPage(() => import("../features/Admin/sliders/UpdateSlider"));
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -99,9 +103,15 @@ export const router = createBrowserRouter([
           { path: "campaigns/create", element: <CreateCampaign /> },
           { path: "campaigns/update/:id", element: <UpdateCampaign /> },
 
+
+          { path: "sliders", element: <SliderPageAdmin /> },
+          { path: "sliders/create", element: <CreateSlider /> },
+          { path: "sliders/update/:id", element: <UpdateSlider /> },
+
           { path: "users", element: <UserPage /> },
           { path: "orders", element: <OrderPageAdmin /> },
           { path: "settings/contact", element: <ContactInfoPage /> },
+          
 
           { path: "*", element: <Navigate to="/admin" replace /> },
         ],

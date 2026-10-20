@@ -1148,6 +1148,18 @@ namespace API.Migrations
                     b.Property<bool>("Aktif")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("AltBaslik")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Baslik")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ButonLinki")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ButonMetni")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Index")
                         .HasColumnType("INTEGER");
 
@@ -1164,6 +1176,10 @@ namespace API.Migrations
                         {
                             Id = 1,
                             Aktif = true,
+                            AltBaslik = "Yeni sezon ürünlerini keşfedin",
+                            Baslik = "YENİ SEZON",
+                            ButonLinki = "/shop",
+                            ButonMetni = "Alışverişe Başla",
                             Index = 0,
                             Resim = "slider/slider1.jpg"
                         },
@@ -1171,6 +1187,10 @@ namespace API.Migrations
                         {
                             Id = 2,
                             Aktif = true,
+                            AltBaslik = "En çok tercih edilen parçalar",
+                            Baslik = "HAFTANIN FAVORİLERİ",
+                            ButonLinki = "/shop?category=6",
+                            ButonMetni = "İncele",
                             Index = 1,
                             Resim = "slider/slider2.jpg"
                         },
@@ -1178,6 +1198,10 @@ namespace API.Migrations
                         {
                             Id = 3,
                             Aktif = true,
+                            AltBaslik = "Seçili ürünlerde kaçırılmayacak fiyatlar",
+                            Baslik = "FIRSAT KÖŞESİ",
+                            ButonLinki = "/shop",
+                            ButonMetni = "Fırsatları Gör",
                             Index = 2,
                             Resim = "slider/slider3.jpg"
                         });

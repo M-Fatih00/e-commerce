@@ -235,3 +235,14 @@
     height: 32px;
   }
 }
+
+.slider .slider-dots .slider-dot {
+  background: transparent;
+  padding: 4px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.slider .slider-dots .slider-dot:focus:not(:focus-visible) {
+  outline: none;
+}
