@@ -105,3 +105,16 @@
     padding: 12px 12px 6px 18px;
   }
 }
+
+
+.single-blog figure {
+  overflow: hidden;
+}
+
+.single-blog figure img {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}

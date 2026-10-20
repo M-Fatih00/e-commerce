@@ -13,9 +13,7 @@ export default function BlogDetailsPage() {
 
   const { detailStatus } = useAppSelector((state) => state.blog);
 
-  const blog = useAppSelector((state) =>
-    selectBlogById(state, Number(id))
-  );
+  const blog = useAppSelector((state) => selectBlogById(state, Number(id)));
 
   useEffect(() => {
     if (id) {
@@ -28,7 +26,14 @@ export default function BlogDetailsPage() {
   }
 
   if (!blog) {
-    return <div>Blog bulunamadı</div>;
+    return (
+      <div
+        className="container"
+        style={{ padding: "60px 0", textAlign: "center" }}
+      >
+        Blog bulunamadı.
+      </div>
+    );
   }
 
   return <BlogDetails blog={blog} />;

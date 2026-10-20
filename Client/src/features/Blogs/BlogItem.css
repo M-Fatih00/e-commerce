@@ -2,8 +2,16 @@
   display: flex;
 }
 
+.blog-list .blog-image {
+  overflow: hidden;
+}
+
 .blog-list .blog-image img {
   width: 100%;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  object-position: center;
+  display: block;
 }
 
 .blog-item .blog-info {
