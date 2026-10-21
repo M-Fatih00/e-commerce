@@ -1,10 +1,10 @@
-import http from 'k6/http';
-import { check, sleep } from 'k6';
+import http from "k6/http";
+import { check, sleep } from "k6";
 
 // ============================================================
 // AYARLAR — kendi ortamına göre değiştir
 // ============================================================
-const BASE_URL = 'http://localhost:5115/api'; // API'nin gerçek adresi (HTTP, port 5115)
+const BASE_URL = "http://localhost:5115/api"; // API'nin gerçek adresi (HTTP, port 5115)
 const INSECURE_SKIP_TLS_VERIFY = true; // self-signed sertifika için (local dev ortamı, HTTP'de etkisiz ama zararsız)
 
 // ============================================================
@@ -12,29 +12,58 @@ const INSECURE_SKIP_TLS_VERIFY = true; // self-signed sertifika için (local dev
 // terminalden -e TEST_TYPE=spike veya -e TEST_TYPE=ramping ile seçersin
 // Hiçbir şey belirtmezsen varsayılan: ramping (kademeli, normal yük testi)
 // ============================================================
-const TEST_TYPE = __ENV.TEST_TYPE || 'ramping';
+const TEST_TYPE = __ENV.TEST_TYPE || "ramping";
 
 const scenarios = {
   ramping: {
-    executor: 'ramping-vus',
+    executor: "ramping-vus",
     startVUs: 0,
     stages: [
-      { duration: '30s', target: 50 },
-      { duration: '1m', target: 100 },
-      { duration: '30s', target: 200 },
-      { duration: '1m30s', target: 200 },
-      { duration: '30s', target: 0 },
+      { duration: "30s", target: 50 },
+      { duration: "1m", target: 100 },
+      { duration: "30s", target: 200 },
+      { duration: "1m30s", target: 200 },
+      { duration: "30s", target: 0 },
     ],
   },
-    spike: {
-    executor: 'ramping-vus',
+  stress: {
+    executor: "ramping-vus",
     startVUs: 0,
     stages: [
-      { duration: '1m', target: 100 },    // yavaş ısınma
-      { duration: '1m30s', target: 200 }, // çok kademeli 200'e
-      { duration: '1m30s', target: 350 }, // çok kademeli 350'ye
-      { duration: '1m', target: 350 },    // 350'de sabit kal
-      { duration: '30s', target: 0 },     // kapanış
+      { duration: "1m", target: 200 },
+      { duration: "1m", target: 500 },
+      { duration: "1m", target: 800 },
+      { duration: "1m", target: 1000 },
+      { duration: "1m", target: 1000 },
+      { duration: "30s", target: 0 },
+    ],
+  },
+  breakpoint: {
+    executor: "ramping-vus",
+    startVUs: 0,
+    stages: [{ duration: "10m", target: 3000 }],
+  },
+};
+
+const thresholdsByType = {
+  ramping: {
+    http_req_duration: ["p(95)<2000"],
+    http_req_failed: ["rate<0.05"],
+  },
+  spike: {
+    http_req_duration: ["p(95)<5000"],
+    http_req_failed: ["rate<0.05"],
+  },
+  stress: {
+    http_req_duration: ["p(95)<5000"],
+    http_req_failed: ["rate<0.05"],
+  },
+  breakpoint: {
+    http_req_duration: [
+      { threshold: "p(95)<10000", abortOnFail: true, delayAbortEval: "30s" },
+    ],
+    http_req_failed: [
+      { threshold: "rate<0.05", abortOnFail: true, delayAbortEval: "30s" },
     ],
   },
 };
@@ -44,20 +73,15 @@ export const options = {
   scenarios: {
     gercek_kullanici_senaryosu: scenarios[TEST_TYPE],
   },
-  thresholds: {
-    // Spike testte eşikleri biraz daha gevşek tutuyoruz çünkü ani yükte
-    // gecikme artması beklenen bir durum, asıl önemli olan hata oranı
-    http_req_duration: TEST_TYPE === 'spike' ? ['p(95)<5000'] : ['p(95)<2000'],
-    http_req_failed: ['rate<0.05'],    // hata oranı %5'ten az olmalı
-  },
+  thresholds: thresholdsByType[TEST_TYPE],
 };
 
 // ============================================================
 // YARDIMCI FONKSİYONLAR
 // ============================================================
 function randomString(length) {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
+  const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
@@ -76,10 +100,10 @@ export default function () {
   const uniqueId = `${__VU}_${__ITER}_${randomString(5)}`;
   const username = `loadtest_${uniqueId}`;
   const email = `loadtest_${uniqueId}@test.com`;
-  const password = 'Test1234!';
+  const password = "Test1234!";
 
   const params = {
-    headers: { 'Content-Type': 'application/json' },
+    headers: { "Content-Type": "application/json" },
   };
 
   // ----------------------------------------------------------
@@ -93,14 +117,20 @@ export default function () {
     ConfirmPassword: password,
   });
 
-  const registerRes = http.post(`${BASE_URL}/account/register`, registerPayload, params);
+  const registerRes = http.post(
+    `${BASE_URL}/account/register`,
+    registerPayload,
+    params,
+  );
 
   const registerOk = check(registerRes, {
-    'register: status 200': (r) => r.status === 200,
+    "register: status 200": (r) => r.status === 200,
   });
 
   if (!registerOk) {
-    console.error(`Register başarısız: status=${registerRes.status} body=${registerRes.body}`);
+    console.error(
+      `Register başarısız: status=${registerRes.status} body=${registerRes.body}`,
+    );
   }
 
   sleep(1); // gerçek kullanıcı gibi biraz bekle
@@ -116,7 +146,7 @@ export default function () {
   const loginRes = http.post(`${BASE_URL}/account/login`, loginPayload, params);
 
   const loginOk = check(loginRes, {
-    'login: status 200': (r) => r.status === 200,
+    "login: status 200": (r) => r.status === 200,
   });
 
   if (!loginOk) {
@@ -132,8 +162,8 @@ export default function () {
   const productsRes = http.get(`${BASE_URL}/products`);
 
   const productsOk = check(productsRes, {
-    'products: status 200': (r) => r.status === 200,
-    'products: liste dolu': (r) => {
+    "products: status 200": (r) => r.status === 200,
+    "products: liste dolu": (r) => {
       try {
         return JSON.parse(r.body).length > 0;
       } catch {
@@ -143,7 +173,7 @@ export default function () {
   });
 
   if (!productsOk) {
-    console.error('Ürün listesi alınamadı veya boş, senaryo durduruluyor.');
+    console.error("Ürün listesi alınamadı veya boş, senaryo durduruluyor.");
     return;
   }
 
@@ -158,7 +188,7 @@ export default function () {
   const detailRes = http.get(`${BASE_URL}/products/${randomProduct.id}`);
 
   const detailOk = check(detailRes, {
-    'product detail: status 200': (r) => r.status === 200,
+    "product detail: status 200": (r) => r.status === 200,
   });
 
   if (!detailOk) {
@@ -190,26 +220,33 @@ export default function () {
   const addCartRes = http.post(cartUrl, null, params);
 
   const cartOk = check(addCartRes, {
-    'add to cart: status 200': (r) => r.status === 200,
+    "add to cart: status 200": (r) => r.status === 200,
   });
 
   if (!cartOk) {
-    console.error(`Sepete ekleme başarısız: ${addCartRes.status} - ${addCartRes.body}`);
+    console.error(
+      `Sepete ekleme başarısız: ${addCartRes.status} - ${addCartRes.body}`,
+    );
     return;
   }
 
   sleep(2); // checkout'a geçmeden önce kullanıcı biraz düşünür :)
 
   // ----------------------------------------------------------
-  // 6) SİPARİŞ OLUŞTUR (Stripe session başlatır, gerçek ödeme YOK)
+  // 6) SİPARİŞ OLUŞTUR — varsayılan kapalı, Stripe'a istek gider
+  // Açmak için: k6 run -e WITH_ORDER=true ecommerce-load-test.js
   // ----------------------------------------------------------
+  if (__ENV.WITH_ORDER !== "true") {
+    return;
+  }
+
   const orderPayload = JSON.stringify({
     AdSoyad: `Load Test ${uniqueId}`,
-    Telefon: '5551234567',
-    Sehir: 'İstanbul',
-    AdresSatiri: 'Test Mahallesi Test Sokak No:1',
-    PostaKodu: '34000',
-    SiparisNotu: 'k6 load test siparişi',
+    Telefon: "5551234567",
+    Sehir: "İstanbul",
+    AdresSatiri: "Test Mahallesi Test Sokak No:1",
+    PostaKodu: "34000",
+    SiparisNotu: "k6 load test siparişi",
     HizliKargo: false,
     KuponKodu: null,
   });
@@ -217,11 +254,13 @@ export default function () {
   const orderRes = http.post(`${BASE_URL}/order/create`, orderPayload, params);
 
   check(orderRes, {
-    'create order: status 200/201': (r) => r.status === 200 || r.status === 201,
+    "create order: status 200/201": (r) => r.status === 200 || r.status === 201,
   });
 
   if (orderRes.status !== 200 && orderRes.status !== 201) {
-    console.error(`Sipariş oluşturma başarısız: ${orderRes.status} - ${orderRes.body}`);
+    console.error(
+      `Sipariş oluşturma başarısız: ${orderRes.status} - ${orderRes.body}`,
+    );
   }
 
   sleep(1);
