@@ -236,7 +236,8 @@ public class OrderController : ControllerBase
                 UrunResmi = i.Urun.Images.FirstOrDefault(x => x.IsMain)?.Url ?? "",
                 Fiyat = Cart.UnitPrice(i.Urun),
                 Miktar = i.Miktar,
-                Beden = i.Beden
+                Beden = i.Beden,
+                Renk = i.Renk
             }).ToList()
         };
 
@@ -578,7 +579,8 @@ public class OrderController : ControllerBase
             UrunResmi = i.UrunResmi,
             Fiyat = i.Fiyat,
             Miktar = i.Miktar,
-            Beden = i.Beden
+            Beden = i.Beden,
+            Renk = i.Renk
         }).ToList()
     };
 }

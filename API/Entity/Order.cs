@@ -38,4 +38,6 @@ public class OrderItem
     public int Miktar { get; set; }
 
     public string? Beden { get; set; }
+    public string? Renk { get; set; }
+
 }

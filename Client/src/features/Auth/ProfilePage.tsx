@@ -4,7 +4,13 @@ import React, { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Alert, Button, Form, Input, message, Upload, Collapse } from "antd";
 import type { UploadProps } from "antd";
-import { UploadOutlined, EditOutlined, SaveOutlined, CloseOutlined, LockOutlined } from "@ant-design/icons";
+import {
+  UploadOutlined,
+  EditOutlined,
+  SaveOutlined,
+  CloseOutlined,
+  LockOutlined,
+} from "@ant-design/icons";
 import { useAppDispatch, useAppSelector } from "../../store/store";
 import { updateAvatar, updateProfile } from "./authSlice";
 import { getMyOrders } from "../Orders/orderSlice";
@@ -36,10 +42,13 @@ const TABS: { key: TabKey; label: string; icon: string }[] = [
 const ProfilePage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const dispatch = useAppDispatch();
-  const { orders, loading: ordersLoading } = useAppSelector((state) => state.order);
+  const { orders, loading: ordersLoading } = useAppSelector(
+    (state) => state.order,
+  );
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab: TabKey = searchParams.get("tab") === "orders" ? "orders" : "account";
+  const activeTab: TabKey =
+    searchParams.get("tab") === "orders" ? "orders" : "account";
 
   const [avatarLoading, setAvatarLoading] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -63,11 +72,18 @@ const ProfilePage: React.FC = () => {
   if (!user) return null;
 
   const changeTab = (key: TabKey) => {
-    setSearchParams(key === "orders" ? { tab: "orders" } : {}, { replace: true });
+    setSearchParams(key === "orders" ? { tab: "orders" } : {}, {
+      replace: true,
+    });
   };
 
-  const paidOrders = orders.filter((order: IOrder) => order.odemeAlindi && order.durum !== "İptal");
-  const totalSpent = paidOrders.reduce((sum: number, order: IOrder) => sum + order.toplam, 0);
+  const paidOrders = orders.filter(
+    (order: IOrder) => order.odemeAlindi && order.durum !== "İptal",
+  );
+  const totalSpent = paidOrders.reduce(
+    (sum: number, order: IOrder) => sum + order.toplam,
+    0,
+  );
 
   const handleAvatarUpload: UploadProps["customRequest"] = async ({ file }) => {
     if (!(file instanceof File)) return;
@@ -135,23 +151,44 @@ const ProfilePage: React.FC = () => {
       <div className="profile-section-header">
         <div>
           <h2>Hesap Bilgileri</h2>
-          <p>Ad, kullanıcı adı ve e-posta bilgilerini buradan güncelleyebilirsin.</p>
+          <p>
+            Ad, kullanıcı adı ve e-posta bilgilerini buradan güncelleyebilirsin.
+          </p>
         </div>
         {!editing && (
-          <DemoLockButton icon={<EditOutlined />} onClick={() => setEditing(true)}>
+          <DemoLockButton
+            icon={<EditOutlined />}
+            onClick={() => setEditing(true)}
+          >
             Düzenle
           </DemoLockButton>
         )}
       </div>
 
-      <Form form={form} layout="vertical" onFinish={handleProfileUpdate} className="profile-form">
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleProfileUpdate}
+        className="profile-form"
+      >
         <Form.Item
           label="Ad Soyad"
           name="fullName"
-          rules={editing ? [
-            { required: true, whitespace: true, message: "Ad soyad zorunludur." },
-            { max: 100, message: "Ad soyad en fazla 100 karakter olabilir." },
-          ] : []}
+          rules={
+            editing
+              ? [
+                  {
+                    required: true,
+                    whitespace: true,
+                    message: "Ad soyad zorunludur.",
+                  },
+                  {
+                    max: 100,
+                    message: "Ad soyad en fazla 100 karakter olabilir.",
+                  },
+                ]
+              : []
+          }
         >
           <Input disabled={!editing} maxLength={100} size="large" />
         </Form.Item>
@@ -160,11 +197,25 @@ const ProfilePage: React.FC = () => {
           <Form.Item
             label="Kullanıcı Adı"
             name="userName"
-            rules={editing ? [
-              { required: true, whitespace: true, message: "Kullanıcı adı zorunludur." },
-              { min: 3, message: "Kullanıcı adı en az 3 karakter olmalıdır." },
-              { max: 50, message: "Kullanıcı adı en fazla 50 karakter olabilir." },
-            ] : []}
+            rules={
+              editing
+                ? [
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: "Kullanıcı adı zorunludur.",
+                    },
+                    {
+                      min: 3,
+                      message: "Kullanıcı adı en az 3 karakter olmalıdır.",
+                    },
+                    {
+                      max: 50,
+                      message: "Kullanıcı adı en fazla 50 karakter olabilir.",
+                    },
+                  ]
+                : []
+            }
           >
             <Input disabled={!editing} maxLength={50} size="large" />
           </Form.Item>
@@ -172,10 +223,21 @@ const ProfilePage: React.FC = () => {
           <Form.Item
             label="E-posta"
             name="email"
-            rules={editing ? [
-              { required: true, whitespace: true, message: "E-posta zorunludur." },
-              { type: "email", message: "Geçerli bir e-posta adresi girin." },
-            ] : []}
+            rules={
+              editing
+                ? [
+                    {
+                      required: true,
+                      whitespace: true,
+                      message: "E-posta zorunludur.",
+                    },
+                    {
+                      type: "email",
+                      message: "Geçerli bir e-posta adresi girin.",
+                    },
+                  ]
+                : []
+            }
           >
             <Input disabled={!editing} maxLength={256} size="large" />
           </Form.Item>
@@ -183,7 +245,12 @@ const ProfilePage: React.FC = () => {
 
         {editing && (
           <div className="profile-form-actions">
-            <Button type="primary" htmlType="submit" loading={profileLoading} icon={<SaveOutlined />}>
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={profileLoading}
+              icon={<SaveOutlined />}
+            >
               Kaydet
             </Button>
             <Button icon={<CloseOutlined />} onClick={handleCancel}>
@@ -196,7 +263,10 @@ const ProfilePage: React.FC = () => {
   );
 
   const orderItems = orders.map((order: IOrder) => {
-    const itemCount = order.orderItems.reduce((sum, item) => sum + item.miktar, 0);
+    const itemCount = order.orderItems.reduce(
+      (sum, item) => sum + item.miktar,
+      0,
+    );
 
     return {
       key: order.id,
@@ -204,9 +274,13 @@ const ProfilePage: React.FC = () => {
         <div className="profile-order-header">
           <div className="profile-order-top">
             <span className="profile-order-id">
-              Sipariş No: <strong>{formatOrderNumber(order.orderNumber)}</strong>
+              Sipariş No:{" "}
+              <strong>{formatOrderNumber(order.orderNumber)}</strong>
             </span>
-            <OrderStatusTag durum={order.durum} odemeAlindi={order.odemeAlindi} />
+            <OrderStatusTag
+              durum={order.durum}
+              odemeAlindi={order.odemeAlindi}
+            />
           </div>
           <div className="profile-order-meta">
             <span>
@@ -219,7 +293,9 @@ const ProfilePage: React.FC = () => {
             <span aria-hidden="true">·</span>
             <span>{itemCount} ürün</span>
             <span aria-hidden="true">·</span>
-            <span className="profile-order-meta-total">{formatPrice(order.toplam)}</span>
+            <span className="profile-order-meta-total">
+              {formatPrice(order.toplam)}
+            </span>
           </div>
         </div>
       ),
@@ -230,10 +306,27 @@ const ProfilePage: React.FC = () => {
               <li className="profile-order-item" key={item.id}>
                 <span className="profile-order-item-name">
                   {item.urunAdi}
-                  {item.beden && <small>Beden: {item.beden}</small>}
+                  {(item.beden || item.renk) && (
+                    <small>
+                      {item.beden && `Beden: ${item.beden}`}
+                      {item.beden && item.renk && " · "}
+                      {item.renk && (
+                        <>
+                          Renk{" "}
+                          <span
+                            className="order-color-dot"
+                            style={{ background: item.renk }}
+                            title={item.renk}
+                          />
+                        </>
+                      )}
+                    </small>
+                  )}
                 </span>
                 <span className="profile-order-item-qty">× {item.miktar}</span>
-                <span className="profile-order-item-price">{formatPrice(item.fiyat * item.miktar)}</span>
+                <span className="profile-order-item-price">
+                  {formatPrice(item.fiyat * item.miktar)}
+                </span>
               </li>
             ))}
           </ul>
@@ -261,8 +354,14 @@ const ProfilePage: React.FC = () => {
       </Link>
     </div>
   ) : (
-    <div className={`profile-order-scroll ${orders.length > 4 ? "has-more" : ""}`}>
-      <Collapse accordion className="profile-order-collapse" items={orderItems} />
+    <div
+      className={`profile-order-scroll ${orders.length > 4 ? "has-more" : ""}`}
+    >
+      <Collapse
+        accordion
+        className="profile-order-collapse"
+        items={orderItems}
+      />
     </div>
   );
 
@@ -273,7 +372,12 @@ const ProfilePage: React.FC = () => {
           <div className="profile-hero">
             <div className="profile-hero-main">
               <div className="profile-avatar-wrap">
-                <UserAvatar fullName={user.fullName} avatar={user.avatar} size={80} fontSize={28} />
+                <UserAvatar
+                  fullName={user.fullName}
+                  avatar={user.avatar}
+                  size={80}
+                  fontSize={28}
+                />
               </div>
               <div className="profile-hero-text">
                 <h1 className="profile-name">{user.fullName}</h1>
@@ -281,8 +385,16 @@ const ProfilePage: React.FC = () => {
                 {isDemo ? (
                   <DemoLockButton size="small">{avatarLabel}</DemoLockButton>
                 ) : (
-                  <Upload customRequest={handleAvatarUpload} showUploadList={false} accept={AVATAR_ACCEPT}>
-                    <Button icon={<UploadOutlined />} loading={avatarLoading} size="small">
+                  <Upload
+                    customRequest={handleAvatarUpload}
+                    showUploadList={false}
+                    accept={AVATAR_ACCEPT}
+                  >
+                    <Button
+                      icon={<UploadOutlined />}
+                      loading={avatarLoading}
+                      size="small"
+                    >
                       {avatarLabel}
                     </Button>
                   </Upload>
@@ -302,7 +414,11 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="profile-tabs" role="tablist" aria-label="Profil bölümleri">
+          <div
+            className="profile-tabs"
+            role="tablist"
+            aria-label="Profil bölümleri"
+          >
             {TABS.map((tab) => (
               <button
                 key={tab.key}
