@@ -32,4 +32,5 @@ public class OrderItemDTO
     public decimal Fiyat { get; set; }
     public int Miktar { get; set; }
     public string? Beden { get; set; }
+    public string? Renk { get; set; }
 }

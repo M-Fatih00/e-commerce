@@ -39,7 +39,14 @@ const STATUS = {
   cancelled: "İptal",
 } as const;
 
-type FilterKey = "all" | "paid" | "shipped" | "delivered" | "refunded" | "pending" | "abandoned";
+type FilterKey =
+  | "all"
+  | "paid"
+  | "shipped"
+  | "delivered"
+  | "refunded"
+  | "pending"
+  | "abandoned";
 
 const FILTERS: { value: FilterKey; label: string }[] = [
   { value: "all", label: "Tüm siparişler" },
@@ -88,12 +95,18 @@ const nextStep = (order: IOrder) => {
   return null;
 };
 
-const canCancel = (order: IOrder) => order.durum === STATUS.paid || order.durum === STATUS.pending;
+const canCancel = (order: IOrder) =>
+  order.durum === STATUS.paid || order.durum === STATUS.pending;
 
-const money = (value: number) => value.toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
+const money = (value: number) =>
+  value.toLocaleString("tr-TR", { style: "currency", currency: "TRY" });
 
 const formatDate = (value: string) =>
-  new Date(value).toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" });
+  new Date(value).toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 
 const formatDateTime = (value: string) =>
   new Date(value).toLocaleString("tr-TR", {
@@ -119,7 +132,8 @@ const initials = (name: string) =>
     .join("")
     .toLocaleUpperCase("tr-TR");
 
-const stepIndex = (durum: string) => (durum === STATUS.delivered ? 2 : durum === STATUS.shipped ? 1 : 0);
+const stepIndex = (durum: string) =>
+  durum === STATUS.delivered ? 2 : durum === STATUS.shipped ? 1 : 0;
 
 const OrderPageAdmin: React.FC = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
@@ -149,14 +163,23 @@ const OrderPageAdmin: React.FC = () => {
   const changeStatus = async (order: IOrder, durum: string) => {
     setActionId(order.id);
     try {
-      const updated: IOrder = await requests.Order.updateStatus(order.id, durum);
+      const updated: IOrder = await requests.Order.updateStatus(
+        order.id,
+        durum,
+      );
       setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
       setSelectedOrder((prev) => (prev?.id === updated.id ? updated : prev));
 
       if (durum === STATUS.cancelled) {
-        message.success(order.odemeAlindi ? "Sipariş iptal edildi, ödeme iade edildi." : "Sipariş iptal edildi.");
+        message.success(
+          order.odemeAlindi
+            ? "Sipariş iptal edildi, ödeme iade edildi."
+            : "Sipariş iptal edildi.",
+        );
       } else {
-        message.success(`Sipariş "${getOrderStatus(durum).label}" olarak işaretlendi.`);
+        message.success(
+          `Sipariş "${getOrderStatus(durum).label}" olarak işaretlendi.`,
+        );
       }
     } catch (error) {
       showFormError(error, "Durum güncellenemedi.");
@@ -168,7 +191,9 @@ const OrderPageAdmin: React.FC = () => {
   const confirmCancel = (order: IOrder) => {
     const isPaid = order.durum === STATUS.paid;
     modal.confirm({
-      title: isPaid ? `${formatOrderNumber(order.orderNumber)} iptal edilip iade edilsin mi?` : `${formatOrderNumber(order.orderNumber)} iptal edilsin mi?`,
+      title: isPaid
+        ? `${formatOrderNumber(order.orderNumber)} iptal edilip iade edilsin mi?`
+        : `${formatOrderNumber(order.orderNumber)} iptal edilsin mi?`,
       content: isPaid
         ? `${money(order.toplam)} müşteriye Stripe üzerinden iade edilir ve stok geri eklenir. Bu işlem geri alınamaz.`
         : "Müşterinin ödeme sayfası kapatılır.",
@@ -180,13 +205,17 @@ const OrderPageAdmin: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    const active = orders.filter((o) => o.odemeAlindi && o.durum !== STATUS.cancelled);
+    const active = orders.filter(
+      (o) => o.odemeAlindi && o.durum !== STATUS.cancelled,
+    );
     return {
       revenue: active.reduce((sum, o) => sum + o.toplam, 0),
       paid: orders.filter((o) => o.durum === STATUS.paid).length,
       shipped: orders.filter((o) => o.durum === STATUS.shipped).length,
       delivered: orders.filter((o) => o.durum === STATUS.delivered).length,
-      refunded: orders.filter((o) => o.durum === STATUS.cancelled && o.odemeAlindi).length,
+      refunded: orders.filter(
+        (o) => o.durum === STATUS.cancelled && o.odemeAlindi,
+      ).length,
     };
   }, [orders]);
 
@@ -198,11 +227,46 @@ const OrderPageAdmin: React.FC = () => {
     color: string;
     bg: string;
   }[] = [
-    { key: "all", label: "Ciro", value: money(stats.revenue), icon: <WalletOutlined />, color: "#531dab", bg: "#f9f0ff" },
-    { key: "paid", label: "Hazırlanıyor", value: stats.paid, icon: <InboxOutlined />, color: "#d46b08", bg: "#fff7e6" },
-    { key: "shipped", label: "Kargoda", value: stats.shipped, icon: <CarOutlined />, color: "#1677ff", bg: "#e6f4ff" },
-    { key: "delivered", label: "Teslim edildi", value: stats.delivered, icon: <CheckCircleOutlined />, color: "#389e0d", bg: "#f6ffed" },
-    { key: "refunded", label: "İade edildi", value: stats.refunded, icon: <RollbackOutlined />, color: "#cf1322", bg: "#fff1f0" },
+    {
+      key: "all",
+      label: "Ciro",
+      value: money(stats.revenue),
+      icon: <WalletOutlined />,
+      color: "#531dab",
+      bg: "#f9f0ff",
+    },
+    {
+      key: "paid",
+      label: "Hazırlanıyor",
+      value: stats.paid,
+      icon: <InboxOutlined />,
+      color: "#d46b08",
+      bg: "#fff7e6",
+    },
+    {
+      key: "shipped",
+      label: "Kargoda",
+      value: stats.shipped,
+      icon: <CarOutlined />,
+      color: "#1677ff",
+      bg: "#e6f4ff",
+    },
+    {
+      key: "delivered",
+      label: "Teslim edildi",
+      value: stats.delivered,
+      icon: <CheckCircleOutlined />,
+      color: "#389e0d",
+      bg: "#f6ffed",
+    },
+    {
+      key: "refunded",
+      label: "İade edildi",
+      value: stats.refunded,
+      icon: <RollbackOutlined />,
+      color: "#cf1322",
+      bg: "#fff1f0",
+    },
   ];
 
   const filteredOrders = useMemo(() => {
@@ -210,9 +274,12 @@ const OrderPageAdmin: React.FC = () => {
     return orders.filter((o) => {
       if (!matchesFilter(o, filter)) return false;
       if (!term) return true;
-      return [o.orderNumber, formatOrderNumber(o.orderNumber), o.adSoyad, o.username].some((value) =>
-        value?.toLocaleLowerCase("tr-TR").includes(term),
-      );
+      return [
+        o.orderNumber,
+        formatOrderNumber(o.orderNumber),
+        o.adSoyad,
+        o.username,
+      ].some((value) => value?.toLocaleLowerCase("tr-TR").includes(term));
     });
   }, [orders, filter, search]);
 
@@ -227,7 +294,13 @@ const OrderPageAdmin: React.FC = () => {
         cancelText="Hayır"
         onConfirm={() => changeStatus(order, step.status)}
       >
-        <Button size={size} type="primary" ghost icon={step.icon} loading={actionId === order.id}>
+        <Button
+          size={size}
+          type="primary"
+          ghost
+          icon={step.icon}
+          loading={actionId === order.id}
+        >
           {step.label}
         </Button>
       </Popconfirm>
@@ -241,7 +314,9 @@ const OrderPageAdmin: React.FC = () => {
       width: 150,
       render: (_: unknown, record: IOrder) => (
         <div>
-          <div className="op-order-no">{formatOrderNumber(record.orderNumber)}</div>
+          <div className="op-order-no">
+            {formatOrderNumber(record.orderNumber)}
+          </div>
           <div className="op-muted">{formatDate(record.siparisTarihi)}</div>
         </div>
       ),
@@ -268,7 +343,9 @@ const OrderPageAdmin: React.FC = () => {
       render: (_: unknown, record: IOrder) => (
         <div>
           <div className="op-amount">{money(record.toplam)}</div>
-          <div className="op-muted">{record.orderItems.reduce((sum, i) => sum + i.miktar, 0)} ürün</div>
+          <div className="op-muted">
+            {record.orderItems.reduce((sum, i) => sum + i.miktar, 0)} ürün
+          </div>
         </div>
       ),
     },
@@ -288,7 +365,11 @@ const OrderPageAdmin: React.FC = () => {
         <div className="op-actions" onClick={(e) => e.stopPropagation()}>
           {renderNextStep(record, "small")}
           <Tooltip title="Detay">
-            <Button size="small" icon={<EyeOutlined />} onClick={() => setSelectedOrder(record)} />
+            <Button
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => setSelectedOrder(record)}
+            />
           </Tooltip>
           {canCancel(record) && (
             <Dropdown
@@ -299,7 +380,10 @@ const OrderPageAdmin: React.FC = () => {
                     key: "cancel",
                     danger: true,
                     icon: <StopOutlined />,
-                    label: record.durum === STATUS.paid ? "İptal et ve iade et" : "Siparişi iptal et",
+                    label:
+                      record.durum === STATUS.paid
+                        ? "İptal et ve iade et"
+                        : "Siparişi iptal et",
                   },
                 ],
                 onClick: () => confirmCancel(record),
@@ -313,7 +397,9 @@ const OrderPageAdmin: React.FC = () => {
     },
   ];
 
-  const selectedMeta = selectedOrder ? getOrderStatus(selectedOrder.durum, selectedOrder.odemeAlindi) : null;
+  const selectedMeta = selectedOrder
+    ? getOrderStatus(selectedOrder.durum, selectedOrder.odemeAlindi)
+    : null;
 
   return (
     <div>
@@ -322,9 +408,15 @@ const OrderPageAdmin: React.FC = () => {
       <div className="op-header animate-fade-in">
         <div>
           <h2>Siparişler</h2>
-          <p className="op-subtitle">Siparişleri takip edin ve durumlarını güncelleyin.</p>
+          <p className="op-subtitle">
+            Siparişleri takip edin ve durumlarını güncelleyin.
+          </p>
         </div>
-        <Button icon={<ReloadOutlined />} onClick={fetchOrders} loading={loading}>
+        <Button
+          icon={<ReloadOutlined />}
+          onClick={fetchOrders}
+          loading={loading}
+        >
           Yenile
         </Button>
       </div>
@@ -338,7 +430,10 @@ const OrderPageAdmin: React.FC = () => {
             style={{ "--i": index } as React.CSSProperties}
             onClick={() => setFilter(card.key)}
           >
-            <span className="op-stat-icon" style={{ color: card.color, background: card.bg }}>
+            <span
+              className="op-stat-icon"
+              style={{ color: card.color, background: card.bg }}
+            >
               {card.icon}
             </span>
             <span>
@@ -350,7 +445,12 @@ const OrderPageAdmin: React.FC = () => {
       </div>
 
       <div className="op-toolbar">
-        <Select value={filter} onChange={setFilter} options={FILTERS} style={{ width: 190 }} />
+        <Select
+          value={filter}
+          onChange={setFilter}
+          options={FILTERS}
+          style={{ width: 190 }}
+        />
         <Input.Search
           allowClear
           placeholder="Sipariş no, müşteri veya kullanıcı adı"
@@ -376,7 +476,11 @@ const OrderPageAdmin: React.FC = () => {
       </div>
 
       <Modal
-        title={selectedOrder ? `Sipariş No: ${formatOrderNumber(selectedOrder.orderNumber)}` : ""}
+        title={
+          selectedOrder
+            ? `Sipariş No: ${formatOrderNumber(selectedOrder.orderNumber)}`
+            : ""
+        }
         open={selectedOrder !== null}
         onCancel={() => setSelectedOrder(null)}
         width={720}
@@ -386,8 +490,14 @@ const OrderPageAdmin: React.FC = () => {
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {renderNextStep(selectedOrder, "middle")}
                 {canCancel(selectedOrder) && (
-                  <Button danger icon={<StopOutlined />} onClick={() => confirmCancel(selectedOrder)}>
-                    {selectedOrder.durum === STATUS.paid ? "İptal et ve iade et" : "İptal et"}
+                  <Button
+                    danger
+                    icon={<StopOutlined />}
+                    onClick={() => confirmCancel(selectedOrder)}
+                  >
+                    {selectedOrder.durum === STATUS.paid
+                      ? "İptal et ve iade et"
+                      : "İptal et"}
                   </Button>
                 )}
               </div>
@@ -398,24 +508,50 @@ const OrderPageAdmin: React.FC = () => {
       >
         {selectedOrder && selectedMeta && (
           <div>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <Tag color={selectedMeta.color} icon={selectedMeta.icon} variant="filled">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 16,
+              }}
+            >
+              <Tag
+                color={selectedMeta.color}
+                icon={selectedMeta.icon}
+                variant="filled"
+              >
                 {selectedMeta.label}
               </Tag>
-              <span className="op-muted">{formatDateTime(selectedOrder.siparisTarihi)}</span>
+              <span className="op-muted">
+                {formatDateTime(selectedOrder.siparisTarihi)}
+              </span>
             </div>
 
-            {selectedOrder.odemeAlindi && selectedOrder.durum !== STATUS.cancelled && (
-              <Steps
-                size="small"
-                current={stepIndex(selectedOrder.durum)}
-                status={selectedOrder.durum === STATUS.delivered ? "finish" : "process"}
-                items={[{ title: "Hazırlanıyor" }, { title: "Kargoda" }, { title: "Teslim Edildi" }]}
-              />
-            )}
+            {selectedOrder.odemeAlindi &&
+              selectedOrder.durum !== STATUS.cancelled && (
+                <Steps
+                  size="small"
+                  current={stepIndex(selectedOrder.durum)}
+                  status={
+                    selectedOrder.durum === STATUS.delivered
+                      ? "finish"
+                      : "process"
+                  }
+                  items={[
+                    { title: "Hazırlanıyor" },
+                    { title: "Kargoda" },
+                    { title: "Teslim Edildi" },
+                  ]}
+                />
+              )}
 
             {selectedOrder.durum === STATUS.pending && (
-              <Alert type="warning" showIcon title="Müşterinin ödemesi bekleniyor." />
+              <Alert
+                type="warning"
+                showIcon
+                title="Müşterinin ödemesi bekleniyor."
+              />
             )}
 
             {selectedOrder.durum === STATUS.cancelled && (
@@ -441,7 +577,9 @@ const OrderPageAdmin: React.FC = () => {
               </div>
               <div>
                 <div className="op-info-label">Telefon</div>
-                <div className="op-info-value">{formatPhone(selectedOrder.telefon)}</div>
+                <div className="op-info-value">
+                  {formatPhone(selectedOrder.telefon)}
+                </div>
               </div>
               <div>
                 <div className="op-info-label">Şehir / Posta Kodu</div>
@@ -456,7 +594,9 @@ const OrderPageAdmin: React.FC = () => {
               {selectedOrder.siparisNotu && (
                 <div className="op-info-wide">
                   <div className="op-info-label">Sipariş Notu</div>
-                  <div className="op-info-value">{selectedOrder.siparisNotu}</div>
+                  <div className="op-info-value">
+                    {selectedOrder.siparisNotu}
+                  </div>
                 </div>
               )}
             </div>
@@ -464,15 +604,30 @@ const OrderPageAdmin: React.FC = () => {
             <div className="op-items">
               {selectedOrder.orderItems.map((item) => (
                 <div className="op-item" key={item.id}>
-                  {item.urunResmi ? <img src={`${baseUrl}/img/${item.urunResmi}`} alt="" /> : null}
+                  {item.urunResmi ? (
+                    <img src={`${baseUrl}/img/${item.urunResmi}`} alt="" />
+                  ) : null}
                   <div className="op-item-info">
                     <div className="op-item-name">{item.urunAdi}</div>
                     <div className="op-muted">
                       {item.beden ? `Beden: ${item.beden} · ` : ""}
+                      {item.renk && (
+                        <>
+                          Renk{" "}
+                          <span
+                            className="order-color-dot"
+                            style={{ background: item.renk }}
+                            title={item.renk}
+                          />
+                          {" · "}
+                        </>
+                      )}
                       {item.miktar} × {money(item.fiyat)}
                     </div>
                   </div>
-                  <div className="op-item-total">{money(item.fiyat * item.miktar)}</div>
+                  <div className="op-item-total">
+                    {money(item.fiyat * item.miktar)}
+                  </div>
                 </div>
               ))}
             </div>
@@ -509,7 +664,9 @@ const OrderPageAdmin: React.FC = () => {
               <div className="op-summary-row">
                 <span>Kargo</span>
                 <span>
-                  {selectedOrder.teslimatUcreti === 0 ? "Ücretsiz" : money(selectedOrder.teslimatUcreti)}
+                  {selectedOrder.teslimatUcreti === 0
+                    ? "Ücretsiz"
+                    : money(selectedOrder.teslimatUcreti)}
                 </span>
               </div>
               <div className="op-summary-row op-summary-total">

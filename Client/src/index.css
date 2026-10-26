@@ -330,3 +330,14 @@ input[type="number"]::-webkit-inner-spin-button {
     animation: none;
   }
 }
+
+
+.order-color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  vertical-align: middle;
+  margin-left: 2px;
+}

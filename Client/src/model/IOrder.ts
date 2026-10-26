@@ -6,6 +6,7 @@ export interface IOrderItem {
   fiyat: number;
   miktar: number;
   beden?: string | null;
+  renk?: string | null;
 }
 
 export interface IOrder {
