@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Stripe;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -132,7 +132,7 @@ builder.Services.AddCors(options =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
+    options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
 });
 
@@ -255,7 +255,7 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<AppRole>>();
 
     await SeedDatabase.SeedRolesAndUsers(userManager, roleManager, app.Configuration);
-    
+
     await DemoDataSeeder.SeedAsync(context, userManager, app.Configuration);
 }
 
@@ -269,6 +269,5 @@ static void ApplyCacheHeaders(HttpContext context)
         ? "public, max-age=31536000, immutable"
         : "no-cache";
 }
-
 
 public partial class Program { }
