@@ -1,7 +1,7 @@
 # 🛍️ E-Commerce | Moda & Giyim
  
 [![CI](https://github.com/M-Fatih00/e-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/M-Fatih00/e-commerce/actions/workflows/ci.yml)
-![.NET 9](https://img.shields.io/badge/.NET-9-512BD4)
+![.NET 10](https://img.shields.io/badge/.NET-10-512BD4)
 ![React](https://img.shields.io/badge/React-TypeScript-3178C6)
 ![Tests](https://img.shields.io/badge/tests-34%20passing-2ea44f)
  
@@ -100,7 +100,7 @@ Giriş sayfasındaki **Demo hesapları** kutusundan **Yönetici** veya **Müşte
 | Katman | Teknolojiler |
 |---|---|
 | **Frontend** | React, TypeScript, Vite, Redux Toolkit, React Router, Ant Design, TipTap, Axios |
-| **Backend** | ASP.NET Core Web API (.NET 9), Entity Framework Core, ASP.NET Core Identity, JWT |
+| **Backend** | ASP.NET Core Web API (.NET 10), Entity Framework Core, ASP.NET Core Identity, JWT |
 | **Veritabanı** | SQLite |
 | **Ödeme ve e-posta** | Stripe Checkout, MailKit (SMTP) |
 | **Test** | xUnit, WebApplicationFactory (API testleri), k6 (yük testi) |
@@ -198,7 +198,7 @@ Her sayfa masaüstü ve mobil görünümüyle birlikte.
 ## 🚀 Kurulum
  
 ### Gereksinimler
-- [.NET 9 SDK](https://dotnet.microsoft.com/download)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [Node.js](https://nodejs.org/) 22+
 ### Backend
  
